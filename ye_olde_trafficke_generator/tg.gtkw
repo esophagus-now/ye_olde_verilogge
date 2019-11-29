@@ -1,0 +1,260 @@
+[*]
+[*] GTKWave Analyzer v3.3.102 (w)1999-2019 BSI
+[*] Fri Nov 29 19:42:23 2019
+[*]
+[dumpfile] "/home/mahkoe/research/ye_olde_verilogge/ye_olde_trafficke_generator/tg.vcd"
+[dumpfile_mtime] "Fri Nov 29 19:39:07 2019"
+[dumpfile_size] 7604
+[savefile] "/home/mahkoe/research/ye_olde_verilogge/ye_olde_trafficke_generator/tg.gtkw"
+[timestart] 0
+[size] 1916 1060
+[pos] -1 -1
+*-16.208004 28700 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tg_tb.
+[sst_width] 214
+[signals_width] 198
+[sst_expanded] 1
+[sst_vpaned_height] 314
+@28
+tg_tb.clk
+@22
+tg_tb.mode[31:0]
+@800200
+-inputs
+@c00028
+#{en} (31)tg_tb.mode[31:0]
+@28
+(31)tg_tb.mode[31:0]
+@1401200
+-group_end
+@c000a8
+#{fill} (30)tg_tb.mode[31:0] (29)tg_tb.mode[31:0]
+@28
+(30)tg_tb.mode[31:0]
+(29)tg_tb.mode[31:0]
+@1401200
+-group_end
+@c00028
+#{loop} (28)tg_tb.mode[31:0]
+@28
+(28)tg_tb.mode[31:0]
+@1401200
+-group_end
+@24
+tg_tb.num_packets[31:0]
+tg_tb.num_flits[31:0]
+tg_tb.last_flit_bytes[31:0]
+tg_tb.M[31:0]
+tg_tb.N[31:0]
+@1000200
+-inputs
+@800200
+-AXI Stream
+@22
+tg_tb.TDATA[63:0]
+tg_tb.TKEEP[7:0]
+@28
+tg_tb.TVALID
+tg_tb.TREADY
+tg_tb.TLAST
+@1000200
+-AXI Stream
+@200
+-internals
+@c00420
+tg_tb.DUT.sum[31:0]
+@28
+(0)tg_tb.DUT.sum[31:0]
+(1)tg_tb.DUT.sum[31:0]
+(2)tg_tb.DUT.sum[31:0]
+(3)tg_tb.DUT.sum[31:0]
+(4)tg_tb.DUT.sum[31:0]
+(5)tg_tb.DUT.sum[31:0]
+(6)tg_tb.DUT.sum[31:0]
+(7)tg_tb.DUT.sum[31:0]
+(8)tg_tb.DUT.sum[31:0]
+(9)tg_tb.DUT.sum[31:0]
+(10)tg_tb.DUT.sum[31:0]
+(11)tg_tb.DUT.sum[31:0]
+(12)tg_tb.DUT.sum[31:0]
+(13)tg_tb.DUT.sum[31:0]
+(14)tg_tb.DUT.sum[31:0]
+(15)tg_tb.DUT.sum[31:0]
+(16)tg_tb.DUT.sum[31:0]
+(17)tg_tb.DUT.sum[31:0]
+(18)tg_tb.DUT.sum[31:0]
+(19)tg_tb.DUT.sum[31:0]
+(20)tg_tb.DUT.sum[31:0]
+(21)tg_tb.DUT.sum[31:0]
+(22)tg_tb.DUT.sum[31:0]
+(23)tg_tb.DUT.sum[31:0]
+(24)tg_tb.DUT.sum[31:0]
+(25)tg_tb.DUT.sum[31:0]
+(26)tg_tb.DUT.sum[31:0]
+(27)tg_tb.DUT.sum[31:0]
+(28)tg_tb.DUT.sum[31:0]
+(29)tg_tb.DUT.sum[31:0]
+(30)tg_tb.DUT.sum[31:0]
+(31)tg_tb.DUT.sum[31:0]
+@1401200
+-group_end
+@28
+tg_tb.DUT.state[1:0]
+tg_tb.DUT.last_flit
+@24
+tg_tb.DUT.flit_cnt[31:0]
+tg_tb.DUT.packet_cnt[31:0]
+@c00024
+#{hdr_packet_cnt} (0)tg_tb.DUT.hdr[111:0] (1)tg_tb.DUT.hdr[111:0] (2)tg_tb.DUT.hdr[111:0] (3)tg_tb.DUT.hdr[111:0] (4)tg_tb.DUT.hdr[111:0] (5)tg_tb.DUT.hdr[111:0] (6)tg_tb.DUT.hdr[111:0] (7)tg_tb.DUT.hdr[111:0] (8)tg_tb.DUT.hdr[111:0] (9)tg_tb.DUT.hdr[111:0] (10)tg_tb.DUT.hdr[111:0] (11)tg_tb.DUT.hdr[111:0] (12)tg_tb.DUT.hdr[111:0] (13)tg_tb.DUT.hdr[111:0] (14)tg_tb.DUT.hdr[111:0] (15)tg_tb.DUT.hdr[111:0]
+@28
+(0)tg_tb.DUT.hdr[111:0]
+(1)tg_tb.DUT.hdr[111:0]
+(2)tg_tb.DUT.hdr[111:0]
+(3)tg_tb.DUT.hdr[111:0]
+(4)tg_tb.DUT.hdr[111:0]
+(5)tg_tb.DUT.hdr[111:0]
+(6)tg_tb.DUT.hdr[111:0]
+(7)tg_tb.DUT.hdr[111:0]
+(8)tg_tb.DUT.hdr[111:0]
+(9)tg_tb.DUT.hdr[111:0]
+(10)tg_tb.DUT.hdr[111:0]
+(11)tg_tb.DUT.hdr[111:0]
+(12)tg_tb.DUT.hdr[111:0]
+(13)tg_tb.DUT.hdr[111:0]
+(14)tg_tb.DUT.hdr[111:0]
+(15)tg_tb.DUT.hdr[111:0]
+@1401204
+-group_end
+@c000a4
+#{hdr_flit_cnt} (31)tg_tb.DUT.hdr[111:0] (30)tg_tb.DUT.hdr[111:0] (29)tg_tb.DUT.hdr[111:0] (28)tg_tb.DUT.hdr[111:0] (27)tg_tb.DUT.hdr[111:0] (26)tg_tb.DUT.hdr[111:0] (25)tg_tb.DUT.hdr[111:0] (24)tg_tb.DUT.hdr[111:0] (23)tg_tb.DUT.hdr[111:0] (22)tg_tb.DUT.hdr[111:0] (21)tg_tb.DUT.hdr[111:0] (20)tg_tb.DUT.hdr[111:0] (19)tg_tb.DUT.hdr[111:0] (18)tg_tb.DUT.hdr[111:0] (17)tg_tb.DUT.hdr[111:0] (16)tg_tb.DUT.hdr[111:0]
+@28
+(16)tg_tb.DUT.hdr[111:0]
+(17)tg_tb.DUT.hdr[111:0]
+(18)tg_tb.DUT.hdr[111:0]
+(19)tg_tb.DUT.hdr[111:0]
+(20)tg_tb.DUT.hdr[111:0]
+(21)tg_tb.DUT.hdr[111:0]
+(22)tg_tb.DUT.hdr[111:0]
+(23)tg_tb.DUT.hdr[111:0]
+(24)tg_tb.DUT.hdr[111:0]
+(25)tg_tb.DUT.hdr[111:0]
+(26)tg_tb.DUT.hdr[111:0]
+(27)tg_tb.DUT.hdr[111:0]
+(28)tg_tb.DUT.hdr[111:0]
+(29)tg_tb.DUT.hdr[111:0]
+(30)tg_tb.DUT.hdr[111:0]
+(31)tg_tb.DUT.hdr[111:0]
+@1401284
+-group_end
+@c00022
+#{hdr_mode} (32)tg_tb.DUT.hdr[111:0] (33)tg_tb.DUT.hdr[111:0] (34)tg_tb.DUT.hdr[111:0] (35)tg_tb.DUT.hdr[111:0] (36)tg_tb.DUT.hdr[111:0] (37)tg_tb.DUT.hdr[111:0] (38)tg_tb.DUT.hdr[111:0] (39)tg_tb.DUT.hdr[111:0]
+@28
+(32)tg_tb.DUT.hdr[111:0]
+(33)tg_tb.DUT.hdr[111:0]
+(34)tg_tb.DUT.hdr[111:0]
+(35)tg_tb.DUT.hdr[111:0]
+(36)tg_tb.DUT.hdr[111:0]
+(37)tg_tb.DUT.hdr[111:0]
+(38)tg_tb.DUT.hdr[111:0]
+(39)tg_tb.DUT.hdr[111:0]
+@1401200
+-group_end
+@c00024
+#{hdr_num_packets} (40)tg_tb.DUT.hdr[111:0] (41)tg_tb.DUT.hdr[111:0] (42)tg_tb.DUT.hdr[111:0] (43)tg_tb.DUT.hdr[111:0] (44)tg_tb.DUT.hdr[111:0] (45)tg_tb.DUT.hdr[111:0] (46)tg_tb.DUT.hdr[111:0] (47)tg_tb.DUT.hdr[111:0] (48)tg_tb.DUT.hdr[111:0] (49)tg_tb.DUT.hdr[111:0] (50)tg_tb.DUT.hdr[111:0] (51)tg_tb.DUT.hdr[111:0] (52)tg_tb.DUT.hdr[111:0] (53)tg_tb.DUT.hdr[111:0] (54)tg_tb.DUT.hdr[111:0] (55)tg_tb.DUT.hdr[111:0]
+@28
+(40)tg_tb.DUT.hdr[111:0]
+(41)tg_tb.DUT.hdr[111:0]
+(42)tg_tb.DUT.hdr[111:0]
+(43)tg_tb.DUT.hdr[111:0]
+(44)tg_tb.DUT.hdr[111:0]
+(45)tg_tb.DUT.hdr[111:0]
+(46)tg_tb.DUT.hdr[111:0]
+(47)tg_tb.DUT.hdr[111:0]
+(48)tg_tb.DUT.hdr[111:0]
+(49)tg_tb.DUT.hdr[111:0]
+(50)tg_tb.DUT.hdr[111:0]
+(51)tg_tb.DUT.hdr[111:0]
+(52)tg_tb.DUT.hdr[111:0]
+(53)tg_tb.DUT.hdr[111:0]
+(54)tg_tb.DUT.hdr[111:0]
+(55)tg_tb.DUT.hdr[111:0]
+@1401204
+-group_end
+@c00022
+#{hdr_num_flits} (56)tg_tb.DUT.hdr[111:0] (57)tg_tb.DUT.hdr[111:0] (58)tg_tb.DUT.hdr[111:0] (59)tg_tb.DUT.hdr[111:0] (60)tg_tb.DUT.hdr[111:0] (61)tg_tb.DUT.hdr[111:0] (62)tg_tb.DUT.hdr[111:0] (63)tg_tb.DUT.hdr[111:0] (64)tg_tb.DUT.hdr[111:0] (65)tg_tb.DUT.hdr[111:0] (66)tg_tb.DUT.hdr[111:0] (67)tg_tb.DUT.hdr[111:0] (68)tg_tb.DUT.hdr[111:0] (69)tg_tb.DUT.hdr[111:0] (70)tg_tb.DUT.hdr[111:0] (71)tg_tb.DUT.hdr[111:0]
+@28
+(56)tg_tb.DUT.hdr[111:0]
+(57)tg_tb.DUT.hdr[111:0]
+(58)tg_tb.DUT.hdr[111:0]
+(59)tg_tb.DUT.hdr[111:0]
+(60)tg_tb.DUT.hdr[111:0]
+(61)tg_tb.DUT.hdr[111:0]
+(62)tg_tb.DUT.hdr[111:0]
+(63)tg_tb.DUT.hdr[111:0]
+(64)tg_tb.DUT.hdr[111:0]
+(65)tg_tb.DUT.hdr[111:0]
+(66)tg_tb.DUT.hdr[111:0]
+(67)tg_tb.DUT.hdr[111:0]
+(68)tg_tb.DUT.hdr[111:0]
+(69)tg_tb.DUT.hdr[111:0]
+(70)tg_tb.DUT.hdr[111:0]
+(71)tg_tb.DUT.hdr[111:0]
+@1401200
+-group_end
+@c00022
++{hdr_last_flit_bytes} #{hdr)last_flit_bytes} (72)tg_tb.DUT.hdr[111:0] (73)tg_tb.DUT.hdr[111:0] (74)tg_tb.DUT.hdr[111:0] (75)tg_tb.DUT.hdr[111:0] (76)tg_tb.DUT.hdr[111:0] (77)tg_tb.DUT.hdr[111:0] (78)tg_tb.DUT.hdr[111:0] (79)tg_tb.DUT.hdr[111:0]
+@28
+(72)tg_tb.DUT.hdr[111:0]
+(73)tg_tb.DUT.hdr[111:0]
+(74)tg_tb.DUT.hdr[111:0]
+(75)tg_tb.DUT.hdr[111:0]
+(76)tg_tb.DUT.hdr[111:0]
+(77)tg_tb.DUT.hdr[111:0]
+(78)tg_tb.DUT.hdr[111:0]
+(79)tg_tb.DUT.hdr[111:0]
+@1401200
+-group_end
+@c00024
+#{hdr_M} (80)tg_tb.DUT.hdr[111:0] (81)tg_tb.DUT.hdr[111:0] (82)tg_tb.DUT.hdr[111:0] (83)tg_tb.DUT.hdr[111:0] (84)tg_tb.DUT.hdr[111:0] (85)tg_tb.DUT.hdr[111:0] (86)tg_tb.DUT.hdr[111:0] (87)tg_tb.DUT.hdr[111:0] (88)tg_tb.DUT.hdr[111:0] (89)tg_tb.DUT.hdr[111:0] (90)tg_tb.DUT.hdr[111:0] (91)tg_tb.DUT.hdr[111:0] (92)tg_tb.DUT.hdr[111:0] (93)tg_tb.DUT.hdr[111:0] (94)tg_tb.DUT.hdr[111:0] (95)tg_tb.DUT.hdr[111:0]
+@28
+(80)tg_tb.DUT.hdr[111:0]
+(81)tg_tb.DUT.hdr[111:0]
+(82)tg_tb.DUT.hdr[111:0]
+(83)tg_tb.DUT.hdr[111:0]
+(84)tg_tb.DUT.hdr[111:0]
+(85)tg_tb.DUT.hdr[111:0]
+(86)tg_tb.DUT.hdr[111:0]
+(87)tg_tb.DUT.hdr[111:0]
+(88)tg_tb.DUT.hdr[111:0]
+(89)tg_tb.DUT.hdr[111:0]
+(90)tg_tb.DUT.hdr[111:0]
+(91)tg_tb.DUT.hdr[111:0]
+(92)tg_tb.DUT.hdr[111:0]
+(93)tg_tb.DUT.hdr[111:0]
+(94)tg_tb.DUT.hdr[111:0]
+(95)tg_tb.DUT.hdr[111:0]
+@1401204
+-group_end
+@c00025
+#{hdr_N} (96)tg_tb.DUT.hdr[111:0] (97)tg_tb.DUT.hdr[111:0] (98)tg_tb.DUT.hdr[111:0] (99)tg_tb.DUT.hdr[111:0] (100)tg_tb.DUT.hdr[111:0] (101)tg_tb.DUT.hdr[111:0] (102)tg_tb.DUT.hdr[111:0] (103)tg_tb.DUT.hdr[111:0] (104)tg_tb.DUT.hdr[111:0] (105)tg_tb.DUT.hdr[111:0] (106)tg_tb.DUT.hdr[111:0] (107)tg_tb.DUT.hdr[111:0] (108)tg_tb.DUT.hdr[111:0] (109)tg_tb.DUT.hdr[111:0] (110)tg_tb.DUT.hdr[111:0] (111)tg_tb.DUT.hdr[111:0]
+@28
+(96)tg_tb.DUT.hdr[111:0]
+(97)tg_tb.DUT.hdr[111:0]
+(98)tg_tb.DUT.hdr[111:0]
+(99)tg_tb.DUT.hdr[111:0]
+(100)tg_tb.DUT.hdr[111:0]
+(101)tg_tb.DUT.hdr[111:0]
+(102)tg_tb.DUT.hdr[111:0]
+(103)tg_tb.DUT.hdr[111:0]
+(104)tg_tb.DUT.hdr[111:0]
+(105)tg_tb.DUT.hdr[111:0]
+(106)tg_tb.DUT.hdr[111:0]
+(107)tg_tb.DUT.hdr[111:0]
+(108)tg_tb.DUT.hdr[111:0]
+(109)tg_tb.DUT.hdr[111:0]
+(110)tg_tb.DUT.hdr[111:0]
+(111)tg_tb.DUT.hdr[111:0]
+@1401205
+-group_end
+[pattern_trace] 1
+[pattern_trace] 0
