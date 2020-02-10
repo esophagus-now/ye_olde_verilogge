@@ -20,6 +20,9 @@ https://www.xilinx.com/support/documentation/sw_manuals/xilinx11/xst.pdf
 
 Most modules are "platform-independent"
 
+In the very near future I will be providing Vivado tcl scripts to automatically 
+package these as IPs.
+
 ========
 CONTENTS
 ========
@@ -41,6 +44,12 @@ mux_tree
 --------
     A fully pipelined and completely generic MUX tree. It is copied straight 
     out of another one of my projects, but should work in the general case.
+
+torch_arb
+---------
+    Suppose you have n AXI Stream sources, and one sink. Put one of these 
+    fellows on each source and then daisy-chain them. Ensure a "mostly fair" 
+    arbitration with "okay performance".
 
 ye_olde_trafficke_generator
 ---------------------------
