@@ -24,10 +24,23 @@ Most modules are "platform-independent"
 CONTENTS
 ========
 
+axis_governor
+-------------
+    A neat little core for debugging AXI Streams. Not complete yet, but I 
+    figured I would start saving it into github. Allows pausing, dropping, 
+    logging, or injecting into any AXI Stream and is pretty lightweight. For 
+    the sake of completeness, I've also included some quick and dirty HLS code 
+    I wrote that allows me to test it from inside an ARM (in an SoC).
+
 buffered_handshake
 ------------------
     More or less identical to an AXI Stream register slice. Has come in handy 
     more often that I expected.
+
+mux_tree
+--------
+    A fully pipelined and completely generic MUX tree. It is copied straight 
+    out of another one of my projects, but should work in the general case.
 
 ye_olde_trafficke_generator
 ---------------------------

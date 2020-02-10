@@ -37,7 +37,7 @@ accordingly
 M and N
 -------
 Used for throttling bandwidth. The core enforces maintains (as time -> infinity)
-that (active_cycles/idle_cycles) = (M/N)
+that (idle_cycles/active_cycles) = (M/N)
 
 Header format
 -------------
