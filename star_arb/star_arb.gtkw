@@ -1,0 +1,129 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Tue Feb 11 17:36:06 2020
+[*]
+[dumpfile] "/home/mahkoe/research/ye_olde_verilogge/star_arb/star_arb.vcd"
+[dumpfile_mtime] "Tue Feb 11 17:35:45 2020"
+[dumpfile_size] 147959
+[savefile] "/home/mahkoe/research/ye_olde_verilogge/star_arb/star_arb.gtkw"
+[timestart] 0
+[size] 1916 1060
+[pos] -1 -1
+*-19.610842 25000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] star_arb_tb.
+[treeopen] star_arb_tb.arb_0.
+[sst_width] 214
+[signals_width] 150
+[sst_expanded] 1
+[sst_vpaned_height] 314
+@28
+star_arb_tb.clk
+@800200
+-res
+@24
+star_arb_tb.who[1:0]
+star_arb_tb.res_TDATA[7:0]
+@28
+star_arb_tb.res_TVALID
+star_arb_tb.res_TREADY
+star_arb_tb.res_TLAST
+@25
+[color] 1
+star_arb_tb.arb0_cnt[7:0]
+[color] 1
+star_arb_tb.arb1_cnt[7:0]
+[color] 1
+star_arb_tb.arb2_cnt[7:0]
+[color] 1
+star_arb_tb.arb3_cnt[7:0]
+@1000200
+-res
+@c00200
+-src0
+@22
+[color] 1
+star_arb_tb.src0_TDATA[7:0]
+@28
+[color] 1
+star_arb_tb.src0_TVALID
+[color] 1
+star_arb_tb.src0_TREADY
+[color] 1
+star_arb_tb.src0_TLAST
+@1401200
+-src0
+@c00200
+-src1
+@22
+[color] 2
+star_arb_tb.src1_TDATA[7:0]
+@28
+[color] 2
+star_arb_tb.src1_TVALID
+[color] 2
+star_arb_tb.src1_TREADY
+[color] 2
+star_arb_tb.src1_TLAST
+@1401200
+-src1
+@800200
+-arb0
+@28
+star_arb_tb.arb_0.drop_star
+star_arb_tb.arb_0.src_TVALID
+star_arb_tb.arb_0.src_TREADY
+star_arb_tb.arb_0.src_TLAST
+star_arb_tb.arb_0.take_star
+[color] 3
+star_arb_tb.arb_0.star
+star_arb_tb.arb_0.give_star
+[color] 6
+star_arb_tb.arb_0.undecided
+[color] 2
+star_arb_tb.arb_0.sel
+@1000200
+-arb0
+@800200
+-arb1
+@28
+star_arb_tb.arb_1.take_star
+[color] 3
+star_arb_tb.arb_1.star
+star_arb_tb.arb_1.drop_star
+star_arb_tb.arb_1.give_star
+[color] 6
+star_arb_tb.arb_1.undecided
+@100000028
+[color] 2
+star_arb_tb.arb_1.sel
+@1000200
+-arb1
+@800200
+-arb2
+@28
+star_arb_tb.arb_2.take_star
+[color] 3
+star_arb_tb.arb_2.star
+star_arb_tb.arb_2.give_star
+[color] 6
+star_arb_tb.arb_2.undecided
+[color] 2
+star_arb_tb.arb_2.sel
+@1000200
+-arb2
+@800200
+-arb3
+@28
+star_arb_tb.arb_3.drop_star
+star_arb_tb.arb_3.take_star
+[color] 3
+star_arb_tb.arb_3.star
+star_arb_tb.arb_3.give_star
+[color] 6
+star_arb_tb.arb_3.undecided
+[color] 2
+star_arb_tb.arb_3.sel
+@1000200
+-arb3
+[pattern_trace] 1
+[pattern_trace] 0
