@@ -5,34 +5,49 @@
 /*
 bhand.v
 
-Implements a buffered handshake. Also has a parameter for turning on a 
-"counting" mode. This counts how many cycles an input has been in the FIFO.
+Implements a buffered handshake. Can control whether or not the core has reset
+signals and of which polarity. (Unfortunately, it makes the Verilog harder to
+read...)
 
 */
 
 `define genif generate if
+`define else_genif end else if
 `define endgen end endgenerate
+
+`define NO_RESET 0
+`define ACTIVE_HIGH 1
+`define ACTIVE_LOW 2
 
 module bhand # (
     parameter DATA_WIDTH = 8,
-    parameter ENABLE_COUNT = 0,
-    parameter COUNT_WIDTH = 4
+    parameter RESET_TYPE = `ACTIVE_HIGH
 ) (
     input wire clk,
+    //Reset is used according to the RESET_TYPE parameter
     input wire rst,
     
+    //Connect your input stream signals here
+    //For example,
+    //  .idata({in_TDATA, in_TKEEP, in_TDEST, in_TID, in_TLAST}),
+    //  .idata_vld(in_TVALID),
+    //  .idata_rdy(in_TREADY)
+    //
+    //Keep in mind that idata_rdy is an output of this module
     input wire [DATA_WIDTH-1:0] idata,
     input wire idata_vld,
     output wire idata_rdy,
     
+    //Connect your output stream signals here
+    //For example,
+    //  .odata({out_TDATA, out_TKEEP, out_TDEST, out_TID, out_TLAST}),
+    //  .odata_vld(out_TVALID),
+    //  .odata_rdy(out_TREADY)
+    //
+    //Keep in mind that idata_rdy is an output of this module
     output wire [DATA_WIDTH-1:0] odata,
     output wire odata_vld,
-    input wire odata_rdy,
-    
-    //Counting signals. Ignore these ports if ENABLE_COUNT == 0
-    input wire cnt_en,
-    input wire [COUNT_WIDTH-1:0] icount,
-    output wire [COUNT_WIDTH-1:0] ocount
+    input wire odata_rdy
 );
 
     //Some helper signals for neatening up the code
@@ -41,16 +56,10 @@ module bhand # (
     
     wire shift_out;
     assign shift_out = odata_vld && odata_rdy;
-    
-    
-    
-    
+ 
     //Forward-declare this signal since extra_mem needs it
     reg mem_vld = 0;
-    
-    
-    
-    
+
     //Internal registers and signals for extra element
     reg [DATA_WIDTH-1:0] extra_mem = 0;
     reg extra_mem_vld = 0;
@@ -63,9 +72,21 @@ module bhand # (
     //mem is full AND mem will not be read on this cycle
     wire extra_mem_en;
     assign extra_mem_en = shift_in && mem_vld && !shift_out;
-    
+
+`genif (RESET_TYPE == `NO_RESET) begin
+
     always @(posedge clk) begin
         //extra_mem_vld's next value
+        if (extra_mem_en) begin
+            extra_mem_vld <= 1;
+        end else if (shift_out) begin
+            extra_mem_vld <= 0;
+        end
+    end
+    
+`else_genif (RESET_TYPE == `ACTIVE_HIGH) begin
+
+    always @(posedge clk) begin
         if (rst) begin
             extra_mem_vld <= 0;
         end else begin
@@ -75,14 +96,30 @@ module bhand # (
                 extra_mem_vld <= 0;
             end
         end
-        
-        //extra_mem's next value
+    end
+    
+`else_genif (RESET_TYPE == `ACTIVE_LOW) begin
+
+    always @(posedge clk) begin
+        if (!rst) begin
+            extra_mem_vld <= 0;
+        end else begin
+            if (extra_mem_en) begin
+                extra_mem_vld <= 1;
+            end else if (shift_out) begin
+                extra_mem_vld <= 0;
+            end
+        end
+    end
+    
+`endgen
+    
+    //extra_mem's next value
+    always @(posedge clk) begin
         if (extra_mem_en) begin
             extra_mem <= idata;
         end
     end
-    
-    
     
     
     //Internal registers and signals for FIFO element
@@ -96,7 +133,17 @@ module bhand # (
     //We will enable writing into mem if it is ready, and if the input is valid
     wire mem_en;
     assign mem_en = mem_rdy && (idata_vld || extra_mem_vld);
-    
+
+`genif (RESET_TYPE == `NO_RESET) begin
+    always @(posedge clk) begin
+        //mem_vld's next value
+        if (mem_en) begin
+            mem_vld <= 1;
+        end else if (shift_out) begin
+            mem_vld <= 0;
+        end
+    end
+end else if (RESET_TYPE == `ACTIVE_HIGH) begin
     always @(posedge clk) begin
         //mem_vld's next value
         if (rst) begin
@@ -108,53 +155,28 @@ module bhand # (
                 mem_vld <= 0;
             end
         end
-        
+    end
+end else if (RESET_TYPE == `ACTIVE_LOW) begin
+    always @(posedge clk) begin
+        //mem_vld's next value
+        if (!rst) begin
+            mem_vld <= 0;
+        end else begin
+            if (mem_en) begin
+                mem_vld <= 1;
+            end else if (shift_out) begin
+                mem_vld <= 0;
+            end
+        end
+    end
+`endgen
+    
+    always @(posedge clk) begin
         //mem's next value
         if (mem_en) begin
             mem <= extra_mem_vld ? extra_mem : idata;
         end
     end
-
-
-
-
-`genif(ENABLE_COUNT) begin
-    //Declare internal registers
-    reg [COUNT_WIDTH-1:0] extra_cnt_reg = 0;
-    reg [COUNT_WIDTH-1:0] cnt_reg = 0;
-    
-    //extra_cnt_reg
-    always @(posedge clk) begin
-        if (rst) begin
-            extra_cnt_reg <= 0;
-        end else begin
-            if (extra_mem_en) begin
-                extra_cnt_reg <= icount + cnt_en;
-            end else begin
-                extra_cnt_reg <= extra_cnt_reg + cnt_en;
-            end
-        end
-    end
-    
-    //cnt_reg
-    always @(posedge clk) begin
-        if (rst) begin
-            cnt_reg <= 0;
-        end else begin
-            if (mem_en) begin
-                cnt_reg <= extra_mem_vld ? extra_cnt_reg + cnt_en : icount + cnt_en;
-            end else begin
-                cnt_reg <= cnt_reg + cnt_en;
-            end
-        end
-    end
-    
-    //Wire up outputs
-    assign ocount = cnt_reg;
-`endgen
-    
-    
-    
     
     //Actually wire up module outputs
     assign idata_rdy = extra_mem_rdy;
@@ -163,7 +185,13 @@ module bhand # (
     
 endmodule
 
+
+`undef NO_RESET
+`undef ACTIVE_HIGH
+`undef ACTIVE_LOW
+
 `undef genif
+`undef else_genif
 `undef endgen
 
 `endif
