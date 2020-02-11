@@ -113,14 +113,14 @@ module star_arb_tb # (
             src3_TLAST <= ~src3_TLAST;
         end
         
-        //src0_TVALID <= $random;
-        //src1_TVALID <= $random;
-        //src2_TVALID <= $random;
-        //src3_TVALID <= $random;
-        src0_TVALID <= 1;
-        src1_TVALID <= 1;
-        src2_TVALID <= 1;
-        src3_TVALID <= 1;
+        src0_TVALID <= $random;
+        src1_TVALID <= $random;
+        src2_TVALID <= $random;
+        src3_TVALID <= $random;
+        //src0_TVALID <= 1;
+        //src1_TVALID <= 1;
+        //src2_TVALID <= 1;
+        //src3_TVALID <= 1;
         
         res_TREADY <= $random;
         
@@ -147,7 +147,7 @@ module star_arb_tb # (
     //---------------------------------
 
     //Wires from arb3 to arb1
-    wire arb31_TSTAR;    
+    wire arb31_TSTAR;
 
     //Wires from arb1 to arb2
     wire [DATA_WIDTH-1:0] arb12_TDATA;
@@ -159,7 +159,7 @@ module star_arb_tb # (
     star_arb # (
 		.DATA_WIDTH(DATA_WIDTH),
 		.RESET_TYPE(RESET_TYPE),
-		.START_WITH_STAR(0)
+		.START_WITH_STAR(1)
     ) arb_1 (
 		.clk(clk),
 		.rst(rst),
@@ -228,7 +228,7 @@ module star_arb_tb # (
     star_arb # (
 		.DATA_WIDTH(DATA_WIDTH),
 		.RESET_TYPE(RESET_TYPE),
-		.START_WITH_STAR(1)
+		.START_WITH_STAR(0)
     ) arb_3 (
 		.clk(clk),
 		.rst(rst),
