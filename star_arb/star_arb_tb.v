@@ -50,7 +50,13 @@ module star_arb_tb # (
     wire res_TVALID;
     reg res_TREADY = 1;
     wire res_TLAST;
-    wire [1:0] who = res_TDATA[1:0]; //Makes it easier to deal with the waveform
+    
+    //Wires for human-friendly display
+    wire [1:0] who = res_TDATA[1:0]; 
+    reg [7:0] arb0_cnt = 0;
+    reg [7:0] arb1_cnt = 0;
+    reg [7:0] arb2_cnt = 0;
+    reg [7:0] arb3_cnt = 0;
     
     integer fd, dummy;
     
@@ -103,15 +109,34 @@ module star_arb_tb # (
             src3_TDATA <= src3_TDATA + 4;
         end
         
-        src0_TVALID <= $random;
-        src1_TVALID <= $random;
-        src2_TVALID <= $random;
-        src3_TVALID <= $random;
+        //src0_TVALID <= $random;
+        //src1_TVALID <= $random;
+        //src2_TVALID <= $random;
+        //src3_TVALID <= $random;
+        src0_TVALID <= 1;
+        src1_TVALID <= 1;
+        src2_TVALID <= 1;
+        src3_TVALID <= 1;
+        
+        res_TREADY <= $random;
         
         src0_TLAST <= $random;
         src1_TLAST <= $random;
         src2_TLAST <= $random;
         src3_TLAST <= $random;
+        
+        if (res_TDATA && res_TVALID && res_TLAST) begin
+            case (who)
+            2'b00:
+                arb0_cnt <= arb0_cnt + 1;
+            2'b01:
+                arb1_cnt <= arb1_cnt + 1;
+            2'b10:
+                arb2_cnt <= arb2_cnt + 1;
+            2'b11:
+                arb3_cnt <= arb3_cnt + 1;
+            endcase
+        end
     end
 
     //INSTANTIATIONS AND INTERNAL WIRES

@@ -213,6 +213,10 @@ module star_arb # (
     assign comb_TLAST = (sel == `SEL_SRC) ? src_TLAST : prv_TLAST;
     assign comb_TSTAR = star && drop_star; //We give the star away if we had it
                                            //and if we're dropping it
+
+    wire res_TSTAR; //Really annoying kludge: we have to gate give_star with
+    //res_TVALID and res_TREADY to prevent double reads
+    
     //Apply bhand
 
     bhand # (
@@ -226,7 +230,7 @@ module star_arb # (
         .idata_vld(comb_TVALID),
         .idata_rdy(comb_TREADY),
         
-        .odata({res_TDATA, res_TLAST, give_star}),
+        .odata({res_TDATA, res_TLAST, res_TSTAR}),
         .odata_vld(res_TVALID),
         .odata_rdy(res_TREADY)
     );
@@ -234,6 +238,8 @@ module star_arb # (
     //Assign last remaining outputs (src_TREADY and prv_TREADY)
     assign src_TREADY = (sel == `SEL_SRC) && comb_TREADY;
     assign prv_TREADY = (sel == `SEL_PRV) && comb_TREADY;
+    
+    assign give_star = res_TSTAR && res_TVALID && res_TREADY;
     
 endmodule
 
