@@ -152,7 +152,7 @@ module star_arb # (
     
     always @(*) begin
         if (undecided) begin 
-            sel <= ~prv_TVALID || (src_TVALID && star); //Rules 3, 4, and 5
+            sel <= ~prv_TVALID || (src_TVALID && (star || take_star)); //Rules 3, 4, and 5
         end else begin 
             sel <= sel_r; //This caseimplements Rule 6
         end
@@ -169,7 +169,7 @@ module star_arb # (
         // 2) It's being given to us
         //This implements Rule 1 and Rule 2
         
-        star <= (star && ~drop_star) //Case 1
+        star <= (star && ~give_star) //Case 1
                 || take_star;        //Case 2
     end
     
@@ -181,7 +181,7 @@ module star_arb # (
             star <= START_WITH_STAR;
         end else begin
             sel_r <= sel;
-            star <= (star && ~drop_star) //Case 1
+            star <= (star && ~give_star) //Case 1
                     || take_star;        //Case 2
         end
     end
@@ -194,7 +194,7 @@ module star_arb # (
             star <= START_WITH_STAR;
         end else begin
             sel_r <= sel;
-            star <= (star && ~drop_star) //Case 1
+            star <= (star && ~give_star) //Case 1
                     || take_star;        //Case 2
         end
     end

@@ -90,7 +90,7 @@ module star_arb_tb # (
         
         //#0.01
         //dummy = $fscanf(fd, "%x%b%b%b", );
-        #600
+        #6000
         $finish;
     end
     
@@ -98,15 +98,19 @@ module star_arb_tb # (
     always @(posedge clk) begin
         if (src0_TVALID && src0_TREADY) begin
             src0_TDATA <= src0_TDATA + 4;
+            src0_TLAST <= ~src0_TLAST;
         end
         if (src1_TVALID && src1_TREADY) begin
             src1_TDATA <= src1_TDATA + 4;
+            src1_TLAST <= ~src1_TLAST;
         end
         if (src2_TVALID && src2_TREADY) begin
             src2_TDATA <= src2_TDATA + 4;
+            src2_TLAST <= ~src2_TLAST;
         end
         if (src3_TVALID && src3_TREADY) begin
             src3_TDATA <= src3_TDATA + 4;
+            src3_TLAST <= ~src3_TLAST;
         end
         
         //src0_TVALID <= $random;
@@ -120,10 +124,10 @@ module star_arb_tb # (
         
         res_TREADY <= $random;
         
-        src0_TLAST <= $random;
-        src1_TLAST <= $random;
-        src2_TLAST <= $random;
-        src3_TLAST <= $random;
+        //src0_TLAST <= $random;
+        //src1_TLAST <= $random;
+        //src2_TLAST <= $random;
+        //src3_TLAST <= $random;
         
         if (res_TDATA && res_TVALID && res_TLAST) begin
             case (who)
@@ -155,7 +159,7 @@ module star_arb_tb # (
     star_arb # (
 		.DATA_WIDTH(DATA_WIDTH),
 		.RESET_TYPE(RESET_TYPE),
-		.START_WITH_STAR(1)
+		.START_WITH_STAR(0)
     ) arb_0 (
 		.clk(clk),
 		.rst(rst),
@@ -259,7 +263,7 @@ module star_arb_tb # (
     star_arb # (
 		.DATA_WIDTH(DATA_WIDTH),
 		.RESET_TYPE(RESET_TYPE),
-		.START_WITH_STAR(0)
+		.START_WITH_STAR(1)
     ) arb_3 (
 		.clk(clk),
 		.rst(rst),
