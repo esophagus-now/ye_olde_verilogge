@@ -95,13 +95,111 @@ module star_arb # (
     wire prv_flit = prv_TVALID && prv_TREADY;
     wire prv_last = prv_flit && prv_TLAST; 
     
-    //Our decision is volatile on the cycle after a TLAST, and until the 
-    //selected flit is read in by this module. This is for Rule 6
-    reg undecided = 1;
+    //Forward-declare wires/registers if necessary
+    `logic sel; //Selected input stream
+    
+    //*****************
+    //* STAR HANDLING *
+    //***************** 
+    reg star = START_WITH_STAR;  
+     
+    //Ladies and gentlement, please prepare your passports, we are now entering
+    //kludge city
+    reg can_drop = 1'b1;
+    
+    wire drop_star; //Not to be confused with give_star; this signal means we
+    //should "attach" the star to the flit; the give_star output is only 
+    //triggered once the flit leaves the bhand at the end of this module 
+    assign drop_star = /*can_drop && */ (prv_last || src_last);
     
 `genif (RESET_TYPE == `NO_RESET) begin
 
     always @(posedge clk) begin
+        //We will have the star on the next cycle in two cases:
+        // 1) We had it before and don't give it away
+        // 2) It's being given to us
+        //This implements Rule 1 and Rule 2
+        star <= (star && ~drop_star) || take_star;
+        
+        //Also, manage the can_drop FSM
+        case (can_drop)
+        1'b0:
+            can_drop <= ((sel == `SEL_SRC) && src_last) || ((sel == `SEL_PRV) && prv_last);
+        1'b1:
+            can_drop <= ~take_star;
+        endcase
+    end
+    
+`else_genif (RESET_TYPE == `ACTIVE_HIGH) begin
+
+    always @(posedge clk) begin
+        if (rst) begin
+            star <= START_WITH_STAR;
+            can_drop <= 1'b1;
+        end else begin
+            star <= (star && ~drop_star) || take_star;
+                    
+            case (can_drop)
+            1'b0:
+                can_drop <= ((sel == `SEL_SRC) && src_last) || ((sel == `SEL_PRV) && prv_last);
+            1'b1:
+                can_drop <= ~take_star;
+            endcase
+        end
+    end
+    
+`else_genif (RESET_TYPE == `ACTIVE_LOW) begin
+
+    always @(posedge clk) begin
+        if (!rst) begin
+            star <= START_WITH_STAR;
+            can_drop <= 1'b1;
+        end else begin
+            star <= (star && ~drop_star) || take_star;
+            
+            case (can_drop)
+            1'b0:
+                can_drop <= ((sel == `SEL_SRC) && src_last) || ((sel == `SEL_PRV) && prv_last);
+            1'b1:
+                can_drop <= ~take_star;
+            endcase
+        end
+    end
+    
+`endgen
+    
+    
+    //**********************
+    //* SELECTION DECISION *
+    //**********************
+    
+    //Our decision is volatile on the cycle after a TLAST, and until the 
+    //selected flit is read in by this module. This is for Rule 6
+    reg undecided = 1;
+    
+    //sel is combinational in several different inputs and sel_r.
+    //(It is forward-declared at the top of this module)
+    //wire sel;
+    
+    //sel_r is sel delayed by one cycle
+    reg sel_r = `SEL_PRV;
+    
+    //HUGE KLUDGE AHEAD!
+    //If START_WITH_STAR is 1, we know that this is the second-last arbiter,
+    //and that it is safe to enforce even distribution
+    
+    always @(*) begin
+        if (undecided) begin 
+            sel <= ~prv_TVALID || (src_TVALID && star); //Rules 3, 4, and 5
+        end else begin 
+            sel <= sel_r; //This case implements Rule 6
+        end
+    end
+    
+`genif (RESET_TYPE == `NO_RESET) begin
+
+    always @(posedge clk) begin
+        sel_r <= sel;
         if (sel == `SEL_SRC) begin
             undecided <= src_flit ? (src_TLAST ? 1 : 0) : undecided;
         end else begin 
@@ -113,8 +211,10 @@ module star_arb # (
 
     always @(posedge clk) begin
         if (rst) begin
+            sel_r <= `SEL_PRV;
             undecided <= 1;
         end else begin
+            sel_r <= sel;
             if (sel == `SEL_SRC) begin
                 undecided <= src_flit ? (src_TLAST ? 1 : 0) : undecided;
             end else begin 
@@ -127,8 +227,10 @@ module star_arb # (
 
     always @(posedge clk) begin
         if (!rst) begin
+            sel_r <= `SEL_PRV;
             undecided <= 1;
         end else begin
+            sel_r <= sel;
             if (sel == `SEL_SRC) begin
                 undecided <= src_flit ? (src_TLAST ? 1 : 0) : undecided;
             end else begin 
@@ -139,67 +241,9 @@ module star_arb # (
     
 `endgen
     
-    reg star = START_WITH_STAR;
-    wire drop_star; //Not to be confused with give_star; this signal means we
-    //should "attach" the star to the flit; the give_star output is only 
-    //triggered once the flit leaves the bhand at the end of this module 
-    assign drop_star = (sel == `SEL_SRC) && src_last;
-    
-    //sel is combinational in several different inputs and sel_r.
-    //sel_r is sel but delayed by one cycle
-    `logic sel;
-    reg sel_r = `SEL_PRV;
-    
-    always @(*) begin
-        if (undecided) begin 
-            sel <= ~prv_TVALID || (src_TVALID && (star || take_star)); //Rules 3, 4, and 5
-        end else begin 
-            sel <= sel_r; //This caseimplements Rule 6
-        end
-    end
-
-`genif (RESET_TYPE == `NO_RESET) begin
-
-    always @(posedge clk) begin
-        sel_r <= sel;
-        
-        
-        //We will have the star on the next cycle in two cases:
-        // 1) We had it before and don't give it away
-        // 2) It's being given to us
-        //This implements Rule 1 and Rule 2
-        
-        star <= (star && ~give_star) //Case 1
-                || take_star;        //Case 2
-    end
-    
-`else_genif (RESET_TYPE == `ACTIVE_HIGH) begin
-
-    always @(posedge clk) begin
-        if (rst) begin
-            sel_r <= `SEL_PRV;
-            star <= START_WITH_STAR;
-        end else begin
-            sel_r <= sel;
-            star <= (star && ~give_star) //Case 1
-                    || take_star;        //Case 2
-        end
-    end
-    
-`else_genif (RESET_TYPE == `ACTIVE_LOW) begin
-
-    always @(posedge clk) begin
-        if (!rst) begin
-            sel_r <= `SEL_PRV;
-            star <= START_WITH_STAR;
-        end else begin
-            sel_r <= sel;
-            star <= (star && ~give_star) //Case 1
-                    || take_star;        //Case 2
-        end
-    end
-    
-`endgen
+    //************************
+    //* BUFFERED HANDSHAKING *
+    //************************
     
     //Assign correct AXI Stream signals
     wire [DATA_WIDTH -1:0] comb_TDATA;
@@ -234,7 +278,11 @@ module star_arb # (
         .odata_vld(res_TVALID),
         .odata_rdy(res_TREADY)
     );
-
+    
+    //*******************
+    //* LAST FEW THINGS *
+    //*******************
+    
     //Assign last remaining outputs (src_TREADY and prv_TREADY)
     assign src_TREADY = (sel == `SEL_SRC) && comb_TREADY;
     assign prv_TREADY = (sel == `SEL_PRV) && comb_TREADY;
