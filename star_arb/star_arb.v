@@ -19,17 +19,24 @@ sources (see associated README file).
 `include "bhand.v" //Wherever it may be. I think you can use -I in iverilog command line?
 `endif
 
+//Reset types.
 `define NO_RESET 0
 `define ACTIVE_HIGH 1
 `define ACTIVE_LOW 2
 
-`define SEL_SRC 0
-`define SEL_PRV 1
+//
 
+//If selections are backwards, I'll just swap these constants' values
+`define SEL_PRV 0
+`define SEL_SRC 1
+
+//Some may disagree, but I think this helps me read the code. It becomes much
+//easier to visually distinguish generate blocks from regular ones
 `define genif generate if
+`define else_genif end else if
 `define endgen end endgenerate
 
-//TUSER is used to hold the star
+`define logic reg
 
 module star_arb # (
     parameter DATA_WIDTH = 64,
@@ -38,28 +45,28 @@ module star_arb # (
 ) (
     input wire clk,
     input wire rst,
-    input wire rstn,
+    
+    //This is how the star passed between arbiters
+    output wire give_star,
+    input wire take_star,
     
     //Input AXI Stream
     input wire [DATA_WIDTH -1:0] src_TDATA,
     input wire src_TVALID,
     output wire src_TREADY,
     input wire src_TLAST,
-    input wire src_TUSER,
     
     //Chained AXI Stream
     input wire [DATA_WIDTH -1:0] prv_TDATA,
     input wire prv_TVALID,
     output wire prv_TREADY,
     input wire prv_TLAST,
-    input wire prv_TUSER,
     
     //Output AXI Stream
     output wire [DATA_WIDTH -1:0] res_TDATA,
     output wire res_TVALID,
     input wire res_TREADY,
-    output wire res_TLAST,
-    output wire res_TUSER
+    output wire res_TLAST
 );
     //Invariant for whole system of daisy-chained star_arbs: the star is always 
     //in EXACTLY one location
@@ -93,30 +100,66 @@ module star_arb # (
     reg undecided = 1;
     
 `genif (RESET_TYPE == `NO_RESET) begin
+
     always @(posedge clk) begin
         if (sel == `SEL_SRC) begin
-            undecided <= src_flit ? (src_TLAST : 1 : 0) : undecided;
+            undecided <= src_flit ? (src_TLAST ? 1 : 0) : undecided;
         end else begin 
-            undecided <= prv_flit ? (prv_TLAST : 1 : 0) : undecided;
+            undecided <= prv_flit ? (prv_TLAST ? 1 : 0) : undecided;
         end
     end
+    
+`else_genif (RESET_TYPE == `ACTIVE_HIGH) begin
+
+    always @(posedge clk) begin
+        if (rst) begin
+            undecided <= 1;
+        end else begin
+            if (sel == `SEL_SRC) begin
+                undecided <= src_flit ? (src_TLAST ? 1 : 0) : undecided;
+            end else begin 
+                undecided <= prv_flit ? (prv_TLAST ? 1 : 0) : undecided;
+            end
+        end
+    end
+    
+`else_genif (RESET_TYPE == `ACTIVE_LOW) begin
+
+    always @(posedge clk) begin
+        if (!rst) begin
+            undecided <= 1;
+        end else begin
+            if (sel == `SEL_SRC) begin
+                undecided <= src_flit ? (src_TLAST ? 1 : 0) : undecided;
+            end else begin 
+                undecided <= prv_flit ? (prv_TLAST ? 1 : 0) : undecided;
+            end
+        end
+    end
+    
 `endgen
     
     reg star = START_WITH_STAR;
+    wire drop_star; //Not to be confused with give_star; this signal means we
+    //should "attach" the star to the flit; the give_star output is only 
+    //triggered once the flit leaves the bhand at the end of this module 
+    assign drop_star = (sel == `SEL_SRC) && src_last;
     
     //sel is combinational in several different inputs and sel_r.
     //sel_r is sel but delayed by one cycle
-    wire sel;
+    `logic sel;
     reg sel_r = `SEL_PRV;
     
     always @(*) begin
-        if (undecided) begin //This "undecided" stuff implements Rule 6
-            sel <= sel_r;
-        end else begin
+        if (undecided) begin 
             sel <= ~prv_TVALID || (src_TVALID && star); //Rules 3, 4, and 5
+        end else begin 
+            sel <= sel_r; //This caseimplements Rule 6
+        end
     end
 
 `genif (RESET_TYPE == `NO_RESET) begin
+
     always @(posedge clk) begin
         sel_r <= sel;
         
@@ -124,11 +167,38 @@ module star_arb # (
         //We will have the star on the next cycle in two cases:
         // 1) We had it before and don't give it away
         // 2) It's being given to us
-        
-        star <= (star && !((sel == `SEL_SRC) && src_last)  //Case 1
-                || (prev_last && prev_TUSER);              //Case 2
         //This implements Rule 1 and Rule 2
+        
+        star <= (star && ~drop_star) //Case 1
+                || take_star;        //Case 2
     end
+    
+`else_genif (RESET_TYPE == `ACTIVE_HIGH) begin
+
+    always @(posedge clk) begin
+        if (rst) begin
+            sel_r <= `SEL_PRV;
+            star <= START_WITH_STAR;
+        end else begin
+            sel_r <= sel;
+            star <= (star && ~drop_star) //Case 1
+                    || take_star;        //Case 2
+        end
+    end
+    
+`else_genif (RESET_TYPE == `ACTIVE_LOW) begin
+
+    always @(posedge clk) begin
+        if (!rst) begin
+            sel_r <= `SEL_PRV;
+            star <= START_WITH_STAR;
+        end else begin
+            sel_r <= sel;
+            star <= (star && ~drop_star) //Case 1
+                    || take_star;        //Case 2
+        end
+    end
+    
 `endgen
     
     //Assign correct AXI Stream signals
@@ -136,36 +206,34 @@ module star_arb # (
     wire comb_TVALID;
     wire comb_TREADY; //Output from bhand
     wire comb_TLAST;
-    wire comb_TUSER;
+    wire comb_TSTAR; //Is the star attached to this flit?
     
     assign comb_TDATA = (sel == `SEL_SRC) ? src_TDATA : prv_TDATA;
     assign comb_TVALID = (sel == `SEL_SRC) ? src_TVALID : prv_TVALID;
-    assign comb_TREADY = (sel == `SEL_SRC) ? src_TREADY : prv_TREADY;
     assign comb_TLAST = (sel == `SEL_SRC) ? src_TLAST : prv_TLAST;
-    assign comb_TUSER = (sel == `SEL_SRC) && star && comb_TLAST; //Rule 2
-    
+    assign comb_TSTAR = star && drop_star; //We give the star away if we had it
+                                           //and if we're dropping it
     //Apply bhand
 
-`genif (RESET_TYPE == `NO_RESET) begin
     bhand # (
-        .DATA_WIDTH(DATA_WIDTH + 1 + 1) //TDATA + TLAST + TUSER
-    ) (
+        .DATA_WIDTH(DATA_WIDTH + 1 + 1), //TDATA + TLAST + "TSTAR"
+        .RESET_TYPE(RESET_TYPE)
+    ) sit_shake_good_boy (
         .clk(clk),
-        .rst(0),
+        .rst(rst),
         
-        .idata({comb_TDATA, comb_TLAST, comb_TUSER}),
+        .idata({comb_TDATA, comb_TLAST, comb_TSTAR}),
         .idata_vld(comb_TVALID),
         .idata_rdy(comb_TREADY),
         
-        .odata({res_TDATA, res_TLAST, res_TUSER}),
+        .odata({res_TDATA, res_TLAST, give_star}),
         .odata_vld(res_TVALID),
         .odata_rdy(res_TREADY)
     );
-`endgen
 
     //Assign last remaining outputs (src_TREADY and prv_TREADY)
     assign src_TREADY = (sel == `SEL_SRC) && comb_TREADY;
-    assign prv_TREADY = (sel == `PRV_SRC) && comb_TREADY;
+    assign prv_TREADY = (sel == `SEL_PRV) && comb_TREADY;
     
 endmodule
 
@@ -177,4 +245,7 @@ endmodule
 `undef SEL_PRV
 
 `undef genif
+`undef else_genif
 `undef endgen
+
+`undef logic

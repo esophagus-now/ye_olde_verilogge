@@ -44,7 +44,7 @@ module bhand # (
     //  .odata_vld(out_TVALID),
     //  .odata_rdy(out_TREADY)
     //
-    //Keep in mind that idata_rdy is an output of this module
+    //Keep in mind that odata_rdy is an input of this module
     output wire [DATA_WIDTH-1:0] odata,
     output wire odata_vld,
     input wire odata_rdy
