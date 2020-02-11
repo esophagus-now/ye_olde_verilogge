@@ -146,43 +146,8 @@ module star_arb_tb # (
     //INSTANTIATIONS AND INTERNAL WIRES
     //---------------------------------
 
-    //Wires from arb3 to arb0
-    wire arb30_TSTAR;
-    
-    //Wires from arb0 to arb1
-    wire [DATA_WIDTH -1:0] arb01_TDATA;
-    wire arb01_TVALID;
-    wire arb01_TREADY;
-    wire arb01_TLAST;
-    wire arb01_TSTAR;
-    
-    star_arb # (
-		.DATA_WIDTH(DATA_WIDTH),
-		.RESET_TYPE(RESET_TYPE),
-		.START_WITH_STAR(0)
-    ) arb_0 (
-		.clk(clk),
-		.rst(rst),
-        
-        //This is how the star passed between arbiters
-        .take_star(arb30_TSTAR),
-        .give_star(arb01_TSTAR),
-        
-        //Input AXI Stream
-		.src_TDATA(src0_TDATA),
-		.src_TVALID(src0_TVALID),
-		.src_TREADY(src0_TREADY),
-		.src_TLAST(src0_TLAST),
-        
-        //Chained AXI Stream
-		.prv_TVALID(1'b0),
-        
-        //Output AXI Stream
-		.res_TDATA(arb01_TDATA),
-		.res_TVALID(arb01_TVALID),
-		.res_TREADY(arb01_TREADY),
-		.res_TLAST(arb01_TLAST)
-    );
+    //Wires from arb3 to arb1
+    wire arb31_TSTAR;    
 
     //Wires from arb1 to arb2
     wire [DATA_WIDTH-1:0] arb12_TDATA;
@@ -200,7 +165,7 @@ module star_arb_tb # (
 		.rst(rst),
         
         //This is how the star passed between arbiters
-        .take_star(arb01_TSTAR),
+        .take_star(arb31_TSTAR),
         .give_star(arb12_TSTAR),
         
         //Input AXI Stream
@@ -210,10 +175,10 @@ module star_arb_tb # (
 		.src_TLAST(src1_TLAST),
         
         //Chained AXI Stream
-		.prv_TDATA(arb01_TDATA),
-		.prv_TVALID(arb01_TVALID),
-		.prv_TREADY(arb01_TREADY),
-		.prv_TLAST(arb01_TLAST),
+		.prv_TDATA(src0_TDATA),
+		.prv_TVALID(src0_TVALID),
+		.prv_TREADY(src0_TREADY),
+		.prv_TLAST(src0_TLAST),
         
         //Output AXI Stream
 		.res_TDATA(arb12_TDATA),
@@ -270,7 +235,7 @@ module star_arb_tb # (
         
         //This is how the star passed between arbiters
         .take_star(arb23_TSTAR),
-        .give_star(arb30_TSTAR),
+        .give_star(arb31_TSTAR),
         
         //Input AXI Stream
 		.src_TDATA(src3_TDATA),
