@@ -67,7 +67,8 @@ module bhand_tb;
     end
 
     bhand # (
-        .DATA_WIDTH(`DATA_WIDTH)
+        .DATA_WIDTH(`DATA_WIDTH),
+        .RESET_TYPE(1)
     ) DUT (
         .clk(clk),
         .rst(rst),
