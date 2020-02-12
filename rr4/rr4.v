@@ -46,8 +46,9 @@ module rr4 # (
     
     wire [3:0] req = {s3_TVALID, s2_TVALID, s1_TVALID, s0_TVALID};
     //This technique found in Altera's "Advanced synthesis cookbook"
+    wire [3:0] base = {sel_r[2:0], sel_r[3]};
     wire [7:0] req_dbl = {req, req};
-    wire [7:0] gnt_dbl = req_dbl & ~(req_dbl - sel_r);
+    wire [7:0] gnt_dbl = req_dbl & ~(req_dbl - base);
     wire [3:0] gnt = gnt_dbl[7:4] | gnt_dbl[3:0];
     
     //Vivado requires this wire to be forward-declared in order to compile the
@@ -84,7 +85,7 @@ module rr4 # (
     assign sel = undecided ? gnt : sel_r;
     
     always @(posedge clk) begin
-        sel_r <= sel;
+        sel_r <= `axis_flit(muxout) ? sel : sel_r;
         undecided <= `axis_flit(muxout) ? (muxout_TLAST ?  1 : 0) : undecided;
     end
 `else_genif(TLAST_ARB) begin
@@ -95,7 +96,7 @@ module rr4 # (
             sel_r <= 'b0001;
             undecided <= 1;
         end else begin
-            sel_r <= sel;
+            sel_r <= `axis_flit(muxout) ? sel : sel_r;
             undecided <= `axis_flit(muxout) ? (muxout_TLAST ?  1 : 0) : undecided;
         end
     end

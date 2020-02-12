@@ -28,6 +28,11 @@ module rr4_tb # (
     wire [1:0] who = o_TDATA[1:0];
     wire o_flit = `axis_flit(o);
     
+    reg [15:0] s0_cnt = 0;
+    reg [15:0] s1_cnt = 0;
+    reg [15:0] s2_cnt = 0;
+    reg [15:0] s3_cnt = 0;
+    
     integer fd, dummy;
     
     initial begin
@@ -75,30 +80,50 @@ module rr4_tb # (
         
         //#0.01
         //dummy = $fscanf(fd, "%F%O%R%M%A%T", /* list of variables */);
-        #600
+        #200
+        $dumpoff;
+        #40000
+        $dumpon;
+        #200
         $finish;
     end
     
     //Quick and dirty test vectors
     always @(posedge clk) begin
-        if (`axis_flit(s0))
+        if (`axis_flit(s0)) begin
+            s0_cnt <= s0_cnt + s0_TLAST;
             s0_TDATA <= s0_TDATA + 4;
-        if (`axis_flit(s1))
+        end if (`axis_flit(s1)) begin
+            s1_cnt <= s1_cnt + s1_TLAST;
             s1_TDATA <= s1_TDATA + 4;
-        if (`axis_flit(s2))
+        end if (`axis_flit(s2)) begin
+            s2_cnt <= s2_cnt + s2_TLAST;
             s2_TDATA <= s2_TDATA + 4;
-        if (`axis_flit(s3))
+        end if (`axis_flit(s3)) begin
+            s3_cnt <= s3_cnt + s3_TLAST;
             s3_TDATA <= s3_TDATA + 4;
+        end
         
         s0_TVALID <= $random;
         s1_TVALID <= $random;
         s2_TVALID <= $random;
         s3_TVALID <= $random;
+        //~ s0_TVALID <= 1;
+        //~ s1_TVALID <= 1;
+        //~ s2_TVALID <= 1;
+        //~ s3_TVALID <= 1;
+        
         s0_TLAST <= $random;
         s1_TLAST <= $random;
         s2_TLAST <= $random;
         s3_TLAST <= $random;
+        //~ s0_TLAST <= `axis_flit(s0) ? ~s0_TLAST : s0_TLAST;
+        //~ s1_TLAST <= `axis_flit(s1) ? ~s1_TLAST : s1_TLAST;
+        //~ s2_TLAST <= `axis_flit(s2) ? ~s2_TLAST : s2_TLAST;
+        //~ s3_TLAST <= `axis_flit(s3) ? ~s3_TLAST : s3_TLAST;
+        
         o_TREADY <= $random;
+        //~ o_TREADY <= 1;
     end
 
     rr4 # (

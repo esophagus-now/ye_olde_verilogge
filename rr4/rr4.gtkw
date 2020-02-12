@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Wed Feb 12 22:05:04 2020
+[*] Wed Feb 12 22:18:22 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/rr4/rr4.vcd"
-[dumpfile_mtime] "Wed Feb 12 22:03:53 2020"
-[dumpfile_size] 11450
+[dumpfile_mtime] "Wed Feb 12 22:17:34 2020"
+[dumpfile_size] 96091
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/rr4/rr4.gtkw"
 [timestart] 0
 [size] 1916 1060
 [pos] -1 -1
-*-16.232048 56100 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-19.595535 419000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] rr4_tb.
 [treeopen] rr4_tb.DUT.
 [treeopen] rr4_tb.DUT.genblk10.
@@ -22,20 +22,28 @@ rr4_tb.clk
 @800200
 -o
 @24
-rr4_tb.who[1:0]
-@28
-rr4_tb.o_flit
-@24
+[color] 2
+rr4_tb.s0_cnt[15:0]
+[color] 2
+rr4_tb.s1_cnt[15:0]
+[color] 2
+rr4_tb.s2_cnt[15:0]
+[color] 2
+rr4_tb.s3_cnt[15:0]
 rr4_tb.o_TDATA[7:0]
 @28
 rr4_tb.o_TVALID
 rr4_tb.o_TREADY
+@24
+rr4_tb.who[1:0]
+@28
+rr4_tb.o_flit
 rr4_tb.o_TLAST
 @1000200
 -o
 @800200
 -s0
-@25
+@24
 rr4_tb.s0_TDATA[7:0]
 @28
 rr4_tb.s0_TVALID
@@ -43,5 +51,20 @@ rr4_tb.s0_TREADY
 rr4_tb.s0_TLAST
 @1000200
 -s0
+@800200
+-s1
+@22
+rr4_tb.s1_TDATA[7:0]
+@28
+rr4_tb.s1_TVALID
+rr4_tb.s1_TREADY
+rr4_tb.s1_TLAST
+@1000200
+-s1
+@28
+rr4_tb.DUT.req[3:0]
+rr4_tb.DUT.sel[3:0]
+rr4_tb.DUT.sel_r[3:0]
+rr4_tb.DUT.gnt[3:0]
 [pattern_trace] 1
 [pattern_trace] 0
