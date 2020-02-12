@@ -132,6 +132,10 @@ module rr4_tb # (
         //~ o_TREADY <= 1;
     end
     
+
+    `define IDLE 3'b111
+    reg [2:0] state = `IDLE;
+    
     //Sime simple checks on the output
     always @(posedge clk) begin
         //This makes sure no flits are dropped or repeated
@@ -151,6 +155,18 @@ module rr4_tb # (
                 s3_prev <= o_TDATA;
             end
             endcase
+        end
+        
+        //This makes sure no packet is interrupted before TLAST
+        if (`axis_flit(o)) begin
+            if (state != `IDLE && state[1:0] != who[1:0]) begin
+                $display("Error! Interrupted packet!");
+            end
+            if (o_TLAST) begin
+                state <= `IDLE;
+            end else if (state == `IDLE) begin
+                state <= {1'b0, who};
+            end
         end
     end
 
