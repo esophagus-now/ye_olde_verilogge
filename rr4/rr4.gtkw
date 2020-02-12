@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Wed Feb 12 22:18:22 2020
+[*] Wed Feb 12 22:40:13 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/rr4/rr4.vcd"
-[dumpfile_mtime] "Wed Feb 12 22:17:34 2020"
-[dumpfile_size] 96091
+[dumpfile_mtime] "Wed Feb 12 22:39:54 2020"
+[dumpfile_size] 11115
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/rr4/rr4.gtkw"
-[timestart] 0
+[timestart] 40200000
 [size] 1916 1060
 [pos] -1 -1
-*-19.595535 419000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.595535 40405000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] rr4_tb.
 [treeopen] rr4_tb.DUT.
 [treeopen] rr4_tb.DUT.genblk10.
@@ -63,7 +63,9 @@ rr4_tb.s1_TLAST
 -s1
 @28
 rr4_tb.DUT.req[3:0]
+@29
 rr4_tb.DUT.sel[3:0]
+@28
 rr4_tb.DUT.sel_r[3:0]
 rr4_tb.DUT.gnt[3:0]
 [pattern_trace] 1

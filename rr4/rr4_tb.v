@@ -28,6 +28,12 @@ module rr4_tb # (
     wire [1:0] who = o_TDATA[1:0];
     wire o_flit = `axis_flit(o);
     
+    //A few simple checks to make sure the outputs look okay.
+    reg [DATA_WIDTH -1:0] s0_prev = 0;
+    reg [DATA_WIDTH -1:0] s1_prev = 1;
+    reg [DATA_WIDTH -1:0] s2_prev = 2;
+    reg [DATA_WIDTH -1:0] s3_prev = 3;
+    
     reg [15:0] s0_cnt = 0;
     reg [15:0] s1_cnt = 0;
     reg [15:0] s2_cnt = 0;
@@ -40,10 +46,10 @@ module rr4_tb # (
         $dumpvars;
         $dumplimit(512000);
         
-        s0_TDATA = 0;
-        s1_TDATA = 1;
-        s2_TDATA = 2;
-        s3_TDATA = 3;
+        s0_TDATA = 4;
+        s1_TDATA = 5;
+        s2_TDATA = 6;
+        s3_TDATA = 7;
         
         s0_TVALID = 0;
         s1_TVALID = 0;
@@ -124,6 +130,28 @@ module rr4_tb # (
         
         o_TREADY <= $random;
         //~ o_TREADY <= 1;
+    end
+    
+    //Sime simple checks on the output
+    always @(posedge clk) begin
+        //This makes sure no flits are dropped or repeated
+        if (`axis_flit(o)) begin
+            case (who)
+            2'b00: begin
+                if (o_TDATA - s0_prev != 8'd4) $display("Error! cur = %d, prev = %d", o_TDATA, s0_prev);
+                s0_prev <= o_TDATA;
+            end 2'b01: begin
+                if (o_TDATA - s1_prev != 8'd4) $display("Error! cur = %d, prev = %d", o_TDATA, s1_prev);
+                s1_prev <= o_TDATA;
+            end 2'b10: begin
+                if (o_TDATA - s2_prev != 8'd4) $display("Error! cur = %d, prev = %d", o_TDATA, s2_prev);
+                s2_prev <= o_TDATA;
+            end 2'b11: begin
+                if (o_TDATA - s3_prev != 8'd4) $display("Error! cur = %d, prev = %d", o_TDATA, s3_prev);
+                s3_prev <= o_TDATA;
+            end
+            endcase
+        end
     end
 
     rr4 # (
