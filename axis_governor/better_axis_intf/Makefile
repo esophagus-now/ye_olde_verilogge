@@ -2,14 +2,14 @@
 
 dst_dir=$(HOME)/ip_repo
 src_dir=.
-ip_name=axis_governor
+ip_name=dbg_guv
 part_no=xczu19eg-ffvc1760-2-i
 # Makes Makefile easier to read
 out_dir=${dst_dir}/${ip_name}
 
 # These variables are for running the testbench
-MODULE := axis_governor
-MODULE_CAPS := AXIS_GOVERNOR
+MODULE := dbg_guv
+MODULE_CAPS := DBG_GUV
 
 
 
@@ -27,7 +27,7 @@ open:	$(MODULE).vcd
 
 # Compile the Verilog into Icarus's special format
 $(MODULE).vvp:	$(MODULE).v $(MODULE)_tb.v $(MODULE)_drivers.mem
-	iverilog -DFROM_$(MODULE_CAPS) -g2012 -o $(MODULE).vvp $(MODULE)_tb.v
+	iverilog -DFROM_$(MODULE_CAPS) -I../ -I../../macros/ -I../../buffered_handshake -g2012 -o $(MODULE).vvp $(MODULE)_tb.v
 
 # Run the Verilog simulator
 $(MODULE).vcd:	$(MODULE).vvp
@@ -43,9 +43,13 @@ clean:
 ip: clean
 	rm -rf ${out_dir}
 	mkdir -p ${out_dir}/src
-	cp $(shell find ${src_dir} -name "*.v" -o -name "*vh" -o -name "*sv" | grep -v "tb") ${out_dir}/src
+	cp dbg_guv.v ../axis_governor.v ../../macros/macros.vh ${out_dir}/src
 	vivado -nolog -nojournal -notrace -mode batch -source ip_maker.tcl -tclargs ${out_dir} ${ip_name} ${part_no}
 	rm -rf ${ip_name}_tmp_proj
 	rm -f *log
 	rm -rf .Xil
 	rm -f vivado*
+
+syntax_check:
+	iverilog -DICARUS_VERILOG -I../ -I../../macros/ -I../../buffered_handshake -g2012 -o $(MODULE).vvp $(MODULE).v
+ 
