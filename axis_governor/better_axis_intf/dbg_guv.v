@@ -53,7 +53,7 @@ until the user explicitly chagnes them
 
  `ifdef ICARUS_VERILOG
 `include "axis_governor.v"
-`include "bhand.v"
+//`include "bhand.v"
 `endif
 
 `include "macros.vh"
@@ -66,7 +66,7 @@ module dbg_guv # (
     parameter ADDR_WIDTH = 10, //This gives 1024 simultaneous debug cores
     parameter ADDR = 0, //Set this to be different for each 
     parameter RESET_TYPE = `ACTIVE_HIGH,
-    parameter STICKY_MODE = 0, //If 1, latching registers does not reset them
+    parameter STICKY_MODE = 1, //If 1, latching registers does not reset them
     parameter PIPE_STAGE = 1 //This causes a delay on cmd_out in case fanout is
                              //an issue
 ) (
@@ -137,7 +137,7 @@ module dbg_guv # (
     ////////////////
     
     //Named subfields of command
-    wire [ADDR_WIDTH -1:0] cmd_core_addr = cmd_in_TDATA[ADDR_WIDTH + REG_ADDR_WIDTH -1 :- ADDR_WIDTH];
+    wire [ADDR_WIDTH -1:0] cmd_core_addr = cmd_in_TDATA[ADDR_WIDTH + REG_ADDR_WIDTH -1 -: ADDR_WIDTH];
     wire [REG_ADDR_WIDTH -1:0] cmd_reg_addr = cmd_in_TDATA[REG_ADDR_WIDTH -1:0];  
     //We need to know if this message was meant for us
     wire msg_for_us = cmd_in_TVALID && (cmd_core_addr == ADDR);
@@ -174,8 +174,6 @@ module dbg_guv # (
     
     //The user puts in a reg address of all ones to commit register values
     wire latch_sig = (cmd_fsm_state == CMD_FSM_ADDR) && msg_for_us && (cmd_reg_addr == {REG_ADDR_WIDTH{1'b1}});
-    
-    assign cmd_in_TREADY = msg_for_us || (cmd_fsm_state == CMD_FSM_DATA);
     
     //In the interests of keeping things simple, the commands will happen over
     //two flits: "address" and "data"
@@ -399,7 +397,7 @@ module dbg_guv # (
     //We don't pause if our dropping/logging counters are still going
     assign pause = keep_pausing && ~(|drop_cnt || |log_cnt);
     assign log_en = keep_logging || (|log_cnt);
-    assign drop_en = keep_dropping || (|drop_cnt);
+    assign drop = keep_dropping || (|drop_cnt);
     
 
     /////////////////////////////

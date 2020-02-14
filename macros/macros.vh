@@ -70,6 +70,11 @@
 
 `define ports_axis(name) name``_TDATA, name``_TVALID, name``_TREADY
 
+`define inst_axis(lname, rname) \
+        .lname``_TDATA(rname``_TDATA),\
+        .lname``_TVALID(rname_``TVALID),\
+        .lname``_TREADY(rname_``TREADY)
+
 //Same, but with TLAST signal
 `define in_axis_l(name, width) \
     `in_axis(name, width),\
@@ -101,6 +106,10 @@
 
 `define ports_axis_l(name) `ports_axis(name), name``_TLAST
 
+`define inst_axis_l(lname, rname) \
+        `inst_axis(lname, rname),\
+        .lname``_TLAST(rname``_TLAST)
+
 //Same, but with TKEEP signal
 `define in_axis_k(name, width) \
     `in_axis(name, width),\
@@ -131,6 +140,10 @@
     wire [(width/8) -1:0] name``_TKEEP
 
 `define ports_axis_k(name) `ports_axis(name), name``_TKEEP
+
+`define inst_axis_k(lname, rname) \
+        `inst_axis(lname, rname),\
+        .lname``_TKEEP(rname``_TKEEP)
 
 //Same, but with TLAST and TKEEP signals
 `define in_axis_kl(name, width) \
@@ -171,6 +184,10 @@
 `define ports_axis_kl(name) `ports_axis_l(name), name``_TKEEP
 `define ports_axis_lk(name) `ports_axis_kl(name)
 
+`define inst_axis_kl(lname, rname) \
+        `inst_axis_l(lname, rname),\
+        .lname``_TKEEP(rname``_TKEEP)
+`define inst_axis_lk(lname, rname) `inst_axis_kl(lname, rname)
 
 //Some helper macros to neaten up code dealing with AXI Streams VALID and READY
 `define axis_flit(name) (name``_TVALID && name``_TREADY)
