@@ -7,6 +7,48 @@ diagram when you use the automatic TCL scripts provided along with these cores.
 Please forgive the messy organization; it's unclear how to organize things 
 until they're all finished.
 
+This controller works by maintaining two sets of registers. The first set of 
+registers, called S1, include:
+
+    - drop_cnt: The number of flits to drop from the input stream
+    - log_cnt: The number of flits to log from the input stream
+    - inj_TDATA: The TDATA field of the injection input
+    - inj_TVALID: The TVALID field of the injection input.
+    - inj_T*: The other AXI Stream fields for the injection input
+    - keep_pausing: When 1, pauses input stream indefinitely
+    - keep_logging: When 1, logs input stream indefinitely
+    - keep_dropping: When 1, drops input stream indefinitely
+
+Whenever a flit is dropped(logged), drop_cnt(log_cnt) is decremented. Once the 
+count reaches zero, no more flits will be dropped(logged), unless 
+keep_dropping(keep_logging) is asserted. If the drop_cnt(log_cnt) is nonzero, 
+the keep_pausing signal is ignored. Otherwise, keep_pausing causes 
+keep_dropping(keep_logging) to be ignored. Also, as soon as the injected flit 
+is sent out, the inj_TVALID register is reset to zero.
+
+The second set of registers, called S2, is identical to the first set. In the 
+code, they have an "_r" at the end of their name. These registers do not 
+control anything, and can only be set by the command interface. The trick is 
+that we perform S1 = S2 when the user sends a special command. This allows the 
+user to build up a (possibly complex) set of register updates that will then be 
+applied simultaneously. 
+
+The command interface is definitely clunky, but I've already found myself 
+spending a lot of time writing this code and I want to move on. It only needs 
+to be good enough. Anyway, it works in two steps: first you send an address, 
+and then you send data on the immediately following flit. The address is 
+formatted as {padding, dbg_core, reg}. The dbg_core address specifies which 
+debug core to use, and reg specifies which of the S1 registers to update within 
+that debug core. If reg is all ones, then S1 is copied into S2. These addresses 
+are aligned to the right of cmd_in_TDATA by padding on the left. The data is 
+formatted as {padding, data}. Everything is in big-endian.
+    
+There's an interesting parameter I added: STICKY_MODE. When S1 is copied into 
+S2, I was resetting all the S1 registers back to zero. However, in some cases 
+this was very inconvenient, and can cost more logic if you're not using a reset 
+signal. So when STICKY_MODE is enabled, the S1 registers retain their values 
+until the user explicitly chagnes them
+
 */
 
  `ifdef ICARUS_VERILOG
@@ -24,6 +66,7 @@ module dbg_guv # (
     parameter ADDR_WIDTH = 10, //This gives 1024 simultaneous debug cores
     parameter ADDR = 0, //Set this to be different for each 
     parameter RESET_TYPE = `ACTIVE_HIGH,
+    parameter STICKY_MODE = 0, //If 1, latching registers does not reset them
     parameter PIPE_STAGE = 1 //This causes a delay on cmd_out in case fanout is
                              //an issue
 ) (
@@ -137,7 +180,7 @@ module dbg_guv # (
     //In the interests of keeping things simple, the commands will happen over
     //two flits: "address" and "data"
 
-`genif (NO_RST) begin
+`genif (NO_RST && STICKY_MODE == 0) begin
     always @(posedge clk) begin
         if (latch_sig) begin
             drop_cnt_r <= 0;
@@ -172,7 +215,70 @@ module dbg_guv # (
             endcase
         end
     end
-`else_gen 
+`else_genif (NO_RST) begin //NO_RST && STICKY_MODE == 1
+    always @(posedge clk) begin
+        if (!latch_sig) begin
+            case (cmd_fsm_state)
+            CMD_FSM_ADDR: begin
+                cmd_fsm_state <= msg_for_us ? CMD_FSM_DATA : CMD_FSM_ADDR;
+                saved_reg_addr <= cmd_reg_addr;
+            end CMD_FSM_DATA: begin
+                if (cmd_in_TVALID) begin
+                    cmd_fsm_state <= CMD_FSM_ADDR;
+                    case (saved_reg_addr)
+                    0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                    1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                    2:  inj_TDATA_r <= cmd_in_TDATA;
+                    3:  inj_TVALID_r <= cmd_in_TDATA[0];
+                    4:  inj_TLAST_r <= cmd_in_TDATA[0];
+                    5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
+                    6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
+                    7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
+                    8:  keep_pausing_r <= cmd_in_TDATA[0];
+                    9:  keep_logging_r <= cmd_in_TDATA[0];
+                    10: keep_dropping_r <= cmd_in_TDATA[0];
+                    endcase
+                end
+            end
+            endcase
+        end
+    end
+`else_genif (STICKY_MODE == 0) begin //HAS_RST && STICKY_MODE == 0
+    always @(posedge clk) begin
+        if (rst_sig) begin
+            drop_cnt_r <= 0;
+            log_cnt_r <= 0;
+            inj_TVALID_r <= 0;
+            keep_pausing_r <= 0;
+            keep_logging_r <= 0;
+            keep_dropping_r <= 0;
+        end else begin
+            case (cmd_fsm_state)
+            CMD_FSM_ADDR: begin
+                cmd_fsm_state <= msg_for_us ? CMD_FSM_DATA : CMD_FSM_ADDR;
+                saved_reg_addr <= cmd_reg_addr;
+            end CMD_FSM_DATA: begin
+                if (cmd_in_TVALID) begin
+                    cmd_fsm_state <= CMD_FSM_ADDR;
+                    case (saved_reg_addr)
+                    0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                    1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                    2:  inj_TDATA_r <= cmd_in_TDATA;
+                    3:  inj_TVALID_r <= cmd_in_TDATA[0];
+                    4:  inj_TLAST_r <= cmd_in_TDATA[0];
+                    5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
+                    6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
+                    7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
+                    8:  keep_pausing_r <= cmd_in_TDATA[0];
+                    9:  keep_logging_r <= cmd_in_TDATA[0];
+                    10: keep_dropping_r <= cmd_in_TDATA[0];
+                    endcase
+                end
+            end
+            endcase
+        end
+    end
+`else_gen //HAS_RST && STICKY_MODE == 1
     always @(posedge clk) begin
         if (latch_sig || rst_sig) begin
             drop_cnt_r <= 0;

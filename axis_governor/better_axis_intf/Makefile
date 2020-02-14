@@ -9,11 +9,6 @@ out_dir=${dst_dir}/${ip_name}
 
 # These variables are for running the testbench
 MODULE := dbg_guv
-MODULE_CAPS := DBG_GUV
-
-
-
-
 
 # By default, package as an ip
 default: ip
@@ -27,7 +22,7 @@ open:	$(MODULE).vcd
 
 # Compile the Verilog into Icarus's special format
 $(MODULE).vvp:	$(MODULE).v $(MODULE)_tb.v $(MODULE)_drivers.mem
-	iverilog -DFROM_$(MODULE_CAPS) -I../ -I../../macros/ -I../../buffered_handshake -g2012 -o $(MODULE).vvp $(MODULE)_tb.v
+	iverilog -DICARUS_VERILOG -I../ -I../../macros/ -I../../buffered_handshake -g2012 -o $(MODULE).vvp $(MODULE)_tb.v
 
 # Run the Verilog simulator
 $(MODULE).vcd:	$(MODULE).vvp
@@ -52,4 +47,5 @@ ip: clean
 
 syntax_check:
 	iverilog -DICARUS_VERILOG -I../ -I../../macros/ -I../../buffered_handshake -g2012 -o $(MODULE).vvp $(MODULE).v
+	rm -rf $(MODULE).vvp
  
