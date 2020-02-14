@@ -27,7 +27,7 @@ is really handy for doing up module instantiations
 `include "macros.vh"
 
 module dbg_guv_tb # (
-    parameter DATA_WIDTH = 32,
+    parameter DATA_WIDTH = 16,
     parameter DEST_WIDTH = 16,
     parameter ID_WIDTH = 16,
     parameter CNT_SIZE = 16,
@@ -35,7 +35,7 @@ module dbg_guv_tb # (
     parameter ADDR = 0, //Set this to be different for each 
     parameter RESET_TYPE = `ACTIVE_HIGH,
     parameter STICKY_MODE = 1, //If 1, latching registers does not reset them
-    parameter PIPE_STAGE = 1 //This causes a delay on cmd_out in case fanout is
+    parameter PIPE_STAGE = 0 //This causes a delay on cmd_out in case fanout is
                              //an issue
 );
 	reg clk = 0;    

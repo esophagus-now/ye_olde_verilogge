@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Feb 14 12:10:24 2020
+[*] Fri Feb 14 13:08:04 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.vcd"
-[dumpfile_mtime] "Fri Feb 14 12:10:20 2020"
-[dumpfile_size] 12782
+[dumpfile_mtime] "Fri Feb 14 13:06:32 2020"
+[dumpfile_size] 23276
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.gtkw"
 [timestart] 0
 [size] 1916 1060
 [pos] -1 -1
-*-13.013645 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.640755 215000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dbg_guv_tb.
 [treeopen] dbg_guv_tb.ctl1.
 [sst_width] 214
@@ -20,22 +20,22 @@
 dbg_guv_tb.clk
 dbg_guv_tb.rst
 @22
-dbg_guv_tb.cmd_in_TDATA[31:0]
+dbg_guv_tb.cmd_in_TDATA[15:0]
 @28
 dbg_guv_tb.cmd_in_TVALID
 @22
-dbg_guv_tb.cmd_out_TDATA[31:0]
+dbg_guv_tb.cmd_out_TDATA[15:0]
 @28
 dbg_guv_tb.cmd_out_TVALID
 @800200
 -stream1
 @24
-dbg_guv_tb.in1_TDATA[31:0]
+dbg_guv_tb.in1_TDATA[15:0]
 @28
 dbg_guv_tb.in1_TVALID
 dbg_guv_tb.in1_TREADY
 @24
-dbg_guv_tb.out1_TDATA[31:0]
+dbg_guv_tb.out1_TDATA[15:0]
 @28
 dbg_guv_tb.out1_TVALID
 dbg_guv_tb.out1_TREADY
@@ -44,12 +44,12 @@ dbg_guv_tb.out1_TREADY
 @800200
 -stream2
 @24
-dbg_guv_tb.in2_TDATA[31:0]
+dbg_guv_tb.in2_TDATA[15:0]
 @28
 dbg_guv_tb.in2_TVALID
 dbg_guv_tb.in2_TREADY
 @24
-dbg_guv_tb.out2_TDATA[31:0]
+dbg_guv_tb.out2_TDATA[15:0]
 @28
 dbg_guv_tb.out2_TVALID
 dbg_guv_tb.out2_TREADY
@@ -57,10 +57,16 @@ dbg_guv_tb.out2_TREADY
 -stream2
 @800200
 -ctl1
+@24
+dbg_guv_tb.ctl1.cmd_fsm_state[1:0]
+@28
+dbg_guv_tb.ctl1.msg_for_us
+dbg_guv_tb.ctl1.latch_sig
 @22
 dbg_guv_tb.ctl1.drop_cnt[15:0]
 dbg_guv_tb.ctl1.log_cnt[15:0]
-dbg_guv_tb.ctl1.inj_TDATA[31:0]
+@24
+dbg_guv_tb.ctl1.inj_TDATA[15:0]
 @28
 dbg_guv_tb.ctl1.inj_TVALID
 dbg_guv_tb.ctl1.inj_TREADY
@@ -74,11 +80,19 @@ dbg_guv_tb.ctl1.ello_guvna.drop
 -ctl1
 @800200
 -ctl2
+@24
+dbg_guv_tb.ctl2.cmd_fsm_state[1:0]
+@28
+dbg_guv_tb.ctl2.latch_sig
 @23
+dbg_guv_tb.ctl2.drop_cnt_r[15:0]
+@22
 dbg_guv_tb.ctl2.drop_cnt[15:0]
+dbg_guv_tb.ctl2.log_cnt_r[15:0]
 dbg_guv_tb.ctl2.log_cnt[15:0]
-dbg_guv_tb.ctl2.inj_TDATA[31:0]
-@29
+@24
+dbg_guv_tb.ctl2.inj_TDATA_r[15:0]
+@28
 dbg_guv_tb.ctl2.inj_TVALID
 dbg_guv_tb.ctl2.inj_TREADY
 dbg_guv_tb.ctl2.keep_dropping

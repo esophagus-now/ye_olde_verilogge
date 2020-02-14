@@ -122,6 +122,23 @@ module dbg_guv # (
     `localparam NO_RST = (RESET_TYPE == `NO_RESET);
     `localparam HAS_RST = (RESET_TYPE != `NO_RESET);
     
+    
+`ifdef ICARUS_VERILOG
+    initial begin 
+        $display("dbg_guv:");
+        $display("--------");
+        $display("DATA_WIDTH = %d", DATA_WIDTH );
+        $display("DEST_WIDTH = %d", DEST_WIDTH );
+        $display("ID_WIDTH = %d",   ID_WIDTH   );
+        $display("CNT_SIZE = %d",   CNT_SIZE   );
+        $display("ADDR_WIDTH = %d", ADDR_WIDTH );
+        $display("ADDR = %d",       ADDR       );
+        $display("RESET_TYPE = %d", RESET_TYPE );
+        $display("STICKY_MODE = %d",STICKY_MODE); 
+        $display("PIPE_STAGE = %d", PIPE_STAGE );
+    end
+`endif
+    
     ////////////////////////
     //FORWARD DECLARATIONS//
     ////////////////////////
@@ -140,7 +157,7 @@ module dbg_guv # (
     wire [ADDR_WIDTH -1:0] cmd_core_addr = cmd_in_TDATA[ADDR_WIDTH + REG_ADDR_WIDTH -1 -: ADDR_WIDTH];
     wire [REG_ADDR_WIDTH -1:0] cmd_reg_addr = cmd_in_TDATA[REG_ADDR_WIDTH -1:0];  
     //We need to know if this message was meant for us
-    wire msg_for_us = cmd_in_TVALID && (cmd_core_addr == ADDR);
+    wire msg_for_us = (cmd_core_addr == ADDR);
     
     wire rst_sig;
 `genif (RESET_TYPE == `ACTIVE_HIGH) begin
@@ -168,115 +185,87 @@ module dbg_guv # (
     
     `localparam CMD_FSM_ADDR = 0;
     `localparam CMD_FSM_DATA = 1;
+    `localparam CMD_FSM_IGNORE = 2;
     
-    reg cmd_fsm_state = CMD_FSM_ADDR;
+    reg [1:0] cmd_fsm_state = CMD_FSM_ADDR;
     reg [REG_ADDR_WIDTH -1:0] saved_reg_addr = 0;
     
     //The user puts in a reg address of all ones to commit register values
-    wire latch_sig = (cmd_fsm_state == CMD_FSM_ADDR) && msg_for_us && (cmd_reg_addr == {REG_ADDR_WIDTH{1'b1}});
+    wire reg_addr_all_ones = (cmd_reg_addr == {REG_ADDR_WIDTH{1'b1}});
+    wire latch_sig = (cmd_fsm_state == CMD_FSM_ADDR) && msg_for_us && reg_addr_all_ones;
     
     //In the interests of keeping things simple, the commands will happen over
     //two flits: "address" and "data"
-
+    
+    //TODO: If Vivado is truly inefficient, I'll rewrite this code in a more
+    //optimized way
 `genif (NO_RST && STICKY_MODE == 0) begin
     always @(posedge clk) begin
-        if (latch_sig) begin
+        if (latch_sig) begin //This code is unlikely to synthesize to something efficient
             drop_cnt_r <= 0;
             log_cnt_r <= 0;
             inj_TVALID_r <= 0;
             keep_pausing_r <= 0;
             keep_logging_r <= 0;
             keep_dropping_r <= 0;
-        end else begin
+        end else if (cmd_in_TVALID) begin
             case (cmd_fsm_state)
-            CMD_FSM_ADDR: begin
-                cmd_fsm_state <= msg_for_us ? CMD_FSM_DATA : CMD_FSM_ADDR;
-                saved_reg_addr <= cmd_reg_addr;
-            end CMD_FSM_DATA: begin
-                if (cmd_in_TVALID) begin
+                CMD_FSM_ADDR: begin
+                    cmd_fsm_state <= msg_for_us ? CMD_FSM_DATA : (reg_addr_all_ones ? CMD_FSM_ADDR : CMD_FSM_IGNORE);
+                    saved_reg_addr <= cmd_reg_addr;
+                end CMD_FSM_DATA: begin
                     cmd_fsm_state <= CMD_FSM_ADDR;
                     case (saved_reg_addr)
-                    0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
-                    1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
-                    2:  inj_TDATA_r <= cmd_in_TDATA;
-                    3:  inj_TVALID_r <= cmd_in_TDATA[0];
-                    4:  inj_TLAST_r <= cmd_in_TDATA[0];
-                    5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
-                    6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
-                    7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
-                    8:  keep_pausing_r <= cmd_in_TDATA[0];
-                    9:  keep_logging_r <= cmd_in_TDATA[0];
-                    10: keep_dropping_r <= cmd_in_TDATA[0];
+                        0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                        1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                        2:  inj_TDATA_r <= cmd_in_TDATA;
+                        3:  inj_TVALID_r <= cmd_in_TDATA[0];
+                        4:  inj_TLAST_r <= cmd_in_TDATA[0];
+                        5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
+                        6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
+                        7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
+                        8:  keep_pausing_r <= cmd_in_TDATA[0];
+                        9:  keep_logging_r <= cmd_in_TDATA[0];
+                        10: keep_dropping_r <= cmd_in_TDATA[0];
                     endcase
+                end CMD_FSM_IGNORE: begin
+                    cmd_fsm_state <= CMD_FSM_ADDR;
                 end
-            end
             endcase
         end
     end
 `else_genif (NO_RST) begin //NO_RST && STICKY_MODE == 1
     always @(posedge clk) begin
-        if (!latch_sig) begin
+        if (cmd_in_TVALID) begin
             case (cmd_fsm_state)
-            CMD_FSM_ADDR: begin
-                cmd_fsm_state <= msg_for_us ? CMD_FSM_DATA : CMD_FSM_ADDR;
-                saved_reg_addr <= cmd_reg_addr;
-            end CMD_FSM_DATA: begin
-                if (cmd_in_TVALID) begin
+                CMD_FSM_ADDR: begin
+                    cmd_fsm_state <= reg_addr_all_ones ? 
+                        CMD_FSM_ADDR                                :
+                        (msg_for_us ? CMD_FSM_DATA : CMD_FSM_IGNORE);
+                        
+                    saved_reg_addr <= cmd_reg_addr;
+                end CMD_FSM_DATA: begin
                     cmd_fsm_state <= CMD_FSM_ADDR;
                     case (saved_reg_addr)
-                    0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
-                    1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
-                    2:  inj_TDATA_r <= cmd_in_TDATA;
-                    3:  inj_TVALID_r <= cmd_in_TDATA[0];
-                    4:  inj_TLAST_r <= cmd_in_TDATA[0];
-                    5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
-                    6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
-                    7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
-                    8:  keep_pausing_r <= cmd_in_TDATA[0];
-                    9:  keep_logging_r <= cmd_in_TDATA[0];
-                    10: keep_dropping_r <= cmd_in_TDATA[0];
+                        0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                        1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                        2:  inj_TDATA_r <= cmd_in_TDATA;
+                        3:  inj_TVALID_r <= cmd_in_TDATA[0];
+                        4:  inj_TLAST_r <= cmd_in_TDATA[0];
+                        5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
+                        6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
+                        7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
+                        8:  keep_pausing_r <= cmd_in_TDATA[0];
+                        9:  keep_logging_r <= cmd_in_TDATA[0];
+                        10: keep_dropping_r <= cmd_in_TDATA[0];
                     endcase
+                end CMD_FSM_IGNORE: begin
+                    cmd_fsm_state <= CMD_FSM_ADDR;
                 end
-            end
             endcase
         end
     end
 `else_genif (STICKY_MODE == 0) begin //HAS_RST && STICKY_MODE == 0
-    always @(posedge clk) begin
-        if (rst_sig) begin
-            drop_cnt_r <= 0;
-            log_cnt_r <= 0;
-            inj_TVALID_r <= 0;
-            keep_pausing_r <= 0;
-            keep_logging_r <= 0;
-            keep_dropping_r <= 0;
-        end else begin
-            case (cmd_fsm_state)
-            CMD_FSM_ADDR: begin
-                cmd_fsm_state <= msg_for_us ? CMD_FSM_DATA : CMD_FSM_ADDR;
-                saved_reg_addr <= cmd_reg_addr;
-            end CMD_FSM_DATA: begin
-                if (cmd_in_TVALID) begin
-                    cmd_fsm_state <= CMD_FSM_ADDR;
-                    case (saved_reg_addr)
-                    0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
-                    1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
-                    2:  inj_TDATA_r <= cmd_in_TDATA;
-                    3:  inj_TVALID_r <= cmd_in_TDATA[0];
-                    4:  inj_TLAST_r <= cmd_in_TDATA[0];
-                    5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
-                    6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
-                    7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
-                    8:  keep_pausing_r <= cmd_in_TDATA[0];
-                    9:  keep_logging_r <= cmd_in_TDATA[0];
-                    10: keep_dropping_r <= cmd_in_TDATA[0];
-                    endcase
-                end
-            end
-            endcase
-        end
-    end
-`else_gen //HAS_RST && STICKY_MODE == 1
     always @(posedge clk) begin
         if (latch_sig || rst_sig) begin
             drop_cnt_r <= 0;
@@ -285,15 +274,14 @@ module dbg_guv # (
             keep_pausing_r <= 0;
             keep_logging_r <= 0;
             keep_dropping_r <= 0;
-        end else begin
+        end else if (cmd_in_TVALID) begin
             case (cmd_fsm_state)
             CMD_FSM_ADDR: begin
-                cmd_fsm_state <= msg_for_us ? CMD_FSM_DATA : CMD_FSM_ADDR;
+                cmd_fsm_state <= msg_for_us ? CMD_FSM_DATA : (reg_addr_all_ones ? CMD_FSM_ADDR : CMD_FSM_IGNORE);
                 saved_reg_addr <= cmd_reg_addr;
             end CMD_FSM_DATA: begin
-                if (cmd_in_TVALID) begin
-                    cmd_fsm_state <= CMD_FSM_ADDR;
-                    case (saved_reg_addr)
+                cmd_fsm_state <= CMD_FSM_ADDR;
+                case (saved_reg_addr)
                     0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
                     1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
                     2:  inj_TDATA_r <= cmd_in_TDATA;
@@ -305,9 +293,48 @@ module dbg_guv # (
                     8:  keep_pausing_r <= cmd_in_TDATA[0];
                     9:  keep_logging_r <= cmd_in_TDATA[0];
                     10: keep_dropping_r <= cmd_in_TDATA[0];
-                    endcase
-                end
+                endcase
+            end CMD_FSM_IGNORE: begin
+                cmd_fsm_state <= CMD_FSM_ADDR;
             end
+            endcase
+        end
+    end
+`else_gen //HAS_RST && STICKY_MODE == 1
+    always @(posedge clk) begin
+        if (rst_sig) begin
+            drop_cnt_r <= 0;
+            log_cnt_r <= 0;
+            inj_TVALID_r <= 0;
+            keep_pausing_r <= 0;
+            keep_logging_r <= 0;
+            keep_dropping_r <= 0;
+        end else if (cmd_in_TVALID) begin
+            case (cmd_fsm_state)
+                CMD_FSM_ADDR: begin
+                    cmd_fsm_state <= reg_addr_all_ones ? 
+                        CMD_FSM_ADDR                                :
+                        (msg_for_us ? CMD_FSM_DATA : CMD_FSM_IGNORE);
+                        
+                    saved_reg_addr <= cmd_reg_addr;
+                end CMD_FSM_DATA: begin
+                    cmd_fsm_state <= CMD_FSM_ADDR;
+                    case (saved_reg_addr)
+                        0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                        1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                        2:  inj_TDATA_r <= cmd_in_TDATA;
+                        3:  inj_TVALID_r <= cmd_in_TDATA[0];
+                        4:  inj_TLAST_r <= cmd_in_TDATA[0];
+                        5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
+                        6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
+                        7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
+                        8:  keep_pausing_r <= cmd_in_TDATA[0];
+                        9:  keep_logging_r <= cmd_in_TDATA[0];
+                        10: keep_dropping_r <= cmd_in_TDATA[0];
+                    endcase
+                end CMD_FSM_IGNORE: begin
+                    cmd_fsm_state <= CMD_FSM_ADDR;
+                end
             endcase
         end
     end
@@ -338,7 +365,7 @@ module dbg_guv # (
     always @(posedge clk) begin
         if (latch_sig) begin
             drop_cnt <= drop_cnt_r;
-            log_cnt <= drop_cnt_r;
+            log_cnt <= log_cnt_r;
             inj_TDATA <= inj_TDATA_r;
             inj_TVALID <= inj_TVALID_r;
             inj_TLAST <= inj_TLAST_r;
@@ -373,7 +400,7 @@ module dbg_guv # (
             keep_dropping <= 0;
         end else if (latch_sig) begin
             drop_cnt <= drop_cnt_r;
-            log_cnt <= drop_cnt_r;
+            log_cnt <= log_cnt_r;
             inj_TDATA <= inj_TDATA_r;
             inj_TVALID <= inj_TVALID_r;
             inj_TLAST <= inj_TLAST_r;

@@ -66,14 +66,14 @@
 `define sim_out_axis(name, width) \
     wire [width -1:0] name``_TDATA;\
     wire name``_TVALID;\
-    reg name``_TREADY = 0
+    reg name``_TREADY = 1
 
 `define ports_axis(name) name``_TDATA, name``_TVALID, name``_TREADY
 
 `define inst_axis(lname, rname) \
         .lname``_TDATA(rname``_TDATA),\
-        .lname``_TVALID(rname_``TVALID),\
-        .lname``_TREADY(rname_``TREADY)
+        .lname``_TVALID(rname``_TVALID),\
+        .lname``_TREADY(rname``_TREADY)
 
 //Same, but with TLAST signal
 `define in_axis_l(name, width) \
