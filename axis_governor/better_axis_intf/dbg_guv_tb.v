@@ -33,7 +33,7 @@ module dbg_guv_tb # (
     parameter CNT_SIZE = 16,
     parameter ADDR_WIDTH = 10, //This gives 1024 simultaneous debug cores
     parameter ADDR = 0, //Set this to be different for each 
-    parameter RESET_TYPE = `ACTIVE_HIGH,
+    parameter RESET_TYPE = `NO_RESET,
     parameter STICKY_MODE = 1, //If 1, latching registers does not reset them
     parameter PIPE_STAGE = 0 //This causes a delay on cmd_out in case fanout is
                              //an issue
@@ -136,6 +136,8 @@ module dbg_guv_tb # (
         
         #0.01
         dummy = $fscanf(fd, "%x%b", cmd_in_TDATA, cmd_in_TVALID);
+        //Skip comments at end of line
+        while (!$feof(fd) && $fgetc(fd) != "\n") ;
     end
     
     always @(posedge clk) begin

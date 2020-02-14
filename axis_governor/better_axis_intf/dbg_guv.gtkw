@@ -1,17 +1,18 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Feb 14 13:08:04 2020
+[*] Fri Feb 14 13:30:23 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.vcd"
-[dumpfile_mtime] "Fri Feb 14 13:06:32 2020"
-[dumpfile_size] 23276
+[dumpfile_mtime] "Fri Feb 14 13:29:55 2020"
+[dumpfile_size] 26331
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.gtkw"
 [timestart] 0
 [size] 1916 1060
 [pos] -1 -1
-*-15.640755 215000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.640755 45010 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dbg_guv_tb.
 [treeopen] dbg_guv_tb.ctl1.
+[treeopen] dbg_guv_tb.ctl2.
 [sst_width] 214
 [signals_width] 182
 [sst_expanded] 1
@@ -43,14 +44,14 @@ dbg_guv_tb.out1_TREADY
 -stream1
 @800200
 -stream2
-@24
+@25
 dbg_guv_tb.in2_TDATA[15:0]
-@28
+@29
 dbg_guv_tb.in2_TVALID
 dbg_guv_tb.in2_TREADY
-@24
+@25
 dbg_guv_tb.out2_TDATA[15:0]
-@28
+@29
 dbg_guv_tb.out2_TVALID
 dbg_guv_tb.out2_TREADY
 @1000200
@@ -80,13 +81,14 @@ dbg_guv_tb.ctl1.ello_guvna.drop
 -ctl1
 @800200
 -ctl2
+@22
+dbg_guv_tb.ctl2.saved_reg_addr[3:0]
 @24
 dbg_guv_tb.ctl2.cmd_fsm_state[1:0]
 @28
 dbg_guv_tb.ctl2.latch_sig
-@23
-dbg_guv_tb.ctl2.drop_cnt_r[15:0]
 @22
+dbg_guv_tb.ctl2.drop_cnt_r[15:0]
 dbg_guv_tb.ctl2.drop_cnt[15:0]
 dbg_guv_tb.ctl2.log_cnt_r[15:0]
 dbg_guv_tb.ctl2.log_cnt[15:0]
@@ -101,6 +103,7 @@ dbg_guv_tb.ctl2.keep_pausing
 dbg_guv_tb.ctl2.pause
 dbg_guv_tb.ctl2.log_en
 dbg_guv_tb.ctl2.drop
+dbg_guv_tb.ctl2.log_catted_TREADY
 @1000200
 -ctl2
 [pattern_trace] 1
