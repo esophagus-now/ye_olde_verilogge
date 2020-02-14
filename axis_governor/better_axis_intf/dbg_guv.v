@@ -1,5 +1,8 @@
 `timescale 1ns / 1ps
 
+//TODO: Figure out how to disable the AXI Stream sidechannels using parameters
+//Sadly, there is no clean way to do this.....
+
 /*
 
 This wraps around axis_governor.v, and is what will get put into your block 
@@ -504,5 +507,10 @@ module dbg_guv # (
     assign log_catted_TDATA = {log_TDATA, log_TKEEP, log_TLAST, log_TDEST, log_TID};
     assign log_catted_TVALID = log_TVALID;
     assign log_TREADY = log_catted_TREADY;
+    assign log_catted_TLAST = 1; //This might change in the future 
+    
+    //It might be better to just put the log side channels as a header/footer 
+    //within a stream of AXIS packets. I wasn't sure what to do so I just 
+    //picked something and went with it
     
 endmodule
