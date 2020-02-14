@@ -152,20 +152,22 @@ module dbg_guv # (
                 cmd_fsm_state <= msg_for_us ? CMD_FSM_DATA : CMD_FSM_ADDR;
                 saved_reg_addr <= cmd_reg_addr;
             end CMD_FSM_DATA: begin
-                cmd_fsm_state <= cmd_in_TVALID ? CMD_FSM_ADDR : CMD_FSM_DATA;
-                case (saved_reg_addr)
-                0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
-                1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
-                2:  inj_TDATA_r <= cmd_in_TDATA;
-                3:  inj_TVALID_r <= cmd_in_TDATA[0];
-                4:  inj_TLAST_r <= cmd_in_TDATA[0];
-                5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
-                6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
-                7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
-                8:  keep_pausing_r <= cmd_in_TDATA[0];
-                9:  keep_logging_r <= cmd_in_TDATA[0];
-                10: keep_dropping_r <= cmd_in_TDATA[0];
-                endcase
+                if (cmd_in_TVALID) begin
+                    cmd_fsm_state <= CMD_FSM_ADDR;
+                    case (saved_reg_addr)
+                    0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                    1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                    2:  inj_TDATA_r <= cmd_in_TDATA;
+                    3:  inj_TVALID_r <= cmd_in_TDATA[0];
+                    4:  inj_TLAST_r <= cmd_in_TDATA[0];
+                    5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
+                    6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
+                    7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
+                    8:  keep_pausing_r <= cmd_in_TDATA[0];
+                    9:  keep_logging_r <= cmd_in_TDATA[0];
+                    10: keep_dropping_r <= cmd_in_TDATA[0];
+                    endcase
+                end
             end
             endcase
         end
@@ -185,20 +187,22 @@ module dbg_guv # (
                 cmd_fsm_state <= msg_for_us ? CMD_FSM_DATA : CMD_FSM_ADDR;
                 saved_reg_addr <= cmd_reg_addr;
             end CMD_FSM_DATA: begin
-                cmd_fsm_state <= cmd_in_TVALID ? CMD_FSM_ADDR : CMD_FSM_DATA;
-                case (saved_reg_addr)
-                0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
-                1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
-                2:  inj_TDATA_r <= cmd_in_TDATA;
-                3:  inj_TVALID_r <= cmd_in_TDATA[0];
-                4:  inj_TLAST_r <= cmd_in_TDATA[0];
-                5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
-                6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
-                7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
-                8:  keep_pausing_r <= cmd_in_TDATA[0];
-                9:  keep_logging_r <= cmd_in_TDATA[0];
-                10: keep_dropping_r <= cmd_in_TDATA[0];
-                endcase
+                if (cmd_in_TVALID) begin
+                    cmd_fsm_state <= CMD_FSM_ADDR;
+                    case (saved_reg_addr)
+                    0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                    1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
+                    2:  inj_TDATA_r <= cmd_in_TDATA;
+                    3:  inj_TVALID_r <= cmd_in_TDATA[0];
+                    4:  inj_TLAST_r <= cmd_in_TDATA[0];
+                    5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
+                    6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
+                    7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
+                    8:  keep_pausing_r <= cmd_in_TDATA[0];
+                    9:  keep_logging_r <= cmd_in_TDATA[0];
+                    10: keep_dropping_r <= cmd_in_TDATA[0];
+                    endcase
+                end
             end
             endcase
         end
