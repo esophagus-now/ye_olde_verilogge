@@ -370,4 +370,8 @@ module dbg_guv # (
     assign cmd_out_TVALID = cmd_in_TVALID;
 `endgen
     
+    assign log_catted_TDATA = {log_TDATA, log_TKEEP, log_TLAST, log_TDEST, log_TID};
+    assign log_catted_TVALID = log_TVALID;
+    assign log_TREADY = log_catted_TREADY;
+    
 endmodule
