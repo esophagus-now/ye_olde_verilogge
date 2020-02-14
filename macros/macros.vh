@@ -59,14 +59,14 @@
     wire name``_TREADY
     
 `define sim_in_axis(name, width) \
-    reg [width -1:0] name``_TDATA;\
-    reg name``_TVALID;\
+    reg [width -1:0] name``_TDATA = 0;\
+    reg name``_TVALID = 0;\
     wire name``_TREADY
     
 `define sim_out_axis(name, width) \
     wire [width -1:0] name``_TDATA;\
     wire name``_TVALID;\
-    reg name``_TREADY
+    reg name``_TREADY = 0
 
 `define ports_axis(name) name``_TDATA, name``_TVALID, name``_TREADY
 
@@ -93,7 +93,7 @@
     
 `define sim_in_axis_l(name, width) \
     `sim_in_axis(name, width);\
-    reg name``_TLAST
+    reg name``_TLAST = 0
     
 `define sim_out_axis_l(name, width) \
     `sim_out_axis(name, width);\
@@ -124,7 +124,7 @@
     
 `define sim_in_axis_k(name, width) \
     `sim_in_axis(name, width);\
-    reg [(width/8) -1:0] name``_TKEEP
+    reg [(width/8) -1:0] name``_TKEEP = 0
     
 `define sim_out_axis_k(name, width) \
     `sim_out_axis(name, width);\
@@ -160,7 +160,7 @@
     
 `define sim_in_axis_kl(name, width) \
     `sim_in_axis_l(name, width);\
-    reg [(width/8) -1:0] name``_TKEEP
+    reg [(width/8) -1:0] name``_TKEEP = 0
 `define sim_in_axis_lk(n, w) `sim_in_axis_kl(n, w)
     
 `define sim_out_axis_kl(name, width) \

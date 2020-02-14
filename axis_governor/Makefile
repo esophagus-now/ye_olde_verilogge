@@ -9,11 +9,6 @@ out_dir=${dst_dir}/${ip_name}
 
 # These variables are for running the testbench
 MODULE := axis_governor
-MODULE_CAPS := AXIS_GOVERNOR
-
-
-
-
 
 # By default, package as an ip
 default: ip
@@ -27,7 +22,7 @@ open:	$(MODULE).vcd
 
 # Compile the Verilog into Icarus's special format
 $(MODULE).vvp:	$(MODULE).v $(MODULE)_tb.v $(MODULE)_drivers.mem
-	iverilog -DFROM_$(MODULE_CAPS) -g2012 -o $(MODULE).vvp $(MODULE)_tb.v
+	iverilog -DICARUS_VERILOG -g2012 -o $(MODULE).vvp $(MODULE)_tb.v
 
 # Run the Verilog simulator
 $(MODULE).vcd:	$(MODULE).vvp
@@ -49,3 +44,8 @@ ip: clean
 	rm -f *log
 	rm -rf .Xil
 	rm -f vivado*
+
+syntax_check:
+	iverilog -DICARUS_VERILOG -g2012 -o $(MODULE).vvp $(MODULE).v
+	rm -rf $(MODULE).vvp
+ 

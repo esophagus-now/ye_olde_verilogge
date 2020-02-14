@@ -34,18 +34,23 @@ axis_governor
     logging, or injecting into any AXI Stream and is pretty lightweight. For 
     the sake of completeness, I've also included some quick and dirty HLS code 
     I wrote that allows me to test it from inside an ARM (in an SoC).
+    
+    UPDATE: I've started adding in a new daisy-chainable AXI Stream controller
 
 buffered_handshake
 ------------------
     More or less identical to an AXI Stream register slice. Has come in handy 
     more often that I expected.
+    
+    I guess this is because it implements a pipeline register, and almost 
+    everything I make is pipelined.
 
 mux_tree
 --------
     A fully pipelined and completely generic MUX tree. It is copied straight 
     out of another one of my projects, but should work in the general case.
 
-torch_arb
+star_arb
 ---------
     Suppose you have n AXI Stream sources, and one sink. Put one of these 
     fellows on each source and then daisy-chain them. Ensure a "mostly fair" 
