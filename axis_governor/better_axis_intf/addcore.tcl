@@ -1,29 +1,55 @@
 # Replaces the bd_intf_net n with a dbg_guv core named "inst"
 proc add_dbg_core_to_net {n inst} {
     # Get the two endpoints of this net
-    set pins [get_bd_intf_pins -of_objects $n]
+    set pins [get_bd_intf_pins -of_objects $n -quiet]
+    set ports [get_bd_intf_ports -of_objects $n -quiet]
+    
+    set npins [llength $pins]
+    set nports [llength $ports]
+    
     # Check if it has the right number of endpoints
-    if {[llength $pins] != 2} {
+    if {[expr $npins + $nports] != 2} {
         puts "Warning: invalid net"
         return -1
     }
     
     # Name the two endpoints left and right
-    set left [lindex $pins 0]
-    set right [lindex $pins 1]
+    if {$npins == 2} {
+        set left [lindex $pins 0]
+        set right [lindex $pins 1]
+    } elseif {$npins == 1} {
+        set left [lindex $pins 0]
+        set right [lindex $ports 0]
+    } else {
+        set left [lindex $ports 0]
+        set right [lindex $ports 1]
+    }
     
     # Double-check that they are in fact AXI Stream
     if {[string compare [get_property VLNV $left] "xilinx.com:interface:axis_rtl:1.0"] != 0} {
         puts "Warning: this is not an AXI Stream interface"
         return -1
     }
+    if {[string compare [get_property VLNV $right] "xilinx.com:interface:axis_rtl:1.0"] != 0} {
+        puts "Warning: this is not an AXI Stream interface"
+        return -1
+    }
     
     # Quit early if there is already a dbg_guv at one endpoint of this net
-    set left_vlnv [get_property VLNV [get_bd_cells -of_objects $left]]
-    set right_vlnv [get_property VLNV [get_bd_cells -of_objects $right]]
-    if {$left_vlnv == "mmerlini:yov:dbg_guv:1.0" || $right_vlnv == "mmerlini:yov:dbg_guv:1.0"} {
-        puts "INFO: net already has a dbg_guv"
-        return 0
+    if {$npins > 0} {
+        set left_vlnv [get_property VLNV [get_bd_cells -of_objects $left]]
+        if {$left_vlnv == "mmerlini:yov:dbg_guv:1.0"} {
+            puts "INFO: net already has a dbg_guv"
+            return 0
+        }
+    }
+    
+    if {$npins == 2} {
+        set right_vlnv [get_property VLNV [get_bd_cells -of_objects $right]]
+        if {$right_vlnv == "mmerlini:yov:dbg_guv:1.0"} {
+            puts "INFO: net already has a dbg_guv"
+            return 0
+        }
     }
     
     # Delete the original net
@@ -41,7 +67,7 @@ proc add_dbg_core_to_net {n inst} {
         connect_bd_intf_net -intf_net GUV_${inst}_slv $right $g/in
     }
     
-    return 0
+    return $g
 }
 
 # Searches current BD to get next ID to use for a dbg_guv
@@ -60,16 +86,115 @@ proc get_next_dbg_core_id {} {
     return $next_id
 }
 
-proc add_dbg_core_to_highlighted {} {
+# Given a list of AXI Stream masters (with only TDATA, TREADY, TVALID, and TLAST)
+# hooks up an automatically sized arbiter tree
+proc rr_tree {msts} {
     startgroup
-    set nets [get_bd_intf_nets [get_highlighted_objects]]
-    foreach n $nets {
-        set next_id [get_next_dbg_core_id]
-        add_dbg_core_to_net $n GUV_$next_id
+    set nnodes [expr ([llength $msts]+1)/3]
+    
+    set slvs {}
+    set nodes {}
+    while {$nnodes > 0} {
+        set node [create_bd_cell -vlnv Marco_Merlini:fpga_bpf:rr4 -name node_$nnodes]
+        lappend nodes $node
+        lappend slvs [get_bd_intf_pins $node/s0]
+        lappend slvs [get_bd_intf_pins $node/s1]
+        lappend slvs [get_bd_intf_pins $node/s2]
+        lappend slvs [get_bd_intf_pins $node/s3]
+        incr nnodes -1
+        if {$nnodes > 0} {
+            lappend msts [get_bd_intf_pins $node/o ]
+        }
+    }
+    
+    while {[llength $msts] > 0} {
+        connect_bd_intf_net [lindex $msts 0] [lindex $slvs 0]
+        set msts [lreplace $msts 0 0]
+        set slvs [lreplace $slvs 0 0]
+    }
+    
+    # The user is not allowed to use this name
+    set h [create_bd_cell -type hier -name DBG_GUV_TREE]
+    
+    move_bd_cells $h $nodes
+    
+    create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 DBG_GUV_TREE/o
+    connect_bd_intf_net [get_bd_intf_pins DBG_GUV_TREE/o] [get_bd_intf_pins DBG_GUV_TREE/node_1/o]
+    
+    endgroup
+}
+
+
+proc del_dbg_core {c} {
+    startgroup
+    
+    set left [get_bd_intf_nets -of_objects [get_bd_intf_pins $c/in]]
+    set mst [get_bd_intf_pins -of_objects $left -filter "PATH !~ $c/in" -quiet]
+    if {[llength $mst] == 0} {
+        set mst [get_bd_intf_ports -of_objects $left -filter "PATH !~ $c/in" -quiet]
+    }
+    
+    set right [get_bd_intf_nets -of_objects [get_bd_intf_pins $c/out]]
+    set slv [get_bd_intf_pins -of_objects $right -filter "PATH !~ $c/out" -quiet]
+    if {[llength $slv] == 0} {
+        set slv [get_bd_intf_ports -of_objects $right -filter "PATH !~ $c/in" -quiet]
+    }
+    
+    delete_bd_objs [get_bd_intf_nets $left] [get_bd_intf_nets $right]
+    delete_bd_objs $c
+    
+    connect_bd_intf_net $mst $slv
+    endgroup
+}
+
+proc del_all_dbg_cores {} {
+    startgroup
+    delete_bd_objs [get_bd_cells DBG_GUV_TREE -quiet] -quiet
+    set dbg_guvs [get_bd_cells -filter {VLNV =~ "*dbg_guv*"} -quiet]
+    foreach d $dbg_guvs {
+        set nets [get_bd_intf_nets -of_objects $d -quiet]
+        delete_bd_objs [get_bd_intf_nets $d/log_catted -quiet] -quiet
+        delete_bd_objs [get_bd_intf_nets $d/cmd_out -quiet] -quiet
+        del_dbg_core $d
     }
     endgroup
 }
 
-proc del_highlighted_dbg_cores {} {
+proc add_dbg_core_to_highlighted {{safe_mode 1}} {
+    if {$safe_mode} {
+        del_all_dbg_cores
+    }
     
+    set log_outs {}
+    set last_cmd {}
+    
+    startgroup
+    set nets [get_bd_intf_nets [get_highlighted_objects]]
+    foreach n $nets {
+        set next_id [get_next_dbg_core_id]
+        set g [add_dbg_core_to_net $n GUV_$next_id]
+        lappend log_outs $g/log_catted
+        if {[llength $last_cmd] == 1} {
+            connect_bd_intf_net [get_bd_intf_pins $last_cmd] [get_bd_intf_pins $g/cmd_in]
+        }
+        set last_cmd $g/cmd_out
+    }
+    
+    rr_tree $log_outs
+    endgroup
+}
+
+proc del_highlighted_dbg_cores {} {
+    startgroup
+    set cores [get_highlighted_objects]
+    foreach c $cores {
+        if {[get_property VLNV $c] != "mmerlini:yov:dbg_guv:1.0"} {
+            puts "Warning, trying to delete an IP which is not a dbg_guv"
+            continue
+        }
+        
+        del_dbg_core $c
+
+    }
+    endgroup
 }
