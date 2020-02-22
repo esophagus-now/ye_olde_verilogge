@@ -1,110 +1,135 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Feb 14 13:30:23 2020
+[*] Sat Feb 22 22:24:19 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.vcd"
-[dumpfile_mtime] "Fri Feb 14 13:29:55 2020"
-[dumpfile_size] 26331
+[dumpfile_mtime] "Sat Feb 22 22:23:58 2020"
+[dumpfile_size] 59494
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.gtkw"
-[timestart] 0
+[timestart] 23700
 [size] 1916 1060
 [pos] -1 -1
-*-15.640755 45010 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.640755 239000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dbg_guv_tb.
 [treeopen] dbg_guv_tb.ctl1.
 [treeopen] dbg_guv_tb.ctl2.
-[sst_width] 214
-[signals_width] 182
+[sst_width] 279
+[signals_width] 214
 [sst_expanded] 1
-[sst_vpaned_height] 314
+[sst_vpaned_height] 610
 @28
 dbg_guv_tb.clk
 dbg_guv_tb.rst
-@22
-dbg_guv_tb.cmd_in_TDATA[15:0]
-@28
-dbg_guv_tb.cmd_in_TVALID
-@22
-dbg_guv_tb.cmd_out_TDATA[15:0]
-@28
-dbg_guv_tb.cmd_out_TVALID
 @800200
--stream1
+-in1
 @24
-dbg_guv_tb.in1_TDATA[15:0]
+[color] 2
+dbg_guv_tb.in1_TDATA[63:0]
 @28
+[color] 2
 dbg_guv_tb.in1_TVALID
+[color] 2
 dbg_guv_tb.in1_TREADY
+@22
+[color] 2
+dbg_guv_tb.in1_TKEEP[7:0]
+@28
+[color] 2
+dbg_guv_tb.in1_TLAST
+@22
+[color] 2
+dbg_guv_tb.in1_TDEST[15:0]
+[color] 2
+dbg_guv_tb.in1_TID[15:0]
+@1000200
+-in1
+@800200
+-out1
 @24
-dbg_guv_tb.out1_TDATA[15:0]
+dbg_guv_tb.out1_TDATA[63:0]
 @28
 dbg_guv_tb.out1_TVALID
 dbg_guv_tb.out1_TREADY
+@22
+dbg_guv_tb.out1_TKEEP[7:0]
+@28
+dbg_guv_tb.out1_TLAST
+@22
+dbg_guv_tb.out1_TDEST[15:0]
+dbg_guv_tb.out1_TID[15:0]
 @1000200
--stream1
+-out1
 @800200
--stream2
-@25
-dbg_guv_tb.in2_TDATA[15:0]
-@29
+-log1
+@22
+[color] 3
+dbg_guv_tb.log_catted1_TDATA[71:0]
+@28
+[color] 3
+dbg_guv_tb.log_catted1_TVALID
+[color] 3
+dbg_guv_tb.log_catted1_TREADY
+[color] 3
+dbg_guv_tb.log_catted1_TLAST
+@1000200
+-log1
+@800200
+-dbg_guv1
+@28
+[color] 7
+dbg_guv_tb.ctl1.pause
+[color] 7
+dbg_guv_tb.ctl1.drop
+[color] 7
+dbg_guv_tb.ctl1.keep_dropping
+[color] 7
+dbg_guv_tb.ctl1.log_en
+[color] 7
+dbg_guv_tb.ctl1.keep_logging
+@1000200
+-dbg_guv1
+@800200
+-in2
+@24
+[color] 2
+dbg_guv_tb.in2_TDATA[63:0]
+@28
+[color] 2
 dbg_guv_tb.in2_TVALID
+[color] 2
 dbg_guv_tb.in2_TREADY
-@25
-dbg_guv_tb.out2_TDATA[15:0]
-@29
+[color] 2
+dbg_guv_tb.in2_TLAST
+@22
+[color] 2
+dbg_guv_tb.in2_TKEEP[7:0]
+[color] 2
+dbg_guv_tb.in2_TDEST[15:0]
+[color] 2
+dbg_guv_tb.in2_TID[15:0]
+@1000200
+-in2
+@800200
+-out2
+@23
+dbg_guv_tb.out2_TDATA[63:0]
+@28
 dbg_guv_tb.out2_TVALID
 dbg_guv_tb.out2_TREADY
-@1000200
--stream2
-@800200
--ctl1
-@24
-dbg_guv_tb.ctl1.cmd_fsm_state[1:0]
-@28
-dbg_guv_tb.ctl1.msg_for_us
-dbg_guv_tb.ctl1.latch_sig
 @22
-dbg_guv_tb.ctl1.drop_cnt[15:0]
-dbg_guv_tb.ctl1.log_cnt[15:0]
-@24
-dbg_guv_tb.ctl1.inj_TDATA[15:0]
+dbg_guv_tb.out2_TKEEP[7:0]
 @28
-dbg_guv_tb.ctl1.inj_TVALID
-dbg_guv_tb.ctl1.inj_TREADY
-dbg_guv_tb.ctl1.keep_dropping
-dbg_guv_tb.ctl1.keep_logging
-dbg_guv_tb.ctl1.keep_pausing
-dbg_guv_tb.ctl1.ello_guvna.pause
-dbg_guv_tb.ctl1.ello_guvna.log_en
-dbg_guv_tb.ctl1.ello_guvna.drop
-@1000200
--ctl1
-@800200
--ctl2
+dbg_guv_tb.out2_TLAST
 @22
-dbg_guv_tb.ctl2.saved_reg_addr[3:0]
-@24
-dbg_guv_tb.ctl2.cmd_fsm_state[1:0]
-@28
-dbg_guv_tb.ctl2.latch_sig
-@22
-dbg_guv_tb.ctl2.drop_cnt_r[15:0]
-dbg_guv_tb.ctl2.drop_cnt[15:0]
-dbg_guv_tb.ctl2.log_cnt_r[15:0]
-dbg_guv_tb.ctl2.log_cnt[15:0]
-@24
-dbg_guv_tb.ctl2.inj_TDATA_r[15:0]
-@28
-dbg_guv_tb.ctl2.inj_TVALID
-dbg_guv_tb.ctl2.inj_TREADY
-dbg_guv_tb.ctl2.keep_dropping
-dbg_guv_tb.ctl2.keep_logging
-dbg_guv_tb.ctl2.keep_pausing
-dbg_guv_tb.ctl2.pause
-dbg_guv_tb.ctl2.log_en
-dbg_guv_tb.ctl2.drop
-dbg_guv_tb.ctl2.log_catted_TREADY
+dbg_guv_tb.out2_TDEST[15:0]
+dbg_guv_tb.out2_TID[15:0]
 @1000200
--ctl2
+-out2
+@22
+dbg_guv_tb.log_catted2_TDATA[71:0]
+@28
+dbg_guv_tb.log_catted2_TVALID
+dbg_guv_tb.log_catted2_TREADY
+dbg_guv_tb.log_catted2_TLAST
 [pattern_trace] 1
 [pattern_trace] 0

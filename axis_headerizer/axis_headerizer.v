@@ -8,7 +8,8 @@ module axis_headerizer # (
     parameter DEST_WIDTH = 16,
     parameter ID_WIDTH = 16,
     parameter USER_WIDTH = 8,
-    parameter RESET_TYPE = `NO_RESET
+    parameter RESET_TYPE = `NO_RESET,
+    parameter ENABLE_TLAST_HACK = 0
 ) (
     input wire clk,
     input wire rst,
@@ -60,6 +61,10 @@ module axis_headerizer # (
     assign hdr_TVALID = sides_TVALID;
     assign sides_TREADY = (state == WAIT_LAST) && hdr_TREADY;
     assign hdr_TKEEP = (state == WAIT_LAST) ? sides_TKEEP : {(DATA_WIDTH/8){1'b1}};
+`genif (ENABLE_TLAST_HACK == 0) begin
     assign hdr_TLAST = (state == WAIT_LAST) && sides_TLAST;
+`else_gen
+    assign hdr_TLAST = (state == WAIT_LAST);
+`endgen
 
 endmodule

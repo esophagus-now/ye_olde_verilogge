@@ -56,18 +56,18 @@ until the user explicitly chagnes them
 
  `ifdef ICARUS_VERILOG
 `include "axis_governor.v"
-//`include "bhand.v"
+`include "axis_headerizer.v"
 `endif
 
 `include "macros.vh"
 
 module dbg_guv # (
-    parameter DATA_WIDTH = 32,
+    parameter DATA_WIDTH = 64,
     parameter DEST_WIDTH = 16,
     parameter ID_WIDTH = 16,
     parameter CNT_SIZE = 16,
     parameter ADDR_WIDTH = 10, //This gives 1024 simultaneous debug cores
-    parameter ADDR = 0, //Set this to be different for each 
+    parameter [ADDR_WIDTH -1:0] ADDR = 0, //Set this to be different for each 
     parameter RESET_TYPE = `NO_RESET,
     parameter STICKY_MODE = 1, //If 1, latching registers does not reset them
     parameter PIPE_STAGE = 1 //This causes a delay on cmd_out in case fanout is
@@ -112,9 +112,10 @@ module dbg_guv # (
     output wire out_TLAST,
     
     //Log AXI Stream. 
-    //This core takes care of concatting the sidechannels into the data part
-    //of the flit
-    `out_axis_l(log_catted, DATA_WIDTH + DATA_WIDTH/8 + 1 + DEST_WIDTH + ID_WIDTH)
+    //This core takes care of adding the TDEST, TID, TLAST, and governor ID as
+    //a header on logged flits. The TKEEP sidechannel is concatted for 
+    //compatibility with the rr4 module
+    `out_axis_l(log_catted, DATA_WIDTH + DATA_WIDTH/8)
 );
     ////////////////////
     //LOCAL PARAMETERS//
@@ -504,13 +505,43 @@ module dbg_guv # (
     assign cmd_out_TVALID = cmd_in_TVALID;
 `endgen
     
-    assign log_catted_TDATA = {log_TDATA, log_TKEEP, log_TLAST, log_TDEST, log_TID};
-    assign log_catted_TVALID = log_TVALID;
-    assign log_TREADY = log_catted_TREADY;
-    assign log_catted_TLAST = 1; //This might change in the future 
+    //Run the log outputs through the "headerizer" module. This module takes a
+    //single flit and sends out a two-flit packet:
+    //
+    // Input flit: log_TDATA, log_TKEEP, log_TLAST, log_TDEST, log_TID, log_TUSER
+    //
+    // Output flit 1: TDATA = {log_TLAST, log_TDEST, log_TID, log_TUSER}, TKEEP = (all ones), TLAST = 0
+    // Output flit 2: TDATA = log_TDATA, TKEEP = log_TKEEP, TLAST = log_TLAST
     
-    //It might be better to just put the log side channels as a header/footer 
-    //within a stream of AXIS packets. I wasn't sure what to do so I just 
-    //picked something and went with it
+    `wire_axis_kl(log_with_hdr, DATA_WIDTH);
+    
+    axis_headerizer # (
+		.DATA_WIDTH(DATA_WIDTH),
+		.DEST_WIDTH(DEST_WIDTH),
+		.ID_WIDTH(ID_WIDTH),
+		.USER_WIDTH(ADDR_WIDTH),
+		.RESET_TYPE(RESET_TYPE),
+        .ENABLE_TLAST_HACK(1)
+    ) headerizer (
+		.clk(clk),
+		.rst(rst),
+        
+        `inst_axis_kl(sides, log),
+		.sides_TDEST(log_TDEST),
+		.sides_TID(log_TID),
+		.sides_TUSER(ADDR),
+        
+        `inst_axis_kl(hdr, log_with_hdr)
+    );
+    
+    assign log_catted_TDATA = {log_with_hdr_TDATA, log_with_hdr_TKEEP};
+    assign log_catted_TVALID = log_with_hdr_TVALID;
+    assign log_with_hdr_TREADY = log_catted_TREADY;
+    assign log_catted_TLAST = log_with_hdr_TLAST;
+    
+    //It might be better to just concat the log side channels into TDATA rather 
+    //than in a header flit. That way, at the cost of more routing resources, 
+    //it might be possible to have 100% transparent snooping. I wasn't sure 
+    //what to do so I just picked the header method and went with it
     
 endmodule

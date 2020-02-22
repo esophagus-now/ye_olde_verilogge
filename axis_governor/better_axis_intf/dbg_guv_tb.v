@@ -27,11 +27,11 @@ is really handy for doing up module instantiations
 `include "macros.vh"
 
 module dbg_guv_tb # (
-    parameter DATA_WIDTH = 16,
+    parameter DATA_WIDTH = 64,
     parameter DEST_WIDTH = 16,
     parameter ID_WIDTH = 16,
     parameter CNT_SIZE = 16,
-    parameter ADDR_WIDTH = 10, //This gives 1024 simultaneous debug cores
+    parameter ADDR_WIDTH = 12, //This gives 1024 simultaneous debug cores
     parameter ADDR = 0, //Set this to be different for each 
     parameter RESET_TYPE = `NO_RESET,
     parameter STICKY_MODE = 1, //If 1, latching registers does not reset them
@@ -64,7 +64,7 @@ module dbg_guv_tb # (
     wire in1_TREADY;
     reg [DATA_WIDTH/8 -1:0] in1_TKEEP = 0;
     reg [DEST_WIDTH -1:0] in1_TDEST = 0;
-    reg [ID_WIDTH -1:0] in1_TID;
+    reg [ID_WIDTH -1:0] in1_TID = 0;
     reg in1_TLAST = 0;
     
     //Input2 AXI Stream.
@@ -97,12 +97,12 @@ module dbg_guv_tb # (
     //Log1 AXI Stream. 
     //This core takes care of concatting the sidechannels into the data part
     //of the flit
-    `sim_out_axis_l(log_catted1, DATA_WIDTH + DATA_WIDTH/8 + 1 + DEST_WIDTH + ID_WIDTH);
+    `sim_out_axis_l(log_catted1, DATA_WIDTH + DATA_WIDTH/8);
     
     //Log2 AXI Stream. 
     //This core takes care of concatting the sidechannels into the data part
     //of the flit
-    `sim_out_axis_l(log_catted2, DATA_WIDTH + DATA_WIDTH/8 + 1 + DEST_WIDTH + ID_WIDTH);
+    `sim_out_axis_l(log_catted2, DATA_WIDTH + DATA_WIDTH/8);
     
     integer fd, dummy;
     
@@ -143,14 +143,18 @@ module dbg_guv_tb # (
     always @(posedge clk) begin
         if (`axis_flit(in1)) begin
             in1_TDATA <= in1_TDATA + 2;
+            in1_TKEEP = ((1 << ($random & 32'b111)) -1);
+            in1_TLAST = $random;
+            in1_TDEST = $random;
+            in1_TID = $random;
         end
         if (`axis_flit(in2)) begin
             in2_TDATA <= in2_TDATA + 2;
+            in2_TKEEP = ((1 << ($random & 32'b111)) -1);
+            in2_TLAST = $random;
+            in2_TDEST = $random;
+            in2_TID = $random;
         end
-        
-        //Don't need to do this, but why not?
-        in1_TLAST = $random;
-        in2_TLAST = $random;
     end
     
     //Wires from ctl1 to ctl2
