@@ -88,6 +88,7 @@ proc get_next_dbg_core_id {} {
 
 # Given a list of AXI Stream masters (with only TDATA, TREADY, TVALID, and TLAST)
 # hooks up an automatically sized arbiter tree
+# TODO?: Special case for n=1
 proc rr_tree {msts} {
     startgroup
     set nnodes [expr ([llength $msts]+1)/3]
@@ -107,19 +108,21 @@ proc rr_tree {msts} {
         }
     }
     
-    while {[llength $msts] > 0} {
+    while {[llength $msts] > 0 && [llength $slvs] > 0} {
         connect_bd_intf_net [lindex $msts 0] [lindex $slvs 0]
         set msts [lreplace $msts 0 0]
         set slvs [lreplace $slvs 0 0]
     }
     
-    # The user is not allowed to use this name
-    set h [create_bd_cell -type hier -name DBG_GUV_TREE]
-    
-    move_bd_cells $h $nodes
-    
-    create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 DBG_GUV_TREE/o
-    connect_bd_intf_net [get_bd_intf_pins DBG_GUV_TREE/o] [get_bd_intf_pins DBG_GUV_TREE/node_1/o]
+    if {[llength $nodes] > 0} {
+        # The user is not allowed to use this name
+        set h [create_bd_cell -type hier -name DBG_GUV_TREE]
+        
+        move_bd_cells $h $nodes
+        
+        create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 DBG_GUV_TREE/o
+        connect_bd_intf_net [get_bd_intf_pins DBG_GUV_TREE/o] [get_bd_intf_pins DBG_GUV_TREE/node_1/o]
+    }
     
     endgroup
 }
@@ -144,6 +147,9 @@ proc del_dbg_core {c} {
     delete_bd_objs $c
     
     connect_bd_intf_net $mst $slv
+    
+    highlight_objects -color_index 3 [get_bd_intf_nets -of_objects $mst]
+    
     endgroup
 }
 
@@ -161,25 +167,46 @@ proc del_all_dbg_cores {} {
 }
 
 proc add_dbg_core_to_highlighted {{safe_mode 1}} {
+    startgroup
+    
     if {$safe_mode} {
         del_all_dbg_cores
     }
     
+    # Stores the list of log outputs to run through the arbiter tree
     set log_outs {}
+    
+    # Stores the previous cmd_out
     set last_cmd {}
     
-    startgroup
+    
+    # Get all highlihgted nets
     set nets [get_bd_intf_nets [get_highlighted_objects]]
+    
     foreach n $nets {
+        # Choose an ID. get_next_dbg_core_id guarantees it will be unique, and 
+        # if some dbg_guvs don't get added (e.g. if the highlighted net was 
+        # invalid), it also makes sure that IDs don't get skipped
         set next_id [get_next_dbg_core_id]
+        
+        # g holds a reference to the newly create dbg_guv cell
         set g [add_dbg_core_to_net $n GUV_$next_id]
+        
+        set_property CONFIG.ADDR $next_id $g
+        
+        # Add $g/log to the list of log outputs
         lappend log_outs $g/log_catted
+        
+        # If last_cmd is not empty, connect its cmd_out to $g/cmd_in
         if {[llength $last_cmd] == 1} {
             connect_bd_intf_net [get_bd_intf_pins $last_cmd] [get_bd_intf_pins $g/cmd_in]
         }
+        
+        # Update last_cmd
         set last_cmd $g/cmd_out
     }
     
+    # Put in the arbiter tree
     rr_tree $log_outs
     endgroup
 }

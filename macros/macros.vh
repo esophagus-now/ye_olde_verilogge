@@ -202,6 +202,15 @@
 `define else_gen end else begin
 `define endgen end endgenerate
 
+//Common construct I use in my desgins
+`define wire_rst_sig \
+    wire rst_sig;\
+`genif (RESET_TYPE == `ACTIVE_HIGH) begin \
+    assign rst_sig = rst; \
+`else_gen \
+    assign rst_sig = ~rst; \
+`endgen \
+wire unused_dummy_in_wire_rst_sig_macro
 
 
 `endif
