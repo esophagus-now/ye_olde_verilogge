@@ -9,17 +9,16 @@ Generates AXI Stream traffic.
 Does not care one bit about area efficiency; the only concern is passing timing 
 at 322 MHz.
 
+UPDATE (many moons later): Please forgive past Marco for this ugly, UGLY, 
+Verilog code! 
+
 */
 
-
-//"if" was already taken
-`define si(x) ((x) ?
-`define prendre (
-`define autrement ) : (
-`define fin ))
+`include "macros.vh"
 
 module tg # (
-    parameter WIDTH = 512
+    parameter WIDTH = 512,
+    parameter RESET_TYPE = `NO_RESET
 ) (
     input wire clk,
     input wire rst,
@@ -41,18 +40,21 @@ module tg # (
     input wire TREADY,
     output wire TLAST
 );
-    parameter BYTES = WIDTH/8;
+    `localparam BYTES = WIDTH/8;
     genvar i;
     //Internal signals
+    
+    `wire_rst_sig;
+    
     reg [15:0] flit_cnt = 0;
     reg [15:0] packet_cnt = 0;
     reg [31:0] lfsr = 1;
     reg [31:0] sum = -'sd1;
 
-    parameter IDLE = 2'b00;
-    parameter NORMAL = 2'b01;
-    parameter COOLDOWN = 2'b11;
-    parameter WAITING = 2'b10;
+    `localparam IDLE = 2'b00;
+    `localparam NORMAL = 2'b01;
+    `localparam COOLDOWN = 2'b11;
+    `localparam WAITING = 2'b10;
     reg [1:0] state = IDLE;
     
     //Some helper wires for neatening code. Also, adding delays to inputs helps when
@@ -119,8 +121,9 @@ module tg # (
     end
     
     //Update internal counters
+`genif (RESET_TYPE == `NO_RESET) begin
     always @(posedge clk) begin
-        if (rst || (en == 0) || state == WAITING || state == IDLE) begin
+        if ((en == 0) || state == WAITING || state == IDLE) begin
             sum <= -'sd1;
             packet_cnt <= 0;
             flit_cnt <= 0;
@@ -133,37 +136,46 @@ module tg # (
                 sum <= sum - N_i;
         end
     end
+`else_gen
+    always @(posedge clk) begin
+        if (rst_sig || (en == 0) || state == WAITING || state == IDLE) begin
+            sum <= -'sd1;
+            packet_cnt <= 0;
+            flit_cnt <= 0;
+        end else begin
+            flit_cnt <= (last_flit) ? 0 : flit_cnt + (TVALID & TREADY);
+            packet_cnt <= (last_packet) ? 0 : packet_cnt + (last_flit);
+            if (TVALID && TREADY)
+                sum <= sum + M_i;
+            else
+                sum <= sum - N_i;
+        end
+    end
+`endgen
     
     wire [31:0] deadbeef;
     assign deadbeef = 32'hDEADBEEF;
     
     //Fill each byte of TDATA and each bit of TKEEP
     for (i = BYTES -1; i >= 0; i = i - 1) begin
-        /*assign TDATA[8*(i+1) -1 -: 8] = 
-            `si(fill[1]) `prendre
-                `si(fill[0]) `prendre
-                    deadbeef[8*(3 - (BYTES-1-i)%4 + 1) -1 -: 8]
-                `autrement
-                    lfsr
-                `fin
-            `autrement
-                `si(fill[0]) `prendre
-                    hdr[8*(`HEADER_BYTES -1 - (BYTES-1-i)%`HEADER_BYTES +1) -1 -: 8]
-                `autrement
-                    0
-                `fin
-            `fin;
-        */ //This was failing timing because too much routing congestion
+
         if ((BYTES-1-i) < `HEADER_BYTES) begin
         	assign TDATA[8*(i+1) -1 -: 8] = hdr[8*(`HEADER_BYTES -1 - (BYTES-1-i)%`HEADER_BYTES +1) -1 -: 8];
-        end else if (i%4 == 3) begin
-        	assign TDATA[8*(i+1) -1 -: 8] = 8'hDE;
-        end else if (i%4 == 2) begin
-        	assign TDATA[8*(i+1) -1 -: 8] = 8'hAD;
-        end else if (i%4 == 1) begin
-        	assign TDATA[8*(i+1) -1 -: 8] = 8'hBE;
-        end else begin
-        	assign TDATA[8*(i+1) -1 -: 8] = 8'hEF;
+        end else begin        
+            assign TDATA[8*(i+1) -1 -: 8] = 
+                `si(fill[1]) `prendre
+                    `si(fill[0]) `prendre
+                        deadbeef[8*(3 - (BYTES-1-i)%4 + 1) -1 -: 8]
+                    `autrement
+                        lfsr
+                    `fin
+                `autrement
+                    `si(fill[0]) `prendre
+                        hdr[8*(`HEADER_BYTES -1 - (BYTES-1-i)%`HEADER_BYTES +1) -1 -: 8]
+                    `autrement
+                        0
+                    `fin
+                `fin;
         end
         assign TKEEP[i] = !TLAST || last_flit_tkeep[i];
                 
@@ -174,9 +186,10 @@ module tg # (
     assign TLAST = (flit_cnt == num_flits_i - 1);
     
     //State machine
-    
+
+`genif (RESET_TYPE == `NO_RESET) begin
     always @(posedge clk) begin
-        if (rst || (en == 0)) begin
+        if (en == 0) begin
             state <= IDLE;
         end else begin
             case (state)
@@ -206,10 +219,40 @@ module tg # (
             endcase
         end
     end
+`else_gen
+    always @(posedge clk) begin
+        if (rst_sig || (en == 0)) begin
+            state <= IDLE;
+        end else begin
+            case (state)
+                IDLE:
+                    state <= (en == 1) ? NORMAL : IDLE;
+                NORMAL:
+                    state <=
+                        `si(last_packet && !loop) `prendre
+                            WAITING
+                        `autrement
+                            `si(last_flit) `prendre
+                                //Check the sign bit of sum
+                                //(I should have made sum 42 bits)
+                                `si(sum[31] == 0) `prendre
+                                    COOLDOWN
+                                `autrement
+                                    NORMAL
+                                `fin
+                            `autrement
+                                NORMAL
+                            `fin
+                        `fin;
+                COOLDOWN:
+                    state <= (sum[31] == 0) ? COOLDOWN : NORMAL;
+                WAITING:
+                    state <= (en == 1) ? WAITING : IDLE;
+            endcase
+        end
+    end
+`endgen
+
 endmodule
 
 `undef HEADER_BYTES
-`undef si
-`undef prendre
-`undef autrement
-`undef fin

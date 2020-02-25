@@ -13,7 +13,7 @@ mode
 +------------------------------------------------------------------------------+
 | 2-1 |    FILL | 00: Fill with zeroes                                         |
 |     |         | 01: Fill with header                                         |
-|     |         | 10: Fill with LFSR                                           |
+|     |         | 10: Fill with LFSR (unimplemented)                           |
 |     |         | 11: Fill with DEADBEEF                                       |
 +------------------------------------------------------------------------------+
 |   3 |    LOOP | 1: Keep looping forever; 0: stop after num_packets           |

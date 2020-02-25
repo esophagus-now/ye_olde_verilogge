@@ -212,5 +212,12 @@ end else begin \
 `endgen \
 wire unused_dummy_in_wire_rst_sig_macro
 
+//This makes the ternary operator look a little more friendly
+//"if" was already taken
+`define si(x) ((x) ?
+`define prendre (
+`define autrement ) : (
+`define fin ))
+
 
 `endif

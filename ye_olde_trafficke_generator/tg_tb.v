@@ -6,11 +6,11 @@ tg_tb.v
 Replace innards with desired logic
 */
 
-`ifdef FROM_TG
+`ifdef ICARUS_VERILOG
 `include "tg.v"
 `endif
 
-`define WIDTH 64
+`define WIDTH 256
 
 module tg_tb;
     reg clk;
@@ -83,7 +83,8 @@ module tg_tb;
     end
 
     tg # (
-        .WIDTH(`WIDTH)
+        .WIDTH(`WIDTH),
+        .RESET_TYPE(1) //Active high
     ) DUT (
         .clk(clk),
         .rst(rst),

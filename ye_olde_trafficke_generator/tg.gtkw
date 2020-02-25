@@ -1,20 +1,20 @@
 [*]
-[*] GTKWave Analyzer v3.3.102 (w)1999-2019 BSI
-[*] Fri Nov 29 19:42:23 2019
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Tue Feb 25 17:41:33 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/ye_olde_trafficke_generator/tg.vcd"
-[dumpfile_mtime] "Fri Nov 29 19:39:07 2019"
-[dumpfile_size] 7604
+[dumpfile_mtime] "Tue Feb 25 17:10:44 2020"
+[dumpfile_size] 24878
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/ye_olde_trafficke_generator/tg.gtkw"
 [timestart] 0
 [size] 1916 1060
 [pos] -1 -1
-*-16.208004 28700 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.208004 197900 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tg_tb.
 [sst_width] 214
 [signals_width] 198
 [sst_expanded] 1
-[sst_vpaned_height] 314
+[sst_vpaned_height] 610
 @28
 tg_tb.clk
 @22
@@ -50,9 +50,8 @@ tg_tb.N[31:0]
 -inputs
 @800200
 -AXI Stream
-@22
-tg_tb.TDATA[63:0]
-tg_tb.TKEEP[7:0]
+@23
+tg_tb.TDATA[255:0]
 @28
 tg_tb.TVALID
 tg_tb.TREADY
@@ -101,9 +100,6 @@ tg_tb.DUT.sum[31:0]
 @28
 tg_tb.DUT.state[1:0]
 tg_tb.DUT.last_flit
-@24
-tg_tb.DUT.flit_cnt[31:0]
-tg_tb.DUT.packet_cnt[31:0]
 @c00024
 #{hdr_packet_cnt} (0)tg_tb.DUT.hdr[111:0] (1)tg_tb.DUT.hdr[111:0] (2)tg_tb.DUT.hdr[111:0] (3)tg_tb.DUT.hdr[111:0] (4)tg_tb.DUT.hdr[111:0] (5)tg_tb.DUT.hdr[111:0] (6)tg_tb.DUT.hdr[111:0] (7)tg_tb.DUT.hdr[111:0] (8)tg_tb.DUT.hdr[111:0] (9)tg_tb.DUT.hdr[111:0] (10)tg_tb.DUT.hdr[111:0] (11)tg_tb.DUT.hdr[111:0] (12)tg_tb.DUT.hdr[111:0] (13)tg_tb.DUT.hdr[111:0] (14)tg_tb.DUT.hdr[111:0] (15)tg_tb.DUT.hdr[111:0]
 @28
@@ -123,7 +119,7 @@ tg_tb.DUT.packet_cnt[31:0]
 (13)tg_tb.DUT.hdr[111:0]
 (14)tg_tb.DUT.hdr[111:0]
 (15)tg_tb.DUT.hdr[111:0]
-@1401204
+@1401200
 -group_end
 @c000a4
 #{hdr_flit_cnt} (31)tg_tb.DUT.hdr[111:0] (30)tg_tb.DUT.hdr[111:0] (29)tg_tb.DUT.hdr[111:0] (28)tg_tb.DUT.hdr[111:0] (27)tg_tb.DUT.hdr[111:0] (26)tg_tb.DUT.hdr[111:0] (25)tg_tb.DUT.hdr[111:0] (24)tg_tb.DUT.hdr[111:0] (23)tg_tb.DUT.hdr[111:0] (22)tg_tb.DUT.hdr[111:0] (21)tg_tb.DUT.hdr[111:0] (20)tg_tb.DUT.hdr[111:0] (19)tg_tb.DUT.hdr[111:0] (18)tg_tb.DUT.hdr[111:0] (17)tg_tb.DUT.hdr[111:0] (16)tg_tb.DUT.hdr[111:0]
@@ -144,7 +140,7 @@ tg_tb.DUT.packet_cnt[31:0]
 (29)tg_tb.DUT.hdr[111:0]
 (30)tg_tb.DUT.hdr[111:0]
 (31)tg_tb.DUT.hdr[111:0]
-@1401284
+@1401200
 -group_end
 @c00022
 #{hdr_mode} (32)tg_tb.DUT.hdr[111:0] (33)tg_tb.DUT.hdr[111:0] (34)tg_tb.DUT.hdr[111:0] (35)tg_tb.DUT.hdr[111:0] (36)tg_tb.DUT.hdr[111:0] (37)tg_tb.DUT.hdr[111:0] (38)tg_tb.DUT.hdr[111:0] (39)tg_tb.DUT.hdr[111:0]
@@ -178,7 +174,7 @@ tg_tb.DUT.packet_cnt[31:0]
 (53)tg_tb.DUT.hdr[111:0]
 (54)tg_tb.DUT.hdr[111:0]
 (55)tg_tb.DUT.hdr[111:0]
-@1401204
+@1401200
 -group_end
 @c00022
 #{hdr_num_flits} (56)tg_tb.DUT.hdr[111:0] (57)tg_tb.DUT.hdr[111:0] (58)tg_tb.DUT.hdr[111:0] (59)tg_tb.DUT.hdr[111:0] (60)tg_tb.DUT.hdr[111:0] (61)tg_tb.DUT.hdr[111:0] (62)tg_tb.DUT.hdr[111:0] (63)tg_tb.DUT.hdr[111:0] (64)tg_tb.DUT.hdr[111:0] (65)tg_tb.DUT.hdr[111:0] (66)tg_tb.DUT.hdr[111:0] (67)tg_tb.DUT.hdr[111:0] (68)tg_tb.DUT.hdr[111:0] (69)tg_tb.DUT.hdr[111:0] (70)tg_tb.DUT.hdr[111:0] (71)tg_tb.DUT.hdr[111:0]
@@ -233,9 +229,9 @@ tg_tb.DUT.packet_cnt[31:0]
 (93)tg_tb.DUT.hdr[111:0]
 (94)tg_tb.DUT.hdr[111:0]
 (95)tg_tb.DUT.hdr[111:0]
-@1401204
+@1401200
 -group_end
-@c00025
+@c00024
 #{hdr_N} (96)tg_tb.DUT.hdr[111:0] (97)tg_tb.DUT.hdr[111:0] (98)tg_tb.DUT.hdr[111:0] (99)tg_tb.DUT.hdr[111:0] (100)tg_tb.DUT.hdr[111:0] (101)tg_tb.DUT.hdr[111:0] (102)tg_tb.DUT.hdr[111:0] (103)tg_tb.DUT.hdr[111:0] (104)tg_tb.DUT.hdr[111:0] (105)tg_tb.DUT.hdr[111:0] (106)tg_tb.DUT.hdr[111:0] (107)tg_tb.DUT.hdr[111:0] (108)tg_tb.DUT.hdr[111:0] (109)tg_tb.DUT.hdr[111:0] (110)tg_tb.DUT.hdr[111:0] (111)tg_tb.DUT.hdr[111:0]
 @28
 (96)tg_tb.DUT.hdr[111:0]
@@ -254,7 +250,7 @@ tg_tb.DUT.packet_cnt[31:0]
 (109)tg_tb.DUT.hdr[111:0]
 (110)tg_tb.DUT.hdr[111:0]
 (111)tg_tb.DUT.hdr[111:0]
-@1401205
+@1401200
 -group_end
 [pattern_trace] 1
 [pattern_trace] 0
