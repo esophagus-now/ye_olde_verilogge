@@ -91,12 +91,15 @@ proc get_next_dbg_core_id {} {
 # TODO?: Special case for n=1
 proc rr_tree {msts} {
     startgroup
-    set nnodes [expr ([llength $msts]+1)/3]
+    set nnodes [expr ([llength $msts]+1)/3]    
     
     set slvs {}
     set nodes {}
     while {$nnodes > 0} {
         set node [create_bd_cell -vlnv Marco_Merlini:fpga_bpf:rr4 -name node_$nnodes]
+        
+        set_property CONFIG.RESET_TYPE 0 $node
+        
         lappend nodes $node
         lappend slvs [get_bd_intf_pins $node/s0]
         lappend slvs [get_bd_intf_pins $node/s1]
@@ -122,6 +125,9 @@ proc rr_tree {msts} {
         
         create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 DBG_GUV_TREE/o
         connect_bd_intf_net [get_bd_intf_pins DBG_GUV_TREE/o] [get_bd_intf_pins DBG_GUV_TREE/node_1/o]
+        create_bd_pin -dir I DBG_GUV_TREE/clk
+        
+        connect_bd_net [list [get_bd_pins /DBG_GUV_TREE/*/clk] [get_bd_pins /DBG_GUV_TREE/clk]]
     }
     
     endgroup
@@ -208,6 +214,11 @@ proc add_dbg_core_to_highlighted {{safe_mode 1}} {
     
     # Put in the arbiter tree
     rr_tree $log_outs
+    
+    # Connect up the clocks
+    # TODO: If I ever plan to allow multiple clock domains, this will have to 
+    # change
+    connect_bd_net [list [get_bd_pins -of_objects [get_bd_cells -hierarchical  -filter {VLNV == mmerlini:yov:dbg_guv:1.0}] -filter {NAME == clk}] [get_bd_pins /DBG_GUV_TREE/clk]]
     endgroup
 }
 
