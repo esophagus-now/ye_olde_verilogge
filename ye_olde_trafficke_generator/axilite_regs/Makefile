@@ -15,5 +15,5 @@ default: clean
 
 clean:
 	rm -rf ${out_dir}
-	rm -rf tg_axilite_intf
+	rm -rf tg_axilite_intf_tmp_proj
 	rm -rf vivado*

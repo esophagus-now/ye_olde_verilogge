@@ -1,25 +1,30 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Feb 22 22:24:19 2020
+[*] Sat Feb 29 03:35:47 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.vcd"
-[dumpfile_mtime] "Sat Feb 22 22:23:58 2020"
-[dumpfile_size] 59494
+[dumpfile_mtime] "Sat Feb 29 03:35:28 2020"
+[dumpfile_size] 71964
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.gtkw"
-[timestart] 23700
+[timestart] 0
 [size] 1916 1060
 [pos] -1 -1
-*-15.640755 239000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.640755 432600 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dbg_guv_tb.
 [treeopen] dbg_guv_tb.ctl1.
 [treeopen] dbg_guv_tb.ctl2.
+[treeopen] dbg_guv_tb.ctl2.ello_guvna.
 [sst_width] 279
-[signals_width] 214
+[signals_width] 237
 [sst_expanded] 1
-[sst_vpaned_height] 610
+[sst_vpaned_height] 568
 @28
 dbg_guv_tb.clk
 dbg_guv_tb.rst
+@22
+dbg_guv_tb.cmd_in_TDATA[63:0]
+@29
+dbg_guv_tb.cmd_out_TVALID
 @800200
 -in1
 @24
@@ -76,6 +81,7 @@ dbg_guv_tb.log_catted1_TLAST
 @800200
 -dbg_guv1
 @28
+dbg_guv_tb.ctl2.ello_guvna.inj_TVALID
 [color] 7
 dbg_guv_tb.ctl1.pause
 [color] 7
@@ -111,7 +117,7 @@ dbg_guv_tb.in2_TID[15:0]
 -in2
 @800200
 -out2
-@23
+@22
 dbg_guv_tb.out2_TDATA[63:0]
 @28
 dbg_guv_tb.out2_TVALID
