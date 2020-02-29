@@ -196,7 +196,7 @@ module dbg_guv # (
     
     //The user puts in a reg address of all ones to commit register values
     wire reg_addr_all_ones = (cmd_reg_addr == {REG_ADDR_WIDTH{1'b1}});
-    wire latch_sig = (cmd_fsm_state == CMD_FSM_ADDR) && msg_for_us && reg_addr_all_ones;
+    wire latch_sig = (cmd_fsm_state == CMD_FSM_ADDR) && msg_for_us && cmd_in_TVALID && reg_addr_all_ones;
     
     //In the interests of keeping things simple, the commands will happen over
     //two flits: "address" and "data"

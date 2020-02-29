@@ -49,6 +49,16 @@ cmd_in_TDATA    cmd_in_TVALID   Comments
 0001            1               Disable keep_pausing
 0000            0               
 001F            1               Latch (performs single injection)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
 0000            0               
 0000            0               
 0000            0               
