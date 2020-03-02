@@ -1,8 +1,21 @@
+# These procs are used to automatically insert dbg_guvs into a design
+
 # Replaces the bd_intf_net n with a dbg_guv core named "inst"
 proc add_dbg_core_to_net {n inst} {
     # Get the two endpoints of this net
     set pins [get_bd_intf_pins -of_objects $n -quiet]
     set ports [get_bd_intf_ports -of_objects $n -quiet]
+    
+    # For some RIDICULOUS reason, a hierarchy port is both a port and a pin!
+    # So we do a little band-aid fix here and remove any element from pins
+    # that also appears in ports
+    foreach p $ports {
+        # see https://stackoverflow.com/questions/5701947/tcl-remove-an-element-from-a-list
+        set idx [lsearch $pins $p]
+        if {$idx != -1} {
+            set pins [lreplace $pins $idx $idx]
+        }
+    } 
     
     set npins [llength $pins]
     set nports [llength $ports]
@@ -56,15 +69,17 @@ proc add_dbg_core_to_net {n inst} {
     delete_bd_objs $n
     
     # Instantiate the dbg_guv
-    set g [create_bd_cell -vlnv mmerlini:yov:dbg_guv $inst]
+    # We do an UGLY hack to deal with Vivado's annoying rules about hierarchies
+    set prefix [lindex [regexp -inline {(.*)\/[^\/]*$} "[get_property PATH $n]"] 1]
+    set g [create_bd_cell -vlnv mmerlini:yov:dbg_guv $prefix/$inst]
 
     # Connect the dbg_guv to the loose endpoints
     if ![string compare [get_property MODE $left] Master] {
-        connect_bd_intf_net -intf_net GUV_${inst}_mst $g/out $right
-        connect_bd_intf_net -intf_net GUV_${inst}_slv $left $g/in
+        connect_bd_intf_net $g/out $right
+        connect_bd_intf_net $left $g/in
     } else {
-        connect_bd_intf_net -intf_net GUV_${inst}_mst $g/out $left
-        connect_bd_intf_net -intf_net GUV_${inst}_slv $right $g/in
+        connect_bd_intf_net $g/out $left
+        connect_bd_intf_net $right $g/in
     }
     
     return $g
@@ -162,7 +177,7 @@ proc del_dbg_core {c} {
 proc del_all_dbg_cores {} {
     startgroup
     delete_bd_objs [get_bd_cells DBG_GUV_TREE -quiet] -quiet
-    set dbg_guvs [get_bd_cells -filter {VLNV =~ "*dbg_guv*"} -quiet]
+    set dbg_guvs [get_bd_cells -hierarchical -filter {VLNV =~ "*dbg_guv*"} -quiet]
     foreach d $dbg_guvs {
         set nets [get_bd_intf_nets -of_objects $d -quiet]
         delete_bd_objs [get_bd_intf_nets $d/log_catted -quiet] -quiet
@@ -172,7 +187,7 @@ proc del_all_dbg_cores {} {
     endgroup
 }
 
-proc add_dbg_core_to_highlighted {{safe_mode 1}} {
+proc add_dbg_core_to_list {nets {safe_mode 1}} {
     startgroup
     
     if {$safe_mode} {
@@ -184,10 +199,6 @@ proc add_dbg_core_to_highlighted {{safe_mode 1}} {
     
     # Stores the previous cmd_out
     set last_cmd {}
-    
-    
-    # Get all highlihgted nets
-    set nets [get_bd_intf_nets [get_highlighted_objects]]
     
     foreach n $nets {
         # Choose an ID. get_next_dbg_core_id guarantees it will be unique, and 
@@ -220,6 +231,10 @@ proc add_dbg_core_to_highlighted {{safe_mode 1}} {
     # change
     connect_bd_net [list [get_bd_pins -of_objects [get_bd_cells -hierarchical  -filter {VLNV == mmerlini:yov:dbg_guv:1.0}] -filter {NAME == clk}] [get_bd_pins /DBG_GUV_TREE/clk]]
     endgroup
+}
+
+proc add_dbg_core_to_highlighted {{safe_mode 1}} {
+    add_dbg_core_to_list [get_bd_intf_nets [get_highlighted_objects]] $safe_mode
 }
 
 proc del_highlighted_dbg_cores {} {
