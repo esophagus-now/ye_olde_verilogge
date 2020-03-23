@@ -46,7 +46,7 @@ cmd_in_TDATA    cmd_in_TVALID   Comments
 0013            1               Select dbg_core[1]::inj_TVALID
 0001            1               Set to 1
 0011            1               Select dbg_core[1]::keep_pausing
-0001            1               Disable keep_pausing
+0001            1               Enable keep_pausing
 0000            0               
 001F            1               Latch (performs single injection)
 001F            0               Latch (but command not valid!!!!)
@@ -61,6 +61,56 @@ cmd_in_TDATA    cmd_in_TVALID   Comments
 001F            0               Latch (but command not valid!!!!)
 0000            0               
 0000            0               
+
+
+0000            0               Try to create a situation where we will see failed injections
+
+0012            1               Select dbg_core[1]::inj_TDATA
+0066            1               Set to 0x66
+0013            1               Select dbg_core[1]::inj_TVALID
+0001            1               Set to 1
+001A            1               Select dbg_core[1]::keep_dropping
+0001            1               Enable keep_dropping
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+001F            1               Latch (performs single injection)             
+0000            0 
+
+
 0000            0               
-        
+0000            0    
+0000            0               
+0000            0    
+0000            0               
+0000            0    
+0000            0               
+0000            0    
 0000            0       

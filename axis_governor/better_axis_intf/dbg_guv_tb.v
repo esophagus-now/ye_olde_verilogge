@@ -140,6 +140,8 @@ module dbg_guv_tb # (
         while (!$feof(fd) && $fgetc(fd) != "\n") ;
     end
     
+    reg [31:0] whatever;
+    
     always @(posedge clk) begin
         if (`axis_flit(in1)) begin
             in1_TDATA <= in1_TDATA + 2;
@@ -155,6 +157,12 @@ module dbg_guv_tb # (
             in2_TDEST = $random;
             in2_TID = $random;
         end
+        
+        whatever = $random;
+        log_catted1_TREADY = (| whatever[2:0]);
+        //log_catted2_TREADY = (| whatever[5:3]);
+        out1_TREADY = (| whatever[8:6]);
+        out2_TREADY = whatever[9];
     end
     
     //Wires from ctl1 to ctl2
