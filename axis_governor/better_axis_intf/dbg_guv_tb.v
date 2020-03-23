@@ -31,7 +31,7 @@ module dbg_guv_tb # (
     parameter DEST_WIDTH = 16,
     parameter ID_WIDTH = 16,
     parameter CNT_SIZE = 16,
-    parameter ADDR_WIDTH = 12, //This gives 1024 simultaneous debug cores
+    parameter ADDR_WIDTH = 11, //This gives 2048 simultaneous debug cores
     parameter ADDR = 0, //Set this to be different for each 
     parameter RESET_TYPE = `NO_RESET,
     parameter STICKY_MODE = 1, //If 1, latching registers does not reset them

@@ -52,6 +52,23 @@ this was very inconvenient, and can cost more logic if you're not using a reset
 signal. So when STICKY_MODE is enabled, the S1 registers retain their values 
 until the user explicitly chagnes them
 
+UPDATES
+Mar 23 / 2020 This module now sends command receipts on the logging interface.
+
+*/
+
+/*
+For future me:
+
+Explanation of the AXI Stream wire on the inside of this module:
+
+                    +-----------+                +---------------+
+     log----------->|           |                |               |
+                    |           |                |               |
+                    |   MUX     |---->to_send--->| headerizer    |---->log_with_hdr
+ receipt----------->|           |                |               |
+                    +-----------+                +---------------+
+
 */
 
  `ifdef ICARUS_VERILOG
@@ -69,9 +86,12 @@ module dbg_guv # (
     parameter ADDR_WIDTH = 10, //This gives 1024 simultaneous debug cores
     parameter [ADDR_WIDTH -1:0] ADDR = 0, //Set this to be different for each 
     parameter RESET_TYPE = `NO_RESET,
+    parameter DUT_RST_VAL = 1, //The value of DUT_rst that will reset the DUT
     parameter STICKY_MODE = 1, //If 1, latching registers does not reset them
-    parameter PIPE_STAGE = 1 //This causes a delay on cmd_out in case fanout is
-                             //an issue
+    parameter PIPE_STAGE = 1, //This causes a delay on cmd_out in case fanout is
+                              //an issue
+    parameter SATCNT_WIDTH = 3 //Saturating ocunter for number of cycles slave
+                               //has not been ready
 ) (
     input wire clk,
     input wire rst,
@@ -111,6 +131,9 @@ module dbg_guv # (
     output wire [ID_WIDTH -1:0] out_TID,
     output wire out_TLAST,
     
+    //DUT Reset output
+    output wire DUT_rst,
+    
     //Log AXI Stream. 
     //This core takes care of adding the TDEST, TID, TLAST, and governor ID as
     //a header on logged flits. The TKEEP sidechannel is concatted for 
@@ -125,6 +148,7 @@ module dbg_guv # (
     //These just clean up the code slightly
     `localparam NO_RST = (RESET_TYPE == `NO_RESET);
     `localparam HAS_RST = (RESET_TYPE != `NO_RESET);
+    `localparam KEEP_WIDTH = DATA_WIDTH/8;
     
     
 `ifdef ICARUS_VERILOG
@@ -140,6 +164,7 @@ module dbg_guv # (
         $display("RESET_TYPE = %d", RESET_TYPE );
         $display("STICKY_MODE = %d",STICKY_MODE); 
         $display("PIPE_STAGE = %d", PIPE_STAGE );
+        $display("SATCNT_WIDTH = %d", SATCNT_WIDTH);
     end
 `endif
     
@@ -152,6 +177,20 @@ module dbg_guv # (
     `wire_axis_kl(log, DATA_WIDTH);
     wire [DEST_WIDTH -1:0] log_TDEST;
     wire [ID_WIDTH -1:0] log_TID;
+    //This is a constant
+    wire [ADDR_WIDTH + 1 -1:0] log_TUSER = {1'b0, ADDR};
+    
+    
+    //Serves double duty. If you wrote a new command with inj_TVALID_r == 0, 
+    //this value will be 1 if the old injection was forcibly dropped.
+    //If instead you wrote a new command with inj_TVALID_r == 1 but the old
+    //injection was still not sent, this value will go to 1.
+    //It means that either your new inject or an old inject was dropped,
+    //depending on whether you wrote 0 or 1 to inj_TVALID_r
+    `logic inj_failed;
+    //TODO: delete inj_failed_sig_stuff once sure I don't need it
+    //Is 1 when we are sending the inj_failed signal in a command receipt flit
+    //wire inj_failed_sig_sent;
     
     ////////////////
     //HELPER WIRES//
@@ -170,6 +209,78 @@ module dbg_guv # (
     assign rst_sig = ~rst;
 `endgen
 
+    ////////////////////////
+    //COMMAND RECEIPT INFO//
+    ////////////////////////
+    
+    //inj_failed is a wire. This register answers the question "has an injection
+    //failed since the last time I checked?"
+    //reg inj_failed_sig = 0;
+    
+    //Saturating counter for out ready.    
+    //Counts up when out_TREADY is low, and saturates instead of wrapping
+    //around. Resets to zero when out_TREADY is high
+    reg [SATCNT_WIDTH -1:0] out_not_rdy_cnt = 0;
+`genif (NO_RST) begin
+    always @(posedge clk) begin
+        out_not_rdy_cnt <= (!out_TREADY && !latch_sig) ? 
+                            out_not_rdy_cnt + !(&out_not_rdy_cnt) :
+                            0;
+        //If an injection failed, set this to one. Otherwise, leave it as one
+        //if it hasn't been sent yet
+        //inj_failed_sig <= (inj_failed_sig && !inj_failed_sig_sent) || inj_failed;
+    end
+`else_gen
+    always @(posedge clk) begin
+        out_not_rdy_cnt <= (!out_TREADY && !latch_sig && !rst_sig) ? 
+                            out_not_rdy_cnt + !(&out_not_rdy_cnt) :
+                            0;
+    end
+`endgen
+    
+    //At some point, we will select whether to send a command receipt or a log.
+    reg [DATA_WIDTH -1:0] receipt_TDATA = 0;
+    reg receipt_TVALID = 0;
+    wire receipt_TREADY;
+    //These next five guys are constants to make the code look more consistent
+    wire [KEEP_WIDTH -1:0] receipt_TKEEP = {KEEP_WIDTH{1'b1}};
+    wire receipt_TLAST = 1;
+    wire [DEST_WIDTH -1:0] receipt_TDEST = 0;
+    wire [ID_WIDTH -1:0] receipt_TID = 0;
+    wire [ADDR_WIDTH + 1 -1:0] receipt_TUSER = {1'b1, ADDR};
+    
+    `localparam RECEIPT_PAD_WIDTH = DATA_WIDTH - SATCNT_WIDTH - 1;
+`ifdef ICARUS_VERILOG
+    initial begin
+        $display("RECEIPT_PAD_WIDTH = %d", RECEIPT_PAD_WIDTH);
+        $display("SATCNT_WIDTH = %d", SATCNT_WIDTH);
+    end
+`endif
+
+    //Rule: user must always wait for a command receipt, or else they risk 
+    //clobbering one
+`genif (NO_RST) begin
+    always @(posedge clk) begin
+        if (latch_sig) begin
+            receipt_TDATA <= {{RECEIPT_PAD_WIDTH{1'b0}}, out_not_rdy_cnt, inj_failed};
+            receipt_TVALID <= 1;
+        end else begin
+            receipt_TVALID <= `axis_flit(receipt) ? 0 : receipt_TVALID;
+        end
+    end
+`else_gen
+    always @(posedge clk) begin
+        if(rst_sig) begin
+            receipt_TVALID <= 0;
+        end else if (latch_sig) begin
+            receipt_TDATA <= {{RECEIPT_PAD_WIDTH{1'b0}}, out_not_rdy_cnt, inj_failed};
+            receipt_TVALID <= 1;
+        end else begin
+            receipt_TVALID <= `axis_flit(receipt) ? 0 : receipt_TVALID;
+        end
+    end
+`endgen
+    
     ///////////////////////////
     //COMMAND INTERPRETER FSM//
     ///////////////////////////
@@ -180,12 +291,17 @@ module dbg_guv # (
     reg [DATA_WIDTH -1:0] inj_TDATA_r = 0;     //Reg addr = 2
     reg inj_TVALID_r = 0;                      //Reg addr = 3
     reg inj_TLAST_r = 0;                       //Reg addr = 4
-    reg [DATA_WIDTH/8 -1:0] inj_TKEEP_r = 0;   //Reg addr = 5
+    reg [KEEP_WIDTH -1:0] inj_TKEEP_r = 0;     //Reg addr = 5
     reg [DEST_WIDTH -1:0] inj_TDEST_r = 0;     //Reg addr = 6
     reg [ID_WIDTH -1:0] inj_TID_r = 0;         //Reg addr = 7
     reg keep_pausing_r = 0;                    //Reg addr = 8
     reg keep_logging_r = 0;                    //Reg addr = 9
     reg keep_dropping_r = 0;                   //Reg addr = 10
+    reg dut_reset_r = !DUT_RST_VAL;            //Reg addr = 11
+    //reg guv_reset_r = 0;                       //Reg addr = 12
+    //TODO: add registers for resetting DUT and resetting dbg_guv
+    //TODO: register readback?
+    //TODO: register to just ask what's going on?
     
     `localparam CMD_FSM_ADDR = 0;
     `localparam CMD_FSM_DATA = 1;
@@ -212,6 +328,7 @@ module dbg_guv # (
             keep_pausing_r <= 0;
             keep_logging_r <= 0;
             keep_dropping_r <= 0;
+            dut_reset_r <= !DUT_RST_VAL;
         end else if (cmd_in_TVALID) begin
             case (cmd_fsm_state)
                 CMD_FSM_ADDR: begin
@@ -225,12 +342,13 @@ module dbg_guv # (
                         2:  inj_TDATA_r <= cmd_in_TDATA;
                         3:  inj_TVALID_r <= cmd_in_TDATA[0];
                         4:  inj_TLAST_r <= cmd_in_TDATA[0];
-                        5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
+                        5:  inj_TKEEP_r <= cmd_in_TDATA[KEEP_WIDTH -1:0];
                         6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
                         7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
                         8:  keep_pausing_r <= cmd_in_TDATA[0];
                         9:  keep_logging_r <= cmd_in_TDATA[0];
                         10: keep_dropping_r <= cmd_in_TDATA[0];
+                        11: dut_reset_r <= cmd_in_TDATA[0];
                     endcase
                 end CMD_FSM_IGNORE: begin
                     cmd_fsm_state <= CMD_FSM_ADDR;
@@ -256,12 +374,13 @@ module dbg_guv # (
                         2:  inj_TDATA_r <= cmd_in_TDATA;
                         3:  inj_TVALID_r <= cmd_in_TDATA[0];
                         4:  inj_TLAST_r <= cmd_in_TDATA[0];
-                        5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
+                        5:  inj_TKEEP_r <= cmd_in_TDATA[KEEP_WIDTH -1:0];
                         6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
                         7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
                         8:  keep_pausing_r <= cmd_in_TDATA[0];
                         9:  keep_logging_r <= cmd_in_TDATA[0];
                         10: keep_dropping_r <= cmd_in_TDATA[0];
+                        11: dut_reset_r <= cmd_in_TDATA[0];
                     endcase
                 end CMD_FSM_IGNORE: begin
                     cmd_fsm_state <= CMD_FSM_ADDR;
@@ -278,6 +397,7 @@ module dbg_guv # (
             keep_pausing_r <= 0;
             keep_logging_r <= 0;
             keep_dropping_r <= 0;
+            dut_reset_r <= !DUT_RST_VAL;
         end else if (cmd_in_TVALID) begin
             case (cmd_fsm_state)
             CMD_FSM_ADDR: begin
@@ -291,12 +411,13 @@ module dbg_guv # (
                     2:  inj_TDATA_r <= cmd_in_TDATA;
                     3:  inj_TVALID_r <= cmd_in_TDATA[0];
                     4:  inj_TLAST_r <= cmd_in_TDATA[0];
-                    5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
+                    5:  inj_TKEEP_r <= cmd_in_TDATA[KEEP_WIDTH -1:0];
                     6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
                     7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
                     8:  keep_pausing_r <= cmd_in_TDATA[0];
                     9:  keep_logging_r <= cmd_in_TDATA[0];
                     10: keep_dropping_r <= cmd_in_TDATA[0];
+                    11: dut_reset_r <= cmd_in_TDATA[0];
                 endcase
             end CMD_FSM_IGNORE: begin
                 cmd_fsm_state <= CMD_FSM_ADDR;
@@ -313,6 +434,7 @@ module dbg_guv # (
             keep_pausing_r <= 0;
             keep_logging_r <= 0;
             keep_dropping_r <= 0;
+            dut_reset_r <= !DUT_RST_VAL;
         end else if (cmd_in_TVALID) begin
             case (cmd_fsm_state)
                 CMD_FSM_ADDR: begin
@@ -329,12 +451,13 @@ module dbg_guv # (
                         2:  inj_TDATA_r <= cmd_in_TDATA;
                         3:  inj_TVALID_r <= cmd_in_TDATA[0];
                         4:  inj_TLAST_r <= cmd_in_TDATA[0];
-                        5:  inj_TKEEP_r <= cmd_in_TDATA[DATA_WIDTH/8 -1:0];
+                        5:  inj_TKEEP_r <= cmd_in_TDATA[KEEP_WIDTH -1:0];
                         6:  inj_TDEST_r <= cmd_in_TDATA[DEST_WIDTH -1:0];
                         7:  inj_TID_r <= cmd_in_TDATA[ID_WIDTH -1:0];
                         8:  keep_pausing_r <= cmd_in_TDATA[0];
                         9:  keep_logging_r <= cmd_in_TDATA[0];
                         10: keep_dropping_r <= cmd_in_TDATA[0];
+                        11: dut_reset_r <= cmd_in_TDATA[0];
                     endcase
                 end CMD_FSM_IGNORE: begin
                     cmd_fsm_state <= CMD_FSM_ADDR;
@@ -353,32 +476,50 @@ module dbg_guv # (
     reg [DATA_WIDTH -1:0] inj_TDATA = 0;
     reg inj_TVALID = 0;
     reg inj_TLAST = 0;
-    reg [DATA_WIDTH/8 -1:0] inj_TKEEP = 0;
+    reg [KEEP_WIDTH -1:0] inj_TKEEP = 0;
     reg [DEST_WIDTH -1:0] inj_TDEST = 0;
     reg [ID_WIDTH -1:0] inj_TID = 0;
     reg keep_pausing = 0;
     reg keep_logging = 0;
     reg keep_dropping = 0;
+    reg dut_reset = !DUT_RST_VAL;
     
     //Governor control wires. These feed directly into axis_governor
     wire pause;
     wire drop;
     wire log_en;
     
+
+    //Suppose we are trying to cancel an old injection (inj_TVALID_r == 0)
+    //Then the old injection failed if it was valid but is not being sent
+    //right now.
+    //A neat trick: now suppose we are trying to write a new injections
+    //(inj_TVALID_r == 1). This fails if the old inject was valid and
+    //is not being sent right now. 
+    //In other words, inj_failed is always equal to this expression no
+    //matter what we're doing. Nice!
+    assign inj_failed = inj_TVALID && !inj_TREADY;
+    
 `genif (NO_RST) begin
     always @(posedge clk) begin
         if (latch_sig) begin
             drop_cnt <= drop_cnt_r;
             log_cnt <= log_cnt_r;
-            inj_TDATA <= inj_TDATA_r;
-            inj_TVALID <= inj_TVALID_r;
-            inj_TLAST <= inj_TLAST_r;
-            inj_TKEEP <= inj_TKEEP_r;
-            inj_TDEST <= inj_TDEST_r;
-            inj_TID <= inj_TID_r;
+            //Special rule: only write new inject values if the old ones have
+            //been sent. However, if the new inj_TVALID_r is zero, then we are
+            //forcing this inject to be dropped, so write anyway
+            if (!inj_failed || inj_TVALID_r == 0) begin
+                inj_TDATA <= inj_TDATA_r;
+                inj_TVALID <= inj_TVALID_r;
+                inj_TLAST <= inj_TLAST_r;
+                inj_TKEEP <= inj_TKEEP_r;
+                inj_TDEST <= inj_TDEST_r;
+                inj_TID <= inj_TID_r;
+            end            
             keep_pausing <= keep_pausing_r;
             keep_logging <= keep_logging_r;
             keep_dropping <= keep_dropping_r;
+            dut_reset <= dut_reset_r;
         end else begin
             //Decrement drop_cnt when flit is sent (if drop_cnt is not already zero)
             drop_cnt <= (|drop_cnt) ? (drop_cnt - `axis_flit(in)) : drop_cnt;
@@ -402,18 +543,23 @@ module dbg_guv # (
             keep_pausing <= 0;
             keep_logging <= 0;
             keep_dropping <= 0;
+            dut_reset <= 0;
         end else if (latch_sig) begin
             drop_cnt <= drop_cnt_r;
             log_cnt <= log_cnt_r;
-            inj_TDATA <= inj_TDATA_r;
-            inj_TVALID <= inj_TVALID_r;
-            inj_TLAST <= inj_TLAST_r;
-            inj_TKEEP <= inj_TKEEP_r;
-            inj_TDEST <= inj_TDEST_r;
-            inj_TID <= inj_TID_r;
+            //See above `genif clause for explanation of inj_* signals
+            if (!inj_failed || inj_TVALID_r == 0) begin
+                inj_TDATA <= inj_TDATA_r;
+                inj_TVALID <= inj_TVALID_r;
+                inj_TLAST <= inj_TLAST_r;
+                inj_TKEEP <= inj_TKEEP_r;
+                inj_TDEST <= inj_TDEST_r;
+                inj_TID <= inj_TID_r;
+            end   
             keep_pausing <= keep_pausing_r;
             keep_logging <= keep_logging_r;
             keep_dropping <= keep_dropping_r;
+            dut_reset <= dut_reset_r;
         end else begin
             //Decrement drop_cnt when flit is sent (if drop_cnt is not already zero)
             drop_cnt <= (|drop_cnt) ? (drop_cnt - `axis_flit(in)) : drop_cnt;
@@ -484,6 +630,33 @@ module dbg_guv # (
 		.log_en(log_en)
     );    
     
+    //////////////////////////////////////////////////
+    //SELECT LOG VS. COMMAND RECEIPT TO GO TO OUTPUT//
+    //////////////////////////////////////////////////
+    
+    `wire_axis_kl(to_send, DATA_WIDTH);
+    wire [DEST_WIDTH -1:0] to_send_TDEST;
+    wire [ID_WIDTH -1:0] to_send_TID;
+    wire [ADDR_WIDTH + 1 -1:0] to_send_TUSER;
+    
+    axis_mux # (
+        .DATA_WIDTH(DATA_WIDTH + KEEP_WIDTH + 1 + DEST_WIDTH + ID_WIDTH + ADDR_WIDTH + 1)
+    ) select_receipt_vs_log (    
+        .sel(receipt_TVALID),
+        
+        .A_TDATA({log_TDATA, log_TKEEP, log_TLAST, log_TDEST, log_TID, log_TUSER}),
+        .A_TVALID(log_TVALID),
+        .A_TREADY(log_TREADY),
+        
+        .B_TDATA({receipt_TDATA, receipt_TKEEP, receipt_TLAST, receipt_TDEST, receipt_TID, receipt_TUSER}),
+        .B_TVALID(receipt_TVALID),
+        .B_TREADY(receipt_TREADY),
+        
+        .f_TDATA({to_send_TDATA, to_send_TKEEP, to_send_TLAST, to_send_TDEST, to_send_TID, to_send_TUSER}),
+        .f_TVALID(to_send_TVALID),
+        .f_TREADY(to_send_TREADY)
+    );
+    
     //////////////////////////////////////
     //CONNECT REMAINING WIRES TO OUTPUTS//
     //////////////////////////////////////
@@ -519,21 +692,23 @@ module dbg_guv # (
 		.DATA_WIDTH(DATA_WIDTH),
 		.DEST_WIDTH(DEST_WIDTH),
 		.ID_WIDTH(ID_WIDTH),
-		.USER_WIDTH(ADDR_WIDTH),
+		.USER_WIDTH(ADDR_WIDTH+1),
 		.RESET_TYPE(RESET_TYPE),
         .ENABLE_TLAST_HACK(1)
     ) headerizer (
 		.clk(clk),
 		.rst(rst),
         
-        `inst_axis_kl(sides, log),
-		.sides_TDEST(log_TDEST),
-		.sides_TID(log_TID),
-		.sides_TUSER(ADDR),
+        `inst_axis_kl(sides, to_send), //TODO: probably better to override here?
+		.sides_TDEST(to_send_TDEST),
+		.sides_TID(to_send_TID),
+		.sides_TUSER(to_send_TUSER),
         
         `inst_axis_kl(hdr, log_with_hdr)
     );
     
+    //TODO: override log_catted for command receipts? Or have separate stream?
+    //TODO: maybe command receipts can be one flit long?
     assign log_catted_TDATA = {log_with_hdr_TDATA, log_with_hdr_TKEEP};
     assign log_catted_TVALID = log_with_hdr_TVALID;
     assign log_with_hdr_TREADY = log_catted_TREADY;
@@ -544,4 +719,25 @@ module dbg_guv # (
     //it might be possible to have 100% transparent snooping. I wasn't sure 
     //what to do so I just picked the header method and went with it
     
+endmodule
+
+/*
+Selects one of two AXI Stream inputs to go to the output. 
+*/
+
+module axis_mux # (
+    parameter DATA_WIDTH = 64
+) (    
+    input wire sel,
+    
+    `in_axis(A, DATA_WIDTH),
+    `in_axis(B, DATA_WIDTH),
+    
+    `out_axis(f, DATA_WIDTH)
+);
+    assign f_TDATA = (sel == 1) ? B_TDATA : A_TDATA;
+    assign f_TVALID = (sel == 1) ? B_TVALID : A_TVALID;
+    
+    assign A_TREADY = (sel == 1) ? 0 : f_TREADY;
+    assign B_TREADY = (sel == 1) ? f_TREADY : 0;
 endmodule

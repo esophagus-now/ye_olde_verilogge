@@ -185,7 +185,7 @@ proc rr_tree {msts {data_w 64}} {
     # UGLY BAND-AID FIX: until I have a more robust method of handling generic
     # choices for AXI Stream channel widths, I've added in an axis_unconcat to
     # bridge the gap here
-    set uncat [create_bd_cell -type ip -vlnv mmerlini:yov:axis_unconcat:1.0 axis_unconcat_0]
+    set uncat [create_bd_cell -type ip -vlnv mmerlini:yov:axis_unconcat:1.0 DBG_GUV_UNCONCAT]
     set_property -dict [list CONFIG.DATA_WIDTH $data_w CONFIG.OUT_ENABLE_KEEP {true} CONFIG.IN_ENABLE_LAST {1} CONFIG.OUT_ENABLE_LAST {true}] $uncat
     connect_bd_intf_net [get_bd_intf_pins $arbiter_out] [get_bd_intf_pins $uncat/left]
     connect_bd_net [get_bd_pins /DBG_GUV_TREE/clk] [get_bd_pins $uncat/clk]
@@ -222,6 +222,7 @@ proc del_dbg_core {c} {
 proc del_all_dbg_cores {} {
     startgroup
     delete_bd_objs [get_bd_cells DBG_GUV_TREE -quiet] -quiet
+    delete_bd_objs [get_bd_cells DBG_GUV_UNCONCAT -quiet] -quiet
     set dbg_guvs [get_bd_cells -hierarchical -filter {VLNV =~ "*dbg_guv*"} -quiet]
     foreach d $dbg_guvs {
         set nets [get_bd_intf_nets -of_objects $d -quiet]

@@ -3,6 +3,23 @@
 
 `include "macros.vh"
 
+/*
+As we all know, in AXI Stream, the DEST, ID, and USER sidechannels are only
+used on the first flit of a packet. This core takes in an AXI Stream packet
+and makes it one flit logner, where the extra flit is a header of all the
+"one-time only" sidechannels. The output AXI Stream only has DATA, KEEP, and 
+LAST.
+
+The format of this header flit is {padding, LAST, DEST, ID, USER}
+
+The ENABLE_TLAST_HACK parameter is currently only used by the dbg_guv. It 
+forces the TLAST of the output stream to always be 0 during the header flit and 
+1 for the next data flit; in other words, a header gets added to every single 
+flit of the packet. In this mode, the TLAST part of the header tells you what 
+the TLAST of the flit was.
+
+*/
+
 module axis_headerizer # (
     parameter DATA_WIDTH = 64,
     parameter DEST_WIDTH = 16,
