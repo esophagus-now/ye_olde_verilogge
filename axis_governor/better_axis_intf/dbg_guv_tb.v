@@ -34,9 +34,12 @@ module dbg_guv_tb # (
     parameter ADDR_WIDTH = 11, //This gives 2048 simultaneous debug cores
     parameter ADDR = 0, //Set this to be different for each 
     parameter RESET_TYPE = `NO_RESET,
+    parameter DUT_RST_VAL = 0, //The value of DUT_rst that will reset the DUT
     parameter STICKY_MODE = 1, //If 1, latching registers does not reset them
-    parameter PIPE_STAGE = 0 //This causes a delay on cmd_out in case fanout is
-                             //an issue
+    parameter PIPE_STAGE = 0, //This causes a delay on cmd_out in case fanout is
+                              //an issue
+    parameter SATCNT_WIDTH = 3 //Saturating ocunter for number of cycles slave
+                               //has not been ready
 );
 	reg clk = 0;    
     reg rst = 0;
@@ -222,9 +225,11 @@ module dbg_guv_tb # (
 		.ADDR_WIDTH(ADDR_WIDTH), //This gives 1024 simultaneous debug cores
 		.ADDR(1), //Set this to be different for each 
 		.RESET_TYPE(RESET_TYPE),
+        .DUT_RST_VAL(DUT_RST_VAL),
 		.STICKY_MODE(STICKY_MODE), //If 1, latching registers does not reset them
-		.PIPE_STAGE(PIPE_STAGE) //This causes a delay on cmd_out in case fanout is
-                                //an issue
+		.PIPE_STAGE(PIPE_STAGE), //This causes a delay on cmd_out in case fanout is
+                                 //an issue
+        .SATCNT_WIDTH(SATCNT_WIDTH)
     ) ctl2 (
 		.clk(clk),
 		.rst(rst),

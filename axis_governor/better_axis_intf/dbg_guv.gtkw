@@ -1,12 +1,12 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Mon Mar 23 20:46:40 2020
+[*] Thu Mar 26 16:13:29 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.vcd"
-[dumpfile_mtime] "Mon Mar 23 20:45:59 2020"
-[dumpfile_size] 92571
+[dumpfile_mtime] "Thu Mar 26 16:12:51 2020"
+[dumpfile_size] 148038
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.gtkw"
-[timestart] 64200
+[timestart] 0
 [size] 1916 1060
 [pos] -1 -1
 *-15.640755 335000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
@@ -155,7 +155,9 @@ dbg_guv_tb.log_catted1_TLAST
 -log1
 @800200
 -dbg_guv1
-@25
+@29
+dbg_guv_tb.ctl1.DUT_rst
+@24
 dbg_guv_tb.ctl1.out_not_rdy_cnt[2:0]
 @28
 [color] 7

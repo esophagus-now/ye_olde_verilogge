@@ -39,6 +39,15 @@ cmd_in_TDATA    cmd_in_TVALID   Comments
 0000            0               
 
 
+000B            1               Select dbg_core[0]::dut_reset
+0001            1               Issue reset
+000F            1               Latch            
+0000            0               
+0000            0   
+000B            1               Select dbg_core[0]::dut_reset
+0000            1               Come out of reset
+000F            1               Latch    
+
 
 
 0012            1               Select dbg_core[1]::inj_TDATA

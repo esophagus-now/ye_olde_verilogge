@@ -60,7 +60,7 @@ Mar 23 / 2020 This module now sends command receipts on the logging interface.
 /*
 For future me:
 
-Explanation of the AXI Stream wire on the inside of this module:
+Explanation of the AXI Stream wires on the inside of this module:
 
                     +-----------+                +---------------+
      log----------->|           |                |               |
@@ -718,6 +718,8 @@ module dbg_guv # (
     //than in a header flit. That way, at the cost of more routing resources, 
     //it might be possible to have 100% transparent snooping. I wasn't sure 
     //what to do so I just picked the header method and went with it
+    
+    assign DUT_rst = dut_reset;
     
 endmodule
 
