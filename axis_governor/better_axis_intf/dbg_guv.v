@@ -145,10 +145,10 @@ module dbg_guv # (
     ////////////////////
     
     `localparam REG_ADDR_WIDTH = 4;
+    `localparam KEEP_WIDTH = DATA_WIDTH/8;
     //These just clean up the code slightly
     `localparam NO_RST = (RESET_TYPE == `NO_RESET);
     `localparam HAS_RST = (RESET_TYPE != `NO_RESET);
-    `localparam KEEP_WIDTH = DATA_WIDTH/8;
     
     
 `ifdef ICARUS_VERILOG

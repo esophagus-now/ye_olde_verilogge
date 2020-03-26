@@ -1,7 +1,7 @@
 # Call as:
 # vivado -mode tcl -nolog -nojournal -source scripts/ip_package.tcl -tclargs $out_dir $ip_name $part_name
 
-start_gui
+# start_gui
 
 set out_dir [lindex $argv 0]
 set ip_name [lindex $argv 1]
@@ -87,11 +87,23 @@ set_property value true [ipx::get_hdl_parameters PIPE_STAGE -of_objects [ipx::cu
 set_property value_format bool [ipx::get_user_parameters PIPE_STAGE -of_objects [ipx::current_core]]
 set_property value_format bool [ipx::get_hdl_parameters PIPE_STAGE -of_objects [ipx::current_core]]
 
-# ipx::create_xgui_files [ipx::current_core]
-# ipx::update_checksums [ipx::current_core]
-# ipx::save_core [ipx::current_core]
-# close_project 
-# exit
+# DUT_RST_VAL parameter
+set_property display_name {DUT reset value} [ipgui::get_guiparamspec -name "DUT_RST_VAL" -component [ipx::current_core] ]
+set_property tooltip {The value that, when applied to the DUT reset port, will cause it to reset} [ipgui::get_guiparamspec -name "DUT_RST_VAL" -component [ipx::current_core] ]
+set_property widget {comboBox} [ipgui::get_guiparamspec -name "DUT_RST_VAL" -component [ipx::current_core] ]
+set_property value_validation_type list [ipx::get_user_parameters DUT_RST_VAL -of_objects [ipx::current_core]]
+set_property value_validation_list {0 1} [ipx::get_user_parameters DUT_RST_VAL -of_objects [ipx::current_core]]
+
+# SATCNT_WIDTH parameter
+set_property display_name {Saturating TREADY-low counter width} [ipgui::get_guiparamspec -name "SATCNT_WIDTH" -component [ipx::current_core] ]
+set_property tooltip {Command receipts include a count of cycles since dout_TREADY was last active as a saturating counter. This parameter controls its width} [ipgui::get_guiparamspec -name "SATCNT_WIDTH" -component [ipx::current_core] ]
+set_property widget {textEdit} [ipgui::get_guiparamspec -name "SATCNT_WIDTH" -component [ipx::current_core] ]
+
+ipx::create_xgui_files [ipx::current_core]
+ipx::update_checksums [ipx::current_core]
+ipx::save_core [ipx::current_core]
+close_project 
+exit
 
 
 
