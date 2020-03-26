@@ -114,22 +114,22 @@ module dbg_guv # (
     //to provide access to its ports through this one.
     
     //Input AXI Stream.
-    input wire [DATA_WIDTH-1:0] in_TDATA,
-    input wire in_TVALID,
-    output wire in_TREADY,
-    input wire [DATA_WIDTH/8 -1:0] in_TKEEP,
-    input wire [DEST_WIDTH -1:0] in_TDEST,
-    input wire [ID_WIDTH -1:0] in_TID,
-    input wire in_TLAST,
+    input wire [DATA_WIDTH-1:0] din_TDATA,
+    input wire din_TVALID,
+    output wire din_TREADY,
+    input wire [DATA_WIDTH/8 -1:0] din_TKEEP,
+    input wire [DEST_WIDTH -1:0] din_TDEST,
+    input wire [ID_WIDTH -1:0] din_TID,
+    input wire din_TLAST,
     
     //Output AXI Stream.
-    output wire [DATA_WIDTH-1:0] out_TDATA,
-    output wire out_TVALID,
-    input wire out_TREADY,
-    output wire [DATA_WIDTH/8 -1:0] out_TKEEP,
-    output wire [DEST_WIDTH -1:0] out_TDEST,
-    output wire [ID_WIDTH -1:0] out_TID,
-    output wire out_TLAST,
+    output wire [DATA_WIDTH-1:0] dout_TDATA,
+    output wire dout_TVALID,
+    input wire dout_TREADY,
+    output wire [DATA_WIDTH/8 -1:0] dout_TKEEP,
+    output wire [DEST_WIDTH -1:0] dout_TDEST,
+    output wire [ID_WIDTH -1:0] dout_TID,
+    output wire dout_TLAST,
     
     //DUT Reset output
     output wire DUT_rst,
@@ -218,13 +218,13 @@ module dbg_guv # (
     //reg inj_failed_sig = 0;
     
     //Saturating counter for out ready.    
-    //Counts up when out_TREADY is low, and saturates instead of wrapping
-    //around. Resets to zero when out_TREADY is high
-    reg [SATCNT_WIDTH -1:0] out_not_rdy_cnt = 0;
+    //Counts up when dout_TREADY is low, and saturates instead of wrapping
+    //around. Resets to zero when dout_TREADY is high
+    reg [SATCNT_WIDTH -1:0] dout_not_rdy_cnt = 0;
 `genif (NO_RST) begin
     always @(posedge clk) begin
-        out_not_rdy_cnt <= (!out_TREADY && !latch_sig) ? 
-                            out_not_rdy_cnt + !(&out_not_rdy_cnt) :
+        dout_not_rdy_cnt <= (!dout_TREADY && !latch_sig) ? 
+                            dout_not_rdy_cnt + !(&dout_not_rdy_cnt) :
                             0;
         //If an injection failed, set this to one. Otherwise, leave it as one
         //if it hasn't been sent yet
@@ -232,8 +232,8 @@ module dbg_guv # (
     end
 `else_gen
     always @(posedge clk) begin
-        out_not_rdy_cnt <= (!out_TREADY && !latch_sig && !rst_sig) ? 
-                            out_not_rdy_cnt + !(&out_not_rdy_cnt) :
+        dout_not_rdy_cnt <= (!dout_TREADY && !latch_sig && !rst_sig) ? 
+                            dout_not_rdy_cnt + !(&dout_not_rdy_cnt) :
                             0;
     end
 `endgen
@@ -262,7 +262,7 @@ module dbg_guv # (
 `genif (NO_RST) begin
     always @(posedge clk) begin
         if (latch_sig) begin
-            receipt_TDATA <= {{RECEIPT_PAD_WIDTH{1'b0}}, out_not_rdy_cnt, inj_failed};
+            receipt_TDATA <= {{RECEIPT_PAD_WIDTH{1'b0}}, dout_not_rdy_cnt, inj_failed};
             receipt_TVALID <= 1;
         end else begin
             receipt_TVALID <= `axis_flit(receipt) ? 0 : receipt_TVALID;
@@ -273,7 +273,7 @@ module dbg_guv # (
         if(rst_sig) begin
             receipt_TVALID <= 0;
         end else if (latch_sig) begin
-            receipt_TDATA <= {{RECEIPT_PAD_WIDTH{1'b0}}, out_not_rdy_cnt, inj_failed};
+            receipt_TDATA <= {{RECEIPT_PAD_WIDTH{1'b0}}, dout_not_rdy_cnt, inj_failed};
             receipt_TVALID <= 1;
         end else begin
             receipt_TVALID <= `axis_flit(receipt) ? 0 : receipt_TVALID;
@@ -522,7 +522,7 @@ module dbg_guv # (
             dut_reset <= dut_reset_r;
         end else begin
             //Decrement drop_cnt when flit is sent (if drop_cnt is not already zero)
-            drop_cnt <= (|drop_cnt) ? (drop_cnt - `axis_flit(in)) : drop_cnt;
+            drop_cnt <= (|drop_cnt) ? (drop_cnt - `axis_flit(din)) : drop_cnt;
             //Decrement drop_cnt when flit is logged (if log_cnt is not already zero)
             log_cnt <= (|log_cnt) ? (log_cnt - `axis_flit(log)) : log_cnt;
             //Set inj_TVALID to 0 once an injection occurs
@@ -589,13 +589,13 @@ module dbg_guv # (
 		.clk(clk),
         
         //Input AXI Stream.
-		.in_TDATA(in_TDATA),
-		.in_TVALID(in_TVALID),
-		.in_TREADY(in_TREADY),
-		.in_TKEEP(in_TKEEP),
-		.in_TDEST(in_TDEST),
-		.in_TID(in_TID),
-		.in_TLAST(in_TLAST),
+		.in_TDATA(din_TDATA),
+		.in_TVALID(din_TVALID),
+		.in_TREADY(din_TREADY),
+		.in_TKEEP(din_TKEEP),
+		.in_TDEST(din_TDEST),
+		.in_TID(din_TID),
+		.in_TLAST(din_TLAST),
         
         //Inject AXI Stream. 
 		.inj_TDATA(inj_TDATA),
@@ -607,13 +607,13 @@ module dbg_guv # (
 		.inj_TLAST(inj_TLAST),
         
         //Output AXI Stream.
-		.out_TDATA(out_TDATA),
-		.out_TVALID(out_TVALID),
-		.out_TREADY(out_TREADY),
-		.out_TKEEP(out_TKEEP),
-		.out_TDEST(out_TDEST),
-		.out_TID(out_TID),
-		.out_TLAST(out_TLAST),
+		.out_TDATA(dout_TDATA),
+		.out_TVALID(dout_TVALID),
+		.out_TREADY(dout_TREADY),
+		.out_TKEEP(dout_TKEEP),
+		.out_TDEST(dout_TDEST),
+		.out_TID(dout_TID),
+		.out_TLAST(dout_TLAST),
         
         //Log AXI Stream. 
 		.log_TDATA(log_TDATA),

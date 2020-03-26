@@ -194,22 +194,22 @@ module dbg_guv_tb # (
 		.cmd_out_TVALID(cmd12_TVALID),
         
         //Input AXI Stream.
-		.in_TDATA(in1_TDATA),
-		.in_TVALID(in1_TVALID),
-		.in_TREADY(in1_TREADY),
-		.in_TKEEP(in1_TKEEP),
-		.in_TDEST(in1_TDEST),
-		.in_TID(in1_TID),
-		.in_TLAST(in1_TLAST),
+		.din_TDATA(in1_TDATA),
+		.din_TVALID(in1_TVALID),
+		.din_TREADY(in1_TREADY),
+		.din_TKEEP(in1_TKEEP),
+		.din_TDEST(in1_TDEST),
+		.din_TID(in1_TID),
+		.din_TLAST(in1_TLAST),
         
         //Output AXI Stream.
-		.out_TDATA(out1_TDATA),
-		.out_TVALID(out1_TVALID),
-		.out_TREADY(out1_TREADY),
-		.out_TKEEP(out1_TKEEP),
-		.out_TDEST(out1_TDEST),
-		.out_TID(out1_TID),
-		.out_TLAST(out1_TLAST),
+		.dout_TDATA(out1_TDATA),
+		.dout_TVALID(out1_TVALID),
+		.dout_TREADY(out1_TREADY),
+		.dout_TKEEP(out1_TKEEP),
+		.dout_TDEST(out1_TDEST),
+		.dout_TID(out1_TID),
+		.dout_TLAST(out1_TLAST),
         
         //Log AXI Stream. 
         //This core takes care of concatting the sidechannels into the data part
@@ -241,22 +241,22 @@ module dbg_guv_tb # (
 		.cmd_out_TVALID(cmd_out_TVALID),
         
         //Input AXI Stream.
-		.in_TDATA(in2_TDATA),
-		.in_TVALID(in2_TVALID),
-		.in_TREADY(in2_TREADY),
-		.in_TKEEP(in2_TKEEP),
-		.in_TDEST(in2_TDEST),
-		.in_TID(in2_TID),
-		.in_TLAST(in2_TLAST),
+		.din_TDATA(in2_TDATA),
+		.din_TVALID(in2_TVALID),
+		.din_TREADY(in2_TREADY),
+		.din_TKEEP(in2_TKEEP),
+		.din_TDEST(in2_TDEST),
+		.din_TID(in2_TID),
+		.din_TLAST(in2_TLAST),
         
         //Output AXI Stream.
-		.out_TDATA(out2_TDATA),
-		.out_TVALID(out2_TVALID),
-		.out_TREADY(out2_TREADY),
-		.out_TKEEP(out2_TKEEP),
-		.out_TDEST(out2_TDEST),
-		.out_TID(out2_TID),
-		.out_TLAST(out2_TLAST),
+		.dout_TDATA(out2_TDATA),
+		.dout_TVALID(out2_TVALID),
+		.dout_TREADY(out2_TREADY),
+		.dout_TKEEP(out2_TKEEP),
+		.dout_TDEST(out2_TDEST),
+		.dout_TID(out2_TID),
+		.dout_TLAST(out2_TLAST),
         
         //Log AXI Stream. 
         //This core takes care of concatting the sidechannels into the data part
