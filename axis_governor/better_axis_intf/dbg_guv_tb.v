@@ -162,10 +162,10 @@ module dbg_guv_tb # (
         end
         
         whatever = $random;
-        log_catted1_TREADY = (| whatever[2:0]);
-        //log_catted2_TREADY = (| whatever[5:3]);
-        out1_TREADY = (| whatever[8:6]);
-        out2_TREADY = whatever[9];
+        log_catted1_TREADY <= (| whatever[2:0]);
+        //log_catted2_TREADY <= (| whatever[5:3]);
+        out1_TREADY <= (| whatever[8:6]);
+        out2_TREADY <= whatever[9];
     end
     
     //Wires from ctl1 to ctl2

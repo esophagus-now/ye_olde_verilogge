@@ -187,7 +187,7 @@ module dbg_guv # (
     //injection was still not sent, this value will go to 1.
     //It means that either your new inject or an old inject was dropped,
     //depending on whether you wrote 0 or 1 to inj_TVALID_r
-    `logic inj_failed;
+    wire inj_failed;
     //TODO: delete inj_failed_sig_stuff once sure I don't need it
     //Is 1 when we are sending the inj_failed signal in a command receipt flit
     //wire inj_failed_sig_sent;
@@ -562,7 +562,7 @@ module dbg_guv # (
             dut_reset <= dut_reset_r;
         end else begin
             //Decrement drop_cnt when flit is sent (if drop_cnt is not already zero)
-            drop_cnt <= (|drop_cnt) ? (drop_cnt - `axis_flit(in)) : drop_cnt;
+            drop_cnt <= (|drop_cnt) ? (drop_cnt - `axis_flit(din)) : drop_cnt;
             //Decrement drop_cnt when flit is logged (if log_cnt is not already zero)
             log_cnt <= (|log_cnt) ? (log_cnt - `axis_flit(log)) : log_cnt;
             //Set inj_TVALID to 0 once an injection occurs

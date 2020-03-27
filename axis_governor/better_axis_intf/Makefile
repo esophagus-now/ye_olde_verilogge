@@ -22,7 +22,7 @@ open:	$(MODULE).vcd
 
 # Compile the Verilog into Icarus's special format
 $(MODULE).vvp:	$(MODULE).v $(MODULE)_tb.v $(MODULE)_drivers.mem
-	iverilog -DICARUS_VERILOG -I../ -I../../macros/ -I../../axis_headerizer -g2012 -o $(MODULE).vvp $(MODULE)_tb.v
+	iverilog -DICARUS_VERILOG -I../ -I../../macros/ -I../../axis_headerizer -o $(MODULE).vvp $(MODULE)_tb.v
 
 # Run the Verilog simulator
 $(MODULE).vcd:	$(MODULE).vvp

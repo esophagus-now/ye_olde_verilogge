@@ -40,8 +40,12 @@ set_property interface_mode master [ipx::get_bus_interfaces DUT_resetn -of_objec
 set_property enablement_dependency {spirit:decode(id('MODELPARAM_VALUE.DUT_RST_VAL')) = 0} [ipx::get_bus_interfaces DUT_resetn -of_objects [ipx::current_core]]
 ipx::add_port_map RST [ipx::get_bus_interfaces DUT_resetn -of_objects [ipx::current_core]]
 set_property physical_name DUT_rst [ipx::get_port_maps RST -of_objects [ipx::get_bus_interfaces DUT_resetn -of_objects [ipx::current_core]]]
+set_property display_name DUT_resetn [ipx::get_bus_interfaces DUT_resetn -of_objects [ipx::current_core]]
 ipx::add_bus_parameter POLARITY [ipx::get_bus_interfaces DUT_resetn -of_objects [ipx::current_core]]
 set_property VALUE ACTIVE_LOW [ipx::get_bus_parameters POLARITY -of_objects [ipx::get_bus_interfaces DUT_resetn -of_objects [ipx::current_core]]]
+
+# Fix up 'clk' interface
+set_property VALUE {rst:DUT_rst} [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects [ipx::get_bus_interfaces clk -of_objects [ipx::current_core]]]
 
 # CNT_SIZE parameter
 set_property display_name {Counter size} [ipgui::get_guiparamspec -name "CNT_SIZE" -component [ipx::current_core] ]
@@ -91,9 +95,8 @@ set_property value_format bool [ipx::get_hdl_parameters PIPE_STAGE -of_objects [
 set_property display_name {DUT reset value} [ipgui::get_guiparamspec -name "DUT_RST_VAL" -component [ipx::current_core] ]
 set_property tooltip {The value that, when applied to the DUT reset port, will cause it to reset} [ipgui::get_guiparamspec -name "DUT_RST_VAL" -component [ipx::current_core] ]
 set_property widget {comboBox} [ipgui::get_guiparamspec -name "DUT_RST_VAL" -component [ipx::current_core] ]
-set_property value_validation_type list [ipx::get_user_parameters DUT_RST_VAL -of_objects [ipx::current_core]]
-set_property value_validation_list {0 1} [ipx::get_user_parameters DUT_RST_VAL -of_objects [ipx::current_core]]
-
+set_property value_validation_type pairs [ipx::get_user_parameters DUT_RST_VAL -of_objects [ipx::current_core]]
+set_property value_validation_pairs {{Active low} 0 {Active high} 1} [ipx::get_user_parameters DUT_RST_VAL -of_objects [ipx::current_core]]
 # SATCNT_WIDTH parameter
 set_property display_name {Saturating TREADY-low counter width} [ipgui::get_guiparamspec -name "SATCNT_WIDTH" -component [ipx::current_core] ]
 set_property tooltip {Command receipts include a count of cycles since dout_TREADY was last active as a saturating counter. This parameter controls its width} [ipgui::get_guiparamspec -name "SATCNT_WIDTH" -component [ipx::current_core] ]
