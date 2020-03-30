@@ -192,6 +192,12 @@ module dbg_guv # (
     //Is 1 when we are sending the inj_failed signal in a command receipt flit
     //wire inj_failed_sig_sent;
     
+    //Vivado was making my life difficult, so this pragma helps
+`ifndef ICARUS_VERILOG
+    (* keep = "true" *)
+`endif
+    wire latch_sig;
+    
     ////////////////
     //HELPER WIRES//
     ////////////////
@@ -303,16 +309,16 @@ module dbg_guv # (
     //TODO: register readback?
     //TODO: register to just ask what's going on?
     
-    `localparam CMD_FSM_ADDR = 0;
-    `localparam CMD_FSM_DATA = 1;
-    `localparam CMD_FSM_IGNORE = 2;
+    `localparam [1:0] CMD_FSM_ADDR = 0;
+    `localparam [1:0] CMD_FSM_DATA = 1;
+    `localparam [1:0] CMD_FSM_IGNORE = 2;
     
     reg [1:0] cmd_fsm_state = CMD_FSM_ADDR;
     reg [REG_ADDR_WIDTH -1:0] saved_reg_addr = 0;
     
     //The user puts in a reg address of all ones to commit register values
     wire reg_addr_all_ones = (cmd_reg_addr == {REG_ADDR_WIDTH{1'b1}});
-    wire latch_sig = (cmd_fsm_state == CMD_FSM_ADDR) && msg_for_us && cmd_in_TVALID && reg_addr_all_ones;
+    assign latch_sig = (cmd_fsm_state == CMD_FSM_ADDR) && msg_for_us && cmd_in_TVALID && reg_addr_all_ones;
     
     //In the interests of keeping things simple, the commands will happen over
     //two flits: "address" and "data"
