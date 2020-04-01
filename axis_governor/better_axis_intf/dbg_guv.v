@@ -198,6 +198,9 @@ module dbg_guv # (
 `endif
     wire latch_sig;
     
+    //The log/command receipt after passing through the headerizer
+    `wire_axis_kl(log_with_hdr, DATA_WIDTH);
+    
     ////////////////
     //HELPER WIRES//
     ////////////////
@@ -304,10 +307,8 @@ module dbg_guv # (
     reg keep_logging_r = 0;                    //Reg addr = 9
     reg keep_dropping_r = 0;                   //Reg addr = 10
     reg dut_reset_r = !DUT_RST_VAL;            //Reg addr = 11
-    //reg guv_reset_r = 0;                       //Reg addr = 12
-    //TODO: add registers for resetting DUT and resetting dbg_guv
-    //TODO: register readback?
-    //TODO: register to just ask what's going on?
+    //Special register: if register address is 14, then all S2 registers
+    //are reset
     
     `localparam [1:0] CMD_FSM_ADDR = 0;
     `localparam [1:0] CMD_FSM_DATA = 1;
@@ -355,6 +356,7 @@ module dbg_guv # (
                         9:  keep_logging_r <= cmd_in_TDATA[0];
                         10: keep_dropping_r <= cmd_in_TDATA[0];
                         11: dut_reset_r <= cmd_in_TDATA[0];
+                        //Special "reset all" register has no meaning when STICKY_MODE is 0
                     endcase
                 end CMD_FSM_IGNORE: begin
                     cmd_fsm_state <= CMD_FSM_ADDR;
@@ -387,6 +389,26 @@ module dbg_guv # (
                         9:  keep_logging_r <= cmd_in_TDATA[0];
                         10: keep_dropping_r <= cmd_in_TDATA[0];
                         11: dut_reset_r <= cmd_in_TDATA[0];
+                        //TODO: decide if I want to keep this or just
+                        //require the user to manually reset everything 
+                        //that's what they need
+                        /*
+                        //Special "reset all" register?
+                        14: begin
+							//TODO: maybe try to find more efficient way to do this?
+							drop_cnt_r <= 0;
+							log_cnt_r <= 0;
+							inj_TVALID_r <= 0;
+							inj_TLAST_r <= 0;
+							inj_TKEEP_r <= 0;
+							inj_TDEST_r <= 0;
+							inj_TID_r <= 0;
+							keep_pausing_r <= 0;
+							keep_logging_r <= 0;
+							keep_dropping_r <= 0;
+							dut_reset_r <= !DUT_RST_VAL;
+                        end
+                        */
                     endcase
                 end CMD_FSM_IGNORE: begin
                     cmd_fsm_state <= CMD_FSM_ADDR;
@@ -424,6 +446,7 @@ module dbg_guv # (
                     9:  keep_logging_r <= cmd_in_TDATA[0];
                     10: keep_dropping_r <= cmd_in_TDATA[0];
                     11: dut_reset_r <= cmd_in_TDATA[0];
+                    //Special "reset all" register has no meaning when STICKY_MODE is 0
                 endcase
             end CMD_FSM_IGNORE: begin
                 cmd_fsm_state <= CMD_FSM_ADDR;
@@ -464,6 +487,26 @@ module dbg_guv # (
                         9:  keep_logging_r <= cmd_in_TDATA[0];
                         10: keep_dropping_r <= cmd_in_TDATA[0];
                         11: dut_reset_r <= cmd_in_TDATA[0];
+                        //TODO: decide if I want to keep this or just
+                        //require the user to manually reset everything 
+                        //that's what they need
+                        /*
+                        //Special "reset all" register?
+                        14: begin
+							//TODO: maybe try to find more efficient way to do this?
+							drop_cnt_r <= 0;
+							log_cnt_r <= 0;
+							inj_TVALID_r <= 0;
+							inj_TLAST_r <= 0;
+							inj_TKEEP_r <= 0;
+							inj_TDEST_r <= 0;
+							inj_TID_r <= 0;
+							keep_pausing_r <= 0;
+							keep_logging_r <= 0;
+							keep_dropping_r <= 0;
+							dut_reset_r <= !DUT_RST_VAL;
+                        end
+                        */
                     endcase
                 end CMD_FSM_IGNORE: begin
                     cmd_fsm_state <= CMD_FSM_ADDR;
@@ -646,21 +689,29 @@ module dbg_guv # (
     wire [ADDR_WIDTH + 1 -1:0] to_send_TUSER;
     
     axis_mux # (
-        .DATA_WIDTH(DATA_WIDTH + KEEP_WIDTH + 1 + DEST_WIDTH + ID_WIDTH + ADDR_WIDTH + 1)
-    ) select_receipt_vs_log (    
+        .DATA_WIDTH(DATA_WIDTH + KEEP_WIDTH + DEST_WIDTH + ID_WIDTH + ADDR_WIDTH + 1)
+    ) select_receipt_vs_log (   
+		.clk(clk),
+		
         .sel(receipt_TVALID),
         
-        .A_TDATA({log_TDATA, log_TKEEP, log_TLAST, log_TDEST, log_TID, log_TUSER}),
+        .headerizer_flit(`axis_flit(log_with_hdr)),
+        .headerizer_TLAST(log_with_hdr_TLAST),
+        
+        .A_TDATA({log_TDATA, log_TKEEP, log_TDEST, log_TID, log_TUSER}),
         .A_TVALID(log_TVALID),
         .A_TREADY(log_TREADY),
+        .A_TLAST(log_TLAST),
         
-        .B_TDATA({receipt_TDATA, receipt_TKEEP, receipt_TLAST, receipt_TDEST, receipt_TID, receipt_TUSER}),
+        .B_TDATA({receipt_TDATA, receipt_TKEEP, receipt_TDEST, receipt_TID, receipt_TUSER}),
         .B_TVALID(receipt_TVALID),
         .B_TREADY(receipt_TREADY),
+        .B_TLAST(receipt_TLAST),
         
-        .f_TDATA({to_send_TDATA, to_send_TKEEP, to_send_TLAST, to_send_TDEST, to_send_TID, to_send_TUSER}),
+        .f_TDATA({to_send_TDATA, to_send_TKEEP, to_send_TDEST, to_send_TID, to_send_TUSER}),
         .f_TVALID(to_send_TVALID),
-        .f_TREADY(to_send_TREADY)
+        .f_TREADY(to_send_TREADY),
+        .f_TLAST(to_send_TLAST)
     );
     
     //////////////////////////////////////
@@ -692,7 +743,7 @@ module dbg_guv # (
     // Output flit 1: TDATA = {log_TLAST, log_TDEST, log_TID, log_TUSER}, TKEEP = (all ones), TLAST = 0
     // Output flit 2: TDATA = log_TDATA, TKEEP = log_TKEEP, TLAST = log_TLAST
     
-    `wire_axis_kl(log_with_hdr, DATA_WIDTH);
+    //`wire_axis_kl(log_with_hdr, DATA_WIDTH); //Moved to forward declarations
     
     axis_headerizer # (
 		.DATA_WIDTH(DATA_WIDTH),
@@ -731,21 +782,54 @@ endmodule
 
 /*
 Selects one of two AXI Stream inputs to go to the output. 
+
+MM Apr 1 / 2020 Updated to arbitrate on TLAST
 */
 
 module axis_mux # (
     parameter DATA_WIDTH = 64
 ) (    
+	input wire clk,
     input wire sel,
     
-    `in_axis(A, DATA_WIDTH),
-    `in_axis(B, DATA_WIDTH),
+    //TERRIBLE UNFORGIVABLE HACK: This MUX needs to arbitrate on TLAST of
+    //the headerizer, not its own output. 
+    input wire headerizer_flit,
+    input wire headerizer_TLAST,
     
-    `out_axis(f, DATA_WIDTH)
+    `in_axis_l(A, DATA_WIDTH),
+    `in_axis_l(B, DATA_WIDTH),
+    
+    `out_axis_l(f, DATA_WIDTH)
 );
-    assign f_TDATA = (sel == 1) ? B_TDATA : A_TDATA;
-    assign f_TVALID = (sel == 1) ? B_TVALID : A_TVALID;
+
+	//This is a very subtle technique. We have a one-bit FSM whose two 
+	//states are "decided" and "undecided". When we are in the "decided"
+	//state, our current decision must be equal to whatever decision was
+	//last in effect. Otherwise, our current decision is the input sel.
+	//
+	//We start in the "undecided" state. 
+	//We transition to "decided" when there is a flit on the output (i.e.
+	//a new packet has started).
+	//We transition to the undecided state when there is a TLAST flit on the
+	//output. 
+	//Otherwise, no transition occurs.
+	reg decided = 0;
+	always @(posedge clk) begin
+		//decided <= `axis_flit(f) ? (f_TLAST ? 0 : 1) : decided;
+		decided <= headerizer_flit ? (headerizer_TLAST ? 0 : 1) : decided;
+	end
+	
+	reg prev_decision = 0;
+	wire decision;
+	always @(posedge clk) prev_decision <= decision;
+	
+	assign decision = decided ? prev_decision : sel;
+		
+    assign f_TDATA = (decision == 1) ? B_TDATA : A_TDATA;
+    assign f_TVALID = (decision == 1) ? B_TVALID : A_TVALID;
+    assign f_TLAST = (decision == 1) ? B_TLAST : A_TLAST;
     
-    assign A_TREADY = (sel == 1) ? 0 : f_TREADY;
-    assign B_TREADY = (sel == 1) ? f_TREADY : 0;
+    assign A_TREADY = (decision == 1) ? 0 : f_TREADY;
+    assign B_TREADY = (decision == 1) ? f_TREADY : 0;
 endmodule

@@ -1,23 +1,23 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Mar 26 16:31:37 2020
+[*] Wed Apr  1 13:50:40 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.vcd"
-[dumpfile_mtime] "Thu Mar 26 16:31:14 2020"
-[dumpfile_size] 148068
+[dumpfile_mtime] "Wed Apr  1 13:50:27 2020"
+[dumpfile_size] 185057
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.gtkw"
-[timestart] 0
-[size] 1916 1060
+[timestart] 252600
+[size] 1920 1057
 [pos] -1 -1
-*-15.640755 335000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.640755 350900 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dbg_guv_tb.
 [treeopen] dbg_guv_tb.ctl1.
 [treeopen] dbg_guv_tb.ctl2.
 [treeopen] dbg_guv_tb.ctl2.ello_guvna.
-[sst_width] 279
-[signals_width] 237
+[sst_width] 229
+[signals_width] 390
 [sst_expanded] 1
-[sst_vpaned_height] 575
+[sst_vpaned_height] 660
 @28
 dbg_guv_tb.clk
 dbg_guv_tb.rst
@@ -68,10 +68,6 @@ dbg_guv_tb.out1_TID[15:0]
 -log1
 @28
 dbg_guv_tb.ctl1.latch_sig
-@22
-[color] 3
-dbg_guv_tb.log_catted1_TDATA[71:0]
-@28
 dbg_guv_tb.ctl1.inj_TVALID
 dbg_guv_tb.ctl1.inj_TREADY
 dbg_guv_tb.ctl1.inj_failed
@@ -144,6 +140,10 @@ dbg_guv_tb.ctl1.receipt_TDATA[63:0]
 (63)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
 @1401200
 -group_end
+@22
+dbg_guv_tb.ctl1.log_with_hdr_TDATA[63:0]
+[color] 3
+dbg_guv_tb.log_catted1_TDATA[71:0]
 @28
 [color] 3
 dbg_guv_tb.log_catted1_TVALID
@@ -171,7 +171,7 @@ dbg_guv_tb.ctl1.keep_logging
 -dbg_guv1
 @800200
 -in2
-@24
+@22
 [color] 2
 dbg_guv_tb.in2_TDATA[63:0]
 @28
@@ -206,7 +206,24 @@ dbg_guv_tb.out2_TDEST[15:0]
 dbg_guv_tb.out2_TID[15:0]
 @1000200
 -out2
+@28
+dbg_guv_tb.ctl2.select_receipt_vs_log.clk
+dbg_guv_tb.ctl2.select_receipt_vs_log.sel
+dbg_guv_tb.ctl2.select_receipt_vs_log.f_TREADY
+dbg_guv_tb.ctl2.select_receipt_vs_log.f_TVALID
+@29
+dbg_guv_tb.ctl2.select_receipt_vs_log.f_TLAST
+@28
+dbg_guv_tb.ctl2.select_receipt_vs_log.decided
+dbg_guv_tb.ctl2.select_receipt_vs_log.prev_decision
+dbg_guv_tb.ctl2.select_receipt_vs_log.decision
+dbg_guv_tb.ctl2.latch_sig
 @22
+dbg_guv_tb.ctl2.log_cnt[15:0]
+@28
+dbg_guv_tb.ctl2.keep_logging
+@22
+dbg_guv_tb.ctl2.log_with_hdr_TDATA[63:0]
 dbg_guv_tb.log_catted2_TDATA[71:0]
 @28
 dbg_guv_tb.log_catted2_TVALID

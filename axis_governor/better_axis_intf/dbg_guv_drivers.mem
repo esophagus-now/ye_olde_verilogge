@@ -13,11 +13,37 @@ cmd_in_TDATA    cmd_in_TVALID   Comments
 
 0008            1               Select dbg_core[0]::keep_pausing
 0000            0               
-0000            1               Enable keep_pausing
+0000            1               Disable keep_pausing
 0000            0               
 000F            1               Latch
 0000            0               
+0000            0    
+
+
+           
+0000            0               This next test is to recreate a problem I see in hardware
+0018            1               Select dbg_core[1]::keep_pausing
+0018            0               
+0018            0               
+0018            0               
+0018            0               
+0018            0               
+0018            0               
+000F            1               Enable keep_pausing, but also test that dbg_guv[0] does not latch
+000F            0               
+000F            0               
+000F            0               
+000F            0               
+000F            0               
+000F            0               
+001F            1               Latch            
+0018            1               Select dbg_core[1]::keep_pausing
+0000            1               Disable keep_pausing         
+001F            1               Latch
+
+
 0000            0               
+0000            0   
 
 
 0018            1               Select dbg_core[1]::log_cnt
