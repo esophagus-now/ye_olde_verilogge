@@ -1,0 +1,52 @@
+THIS IS VERY QUICK AND DIRTY I PROMISE I WILL MAKE BETTER DOCS AT SOME POINT
+
+All values are big-endian and right-aligned
+
+Commands
+--------
+
+A normal command is made up of two flits:
+
+    Flit 0: {zero-padding, dbg_guv address, register address}
+    Flit 1: data to put in that register of that dbg_guv, left-padded with zeroes
+
+This choices of registers are:
+
+    Reg addr = 0:  drop_cnt      
+    Reg addr = 1:  log_cnt       
+    Reg addr = 2:  inj_TDATA     
+    Reg addr = 3:  inj_TVALID    
+    Reg addr = 4:  inj_TLAST     
+    Reg addr = 5:  inj_TKEEP     
+    Reg addr = 6:  inj_TDEST     
+    Reg addr = 7:  inj_TID       
+    Reg addr = 8:  keep_pausing  
+    Reg addr = 9:  keep_logging  
+    Reg addr = 10: keep_dropping 
+    Reg addr = 11: dut_reset     
+    
+
+A latch command only has one flit:
+
+    Flit 0: {zero-padding, dbg_guv address, 4'hF}
+
+Please note that once you have entered an address flit for a normal command, 
+the next flit is always interpreted as data. In other words, to send a latch 
+command, you must complete any partial normal commands.
+
+
+
+Logs and Command Receipts
+-------------------------
+
+All logs and command receipts occur over two flits:
+
+Flit 0: {zero-padding, TLAST, TDEST, TID, L/C, dbg_guv_address}
+	-> If L/C is 0, it means this is a log. If it is 1, it is a command receipt
+
+Flit 1, if L/C is 0: TDATA and TKEEP of the logged flit
+
+Flit 1, if L/C is 1: {zero_padding, dout_not_rdy_cnt, inj_failed, dut_reset, inj_TVALID, |drop_cnt, |log_cnt, keep_dropping, keep_logging, keep_pausing}
+
+NOTE: dout_not_rdy_cnt is a saturating counter which counts how many cycles
+since out_TVALID was last ready when the latch command was received.

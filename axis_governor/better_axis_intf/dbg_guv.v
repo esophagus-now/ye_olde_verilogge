@@ -217,78 +217,6 @@ module dbg_guv # (
 `else_gen
     assign rst_sig = ~rst;
 `endgen
-
-    ////////////////////////
-    //COMMAND RECEIPT INFO//
-    ////////////////////////
-    
-    //inj_failed is a wire. This register answers the question "has an injection
-    //failed since the last time I checked?"
-    //reg inj_failed_sig = 0;
-    
-    //Saturating counter for out ready.    
-    //Counts up when dout_TREADY is low, and saturates instead of wrapping
-    //around. Resets to zero when dout_TREADY is high
-    reg [SATCNT_WIDTH -1:0] dout_not_rdy_cnt = 0;
-`genif (NO_RST) begin
-    always @(posedge clk) begin
-        dout_not_rdy_cnt <= (!dout_TREADY && !latch_sig) ? 
-                            dout_not_rdy_cnt + !(&dout_not_rdy_cnt) :
-                            0;
-        //If an injection failed, set this to one. Otherwise, leave it as one
-        //if it hasn't been sent yet
-        //inj_failed_sig <= (inj_failed_sig && !inj_failed_sig_sent) || inj_failed;
-    end
-`else_gen
-    always @(posedge clk) begin
-        dout_not_rdy_cnt <= (!dout_TREADY && !latch_sig && !rst_sig) ? 
-                            dout_not_rdy_cnt + !(&dout_not_rdy_cnt) :
-                            0;
-    end
-`endgen
-    
-    //At some point, we will select whether to send a command receipt or a log.
-    reg [DATA_WIDTH -1:0] receipt_TDATA = 0;
-    reg receipt_TVALID = 0;
-    wire receipt_TREADY;
-    //These next five guys are constants to make the code look more consistent
-    wire [KEEP_WIDTH -1:0] receipt_TKEEP = {KEEP_WIDTH{1'b1}};
-    wire receipt_TLAST = 1;
-    wire [DEST_WIDTH -1:0] receipt_TDEST = 0;
-    wire [ID_WIDTH -1:0] receipt_TID = 0;
-    wire [ADDR_WIDTH + 1 -1:0] receipt_TUSER = {1'b1, ADDR};
-    
-    `localparam RECEIPT_PAD_WIDTH = DATA_WIDTH - SATCNT_WIDTH - 1;
-`ifdef ICARUS_VERILOG
-    initial begin
-        $display("RECEIPT_PAD_WIDTH = %d", RECEIPT_PAD_WIDTH);
-        $display("SATCNT_WIDTH = %d", SATCNT_WIDTH);
-    end
-`endif
-
-    //Rule: user must always wait for a command receipt, or else they risk 
-    //clobbering one
-`genif (NO_RST) begin
-    always @(posedge clk) begin
-        if (latch_sig) begin
-            receipt_TDATA <= {{RECEIPT_PAD_WIDTH{1'b0}}, dout_not_rdy_cnt, inj_failed};
-            receipt_TVALID <= 1;
-        end else begin
-            receipt_TVALID <= `axis_flit(receipt) ? 0 : receipt_TVALID;
-        end
-    end
-`else_gen
-    always @(posedge clk) begin
-        if(rst_sig) begin
-            receipt_TVALID <= 0;
-        end else if (latch_sig) begin
-            receipt_TDATA <= {{RECEIPT_PAD_WIDTH{1'b0}}, dout_not_rdy_cnt, inj_failed};
-            receipt_TVALID <= 1;
-        end else begin
-            receipt_TVALID <= `axis_flit(receipt) ? 0 : receipt_TVALID;
-        end
-    end
-`endgen
     
     ///////////////////////////
     //COMMAND INTERPRETER FSM//
@@ -515,7 +443,80 @@ module dbg_guv # (
         end
     end
 `endgen
+
+    ////////////////////////
+    //COMMAND RECEIPT INFO//
+    ////////////////////////
     
+    //inj_failed is a wire. This register answers the question "has an injection
+    //failed since the last time I checked?"
+    //reg inj_failed_sig = 0;
+    
+    //Saturating counter for out ready.    
+    //Counts up when dout_TREADY is low, and saturates instead of wrapping
+    //around. Resets to zero when dout_TREADY is high
+    reg [SATCNT_WIDTH -1:0] dout_not_rdy_cnt = 0;
+`genif (NO_RST) begin
+    always @(posedge clk) begin
+        dout_not_rdy_cnt <= (!dout_TREADY && !latch_sig) ? 
+                            dout_not_rdy_cnt + !(&dout_not_rdy_cnt) :
+                            0;
+        //If an injection failed, set this to one. Otherwise, leave it as one
+        //if it hasn't been sent yet
+        //inj_failed_sig <= (inj_failed_sig && !inj_failed_sig_sent) || inj_failed;
+    end
+`else_gen
+    always @(posedge clk) begin
+        dout_not_rdy_cnt <= (!dout_TREADY && !latch_sig && !rst_sig) ? 
+                            dout_not_rdy_cnt + !(&dout_not_rdy_cnt) :
+                            0;
+    end
+`endgen
+    
+    //At some point, we will select whether to send a command receipt or a log.
+    reg [DATA_WIDTH -1:0] receipt_TDATA = 0;
+    reg receipt_TVALID = 0;
+    wire receipt_TREADY;
+    //These next five guys are constants to make the code look more consistent
+    wire [KEEP_WIDTH -1:0] receipt_TKEEP = {KEEP_WIDTH{1'b1}};
+    wire receipt_TLAST = 1;
+    wire [DEST_WIDTH -1:0] receipt_TDEST = 0;
+    wire [ID_WIDTH -1:0] receipt_TID = 0;
+    wire [ADDR_WIDTH + 1 -1:0] receipt_TUSER = {1'b1, ADDR};
+    
+    //Receipt TDATA format = {zero_padding, dout_not_rdy_cnt, inj_failed, dut_reset, inj_TVALID, |drop_cnt, |log_cnt, keep_dropping, keep_logging, keep_pausing}
+    `localparam RECEIPT_PAD_WIDTH = DATA_WIDTH - SATCNT_WIDTH - 8;
+`ifdef ICARUS_VERILOG
+    initial begin
+        $display("RECEIPT_PAD_WIDTH = %d", RECEIPT_PAD_WIDTH);
+        $display("SATCNT_WIDTH = %d", SATCNT_WIDTH);
+    end
+`endif
+
+    //Rule: user must always wait for a command receipt, or else they risk 
+    //clobbering one
+`genif (NO_RST) begin
+    always @(posedge clk) begin
+        if (latch_sig) begin
+            receipt_TDATA <= {{RECEIPT_PAD_WIDTH{1'b0}}, dout_not_rdy_cnt, inj_failed, dut_reset_r, inj_TVALID_r, |drop_cnt_r, |log_cnt_r, keep_dropping_r, keep_logging_r, keep_pausing_r};
+            receipt_TVALID <= 1;
+        end else begin
+            receipt_TVALID <= `axis_flit(receipt) ? 0 : receipt_TVALID;
+        end
+    end
+`else_gen
+    always @(posedge clk) begin
+        if(rst_sig) begin
+            receipt_TVALID <= 0;
+        end else if (latch_sig) begin
+            receipt_TDATA <= {{RECEIPT_PAD_WIDTH{1'b0}}, dout_not_rdy_cnt, inj_failed, dut_reset_r, inj_TVALID_r, |drop_cnt_r, |log_cnt_r, keep_dropping_r, keep_logging_r, keep_pausing_r};
+            receipt_TVALID <= 1;
+        end else begin
+            receipt_TVALID <= `axis_flit(receipt) ? 0 : receipt_TVALID;
+        end
+    end
+`endgen
+
     ////////////////////////
     //GOVERNOR CONTROL FSM//
     ////////////////////////
