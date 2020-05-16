@@ -102,6 +102,39 @@ set_property display_name {Saturating TREADY-low counter width} [ipgui::get_guip
 set_property tooltip {Command receipts include a count of cycles since dout_TREADY was last active as a saturating counter. This parameter controls its width} [ipgui::get_guiparamspec -name "SATCNT_WIDTH" -component [ipx::current_core] ]
 set_property widget {textEdit} [ipgui::get_guiparamspec -name "SATCNT_WIDTH" -component [ipx::current_core] ]
 
+# DEFAULT_PAUSE parameter
+set_property display_name {Pause on startup} [ipgui::get_guiparamspec -name "DEFAULT_PAUSE" -component [ipx::current_core] ]
+set_property tooltip {On powerup, keep_pausing is 1. This takes precedence over keep_logging and keep_dropping} [ipgui::get_guiparamspec -name "DEFAULT_PAUSE" -component [ipx::current_core] ]
+set_property widget {checkBox} [ipgui::get_guiparamspec -name "DEFAULT_PAUSE" -component [ipx::current_core] ]
+set_property value false [ipx::get_user_parameters DEFAULT_PAUSE -of_objects [ipx::current_core]]
+set_property value false [ipx::get_hdl_parameters DEFAULT_PAUSE -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_user_parameters DEFAULT_PAUSE -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_hdl_parameters DEFAULT_PAUSE -of_objects [ipx::current_core]]
+
+# DEFAULT_LOG parameter
+set_property display_name {Log on startup} [ipgui::get_guiparamspec -name "DEFAULT_LOG" -component [ipx::current_core] ]
+set_property tooltip {At powerup, keep_logging is 1. Note that keep_pausing takes precedence} [ipgui::get_guiparamspec -name "DEFAULT_LOG" -component [ipx::current_core] ]
+set_property widget {checkBox} [ipgui::get_guiparamspec -name "DEFAULT_LOG" -component [ipx::current_core] ]
+set_property value false [ipx::get_user_parameters DEFAULT_LOG -of_objects [ipx::current_core]]
+set_property value false [ipx::get_hdl_parameters DEFAULT_LOG -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_user_parameters DEFAULT_LOG -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_hdl_parameters DEFAULT_LOG -of_objects [ipx::current_core]]
+
+# DEFAULT_DROP parameter
+set_property display_name {Drop on startup} [ipgui::get_guiparamspec -name "DEFAULT_DROP" -component [ipx::current_core] ]
+set_property tooltip {On powerup, keep_dropping is on. Note that keep_pausing has higher precedence} [ipgui::get_guiparamspec -name "DEFAULT_DROP" -component [ipx::current_core] ]
+set_property widget {checkBox} [ipgui::get_guiparamspec -name "DEFAULT_DROP" -component [ipx::current_core] ]
+set_property value false [ipx::get_user_parameters DEFAULT_DROP -of_objects [ipx::current_core]]
+set_property value false [ipx::get_hdl_parameters DEFAULT_DROP -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_user_parameters DEFAULT_DROP -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_hdl_parameters DEFAULT_DROP -of_objects [ipx::current_core]]
+set_property value_validation_list value [ipx::get_user_parameters DEFAULT_DROP -of_objects [ipx::current_core]]
+set_property value_validation_type none [ipx::get_user_parameters DEFAULT_DROP -of_objects [ipx::current_core]]
+
+# DEFAULT_INJECT parameter
+# Why did I even make this?
+ipgui::remove_param -component [ipx::current_core] [ipgui::get_guiparamspec -name "DEFAULT_INJECT" -component [ipx::current_core]]
+
 ipx::create_xgui_files [ipx::current_core]
 ipx::update_checksums [ipx::current_core]
 ipx::save_core [ipx::current_core]

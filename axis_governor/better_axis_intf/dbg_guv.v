@@ -90,8 +90,12 @@ module dbg_guv # (
     parameter STICKY_MODE = 1, //If 1, latching registers does not reset them
     parameter PIPE_STAGE = 1, //This causes a delay on cmd_out in case fanout is
                               //an issue
-    parameter SATCNT_WIDTH = 3 //Saturating ocunter for number of cycles slave
+    parameter SATCNT_WIDTH = 3, //Saturating ocunter for number of cycles slave
                                //has not been ready
+    parameter DEFAULT_DROP = 0,
+    parameter DEFAULT_LOG = 0,
+    parameter DEFAULT_PAUSE = 0,
+    parameter DEFAULT_INJECT = 0
 ) (
     input wire clk,
     input wire rst,
@@ -323,18 +327,18 @@ module dbg_guv # (
                         /*
                         //Special "reset all" register?
                         14: begin
-							//TODO: maybe try to find more efficient way to do this?
-							drop_cnt_r <= 0;
-							log_cnt_r <= 0;
-							inj_TVALID_r <= 0;
-							inj_TLAST_r <= 0;
-							inj_TKEEP_r <= 0;
-							inj_TDEST_r <= 0;
-							inj_TID_r <= 0;
-							keep_pausing_r <= 0;
-							keep_logging_r <= 0;
-							keep_dropping_r <= 0;
-							dut_reset_r <= !DUT_RST_VAL;
+                            //TODO: maybe try to find more efficient way to do this?
+                            drop_cnt_r <= 0;
+                            log_cnt_r <= 0;
+                            inj_TVALID_r <= 0;
+                            inj_TLAST_r <= 0;
+                            inj_TKEEP_r <= 0;
+                            inj_TDEST_r <= 0;
+                            inj_TID_r <= 0;
+                            keep_pausing_r <= 0;
+                            keep_logging_r <= 0;
+                            keep_dropping_r <= 0;
+                            dut_reset_r <= !DUT_RST_VAL;
                         end
                         */
                     endcase
@@ -421,18 +425,18 @@ module dbg_guv # (
                         /*
                         //Special "reset all" register?
                         14: begin
-							//TODO: maybe try to find more efficient way to do this?
-							drop_cnt_r <= 0;
-							log_cnt_r <= 0;
-							inj_TVALID_r <= 0;
-							inj_TLAST_r <= 0;
-							inj_TKEEP_r <= 0;
-							inj_TDEST_r <= 0;
-							inj_TID_r <= 0;
-							keep_pausing_r <= 0;
-							keep_logging_r <= 0;
-							keep_dropping_r <= 0;
-							dut_reset_r <= !DUT_RST_VAL;
+                            //TODO: maybe try to find more efficient way to do this?
+                            drop_cnt_r <= 0;
+                            log_cnt_r <= 0;
+                            inj_TVALID_r <= 0;
+                            inj_TLAST_r <= 0;
+                            inj_TKEEP_r <= 0;
+                            inj_TDEST_r <= 0;
+                            inj_TID_r <= 0;
+                            keep_pausing_r <= 0;
+                            keep_logging_r <= 0;
+                            keep_dropping_r <= 0;
+                            dut_reset_r <= !DUT_RST_VAL;
                         end
                         */
                     endcase
@@ -524,14 +528,14 @@ module dbg_guv # (
     reg [CNT_SIZE -1:0] drop_cnt = 0;
     reg [CNT_SIZE -1:0] log_cnt = 0;
     reg [DATA_WIDTH -1:0] inj_TDATA = 0;
-    reg inj_TVALID = 0;
+    reg inj_TVALID = DEFAULT_INJECT[0];
     reg inj_TLAST = 0;
     reg [KEEP_WIDTH -1:0] inj_TKEEP = 0;
     reg [DEST_WIDTH -1:0] inj_TDEST = 0;
     reg [ID_WIDTH -1:0] inj_TID = 0;
-    reg keep_pausing = 0;
-    reg keep_logging = 0;
-    reg keep_dropping = 0;
+    reg keep_pausing = DEFAULT_PAUSE[0];
+    reg keep_logging = DEFAULT_LOG[0];
+    reg keep_dropping = DEFAULT_DROP[0];
     reg dut_reset = !DUT_RST_VAL;
     
     //Governor control wires. These feed directly into axis_governor
@@ -632,52 +636,52 @@ module dbg_guv # (
     /////////////////////////////
     
     axis_governor #(
-		.DATA_WIDTH(DATA_WIDTH),
-		.DEST_WIDTH(DEST_WIDTH),
-		.ID_WIDTH(ID_WIDTH)
+        .DATA_WIDTH(DATA_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH),
+        .ID_WIDTH(ID_WIDTH)
     ) ello_guvna (    
-		.clk(clk),
+        .clk(clk),
         
         //Input AXI Stream.
-		.in_TDATA(din_TDATA),
-		.in_TVALID(din_TVALID),
-		.in_TREADY(din_TREADY),
-		.in_TKEEP(din_TKEEP),
-		.in_TDEST(din_TDEST),
-		.in_TID(din_TID),
-		.in_TLAST(din_TLAST),
+        .in_TDATA(din_TDATA),
+        .in_TVALID(din_TVALID),
+        .in_TREADY(din_TREADY),
+        .in_TKEEP(din_TKEEP),
+        .in_TDEST(din_TDEST),
+        .in_TID(din_TID),
+        .in_TLAST(din_TLAST),
         
         //Inject AXI Stream. 
-		.inj_TDATA(inj_TDATA),
-		.inj_TVALID(inj_TVALID),
-		.inj_TREADY(inj_TREADY),
-		.inj_TKEEP(inj_TKEEP),
-		.inj_TDEST(inj_TDEST),
-		.inj_TID(inj_TID),
-		.inj_TLAST(inj_TLAST),
+        .inj_TDATA(inj_TDATA),
+        .inj_TVALID(inj_TVALID),
+        .inj_TREADY(inj_TREADY),
+        .inj_TKEEP(inj_TKEEP),
+        .inj_TDEST(inj_TDEST),
+        .inj_TID(inj_TID),
+        .inj_TLAST(inj_TLAST),
         
         //Output AXI Stream.
-		.out_TDATA(dout_TDATA),
-		.out_TVALID(dout_TVALID),
-		.out_TREADY(dout_TREADY),
-		.out_TKEEP(dout_TKEEP),
-		.out_TDEST(dout_TDEST),
-		.out_TID(dout_TID),
-		.out_TLAST(dout_TLAST),
+        .out_TDATA(dout_TDATA),
+        .out_TVALID(dout_TVALID),
+        .out_TREADY(dout_TREADY),
+        .out_TKEEP(dout_TKEEP),
+        .out_TDEST(dout_TDEST),
+        .out_TID(dout_TID),
+        .out_TLAST(dout_TLAST),
         
         //Log AXI Stream. 
-		.log_TDATA(log_TDATA),
-		.log_TVALID(log_TVALID),
-		.log_TREADY(log_TREADY),
-		.log_TKEEP(log_TKEEP),
-		.log_TDEST(log_TDEST),
-		.log_TID(log_TID),
-		.log_TLAST(log_TLAST),
+        .log_TDATA(log_TDATA),
+        .log_TVALID(log_TVALID),
+        .log_TREADY(log_TREADY),
+        .log_TKEEP(log_TKEEP),
+        .log_TDEST(log_TDEST),
+        .log_TID(log_TID),
+        .log_TLAST(log_TLAST),
         
         //Control signals
-		.pause(pause),
-		.drop(drop),
-		.log_en(log_en)
+        .pause(pause),
+        .drop(drop),
+        .log_en(log_en)
     );    
     
     //////////////////////////////////////////////////
@@ -692,8 +696,8 @@ module dbg_guv # (
     axis_mux # (
         .DATA_WIDTH(DATA_WIDTH + KEEP_WIDTH + DEST_WIDTH + ID_WIDTH + ADDR_WIDTH + 1)
     ) select_receipt_vs_log (   
-		.clk(clk),
-		
+        .clk(clk),
+        
         .sel(receipt_TVALID),
         
         .headerizer_flit(`axis_flit(log_with_hdr)),
@@ -747,20 +751,20 @@ module dbg_guv # (
     //`wire_axis_kl(log_with_hdr, DATA_WIDTH); //Moved to forward declarations
     
     axis_headerizer # (
-		.DATA_WIDTH(DATA_WIDTH),
-		.DEST_WIDTH(DEST_WIDTH),
-		.ID_WIDTH(ID_WIDTH),
-		.USER_WIDTH(ADDR_WIDTH+1),
-		.RESET_TYPE(RESET_TYPE),
+        .DATA_WIDTH(DATA_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH),
+        .ID_WIDTH(ID_WIDTH),
+        .USER_WIDTH(ADDR_WIDTH+1),
+        .RESET_TYPE(RESET_TYPE),
         .ENABLE_TLAST_HACK(1)
     ) headerizer (
-		.clk(clk),
-		.rst(rst),
+        .clk(clk),
+        .rst(rst),
         
         `inst_axis_kl(sides, to_send), //TODO: probably better to override here?
-		.sides_TDEST(to_send_TDEST),
-		.sides_TID(to_send_TID),
-		.sides_TUSER(to_send_TUSER),
+        .sides_TDEST(to_send_TDEST),
+        .sides_TID(to_send_TID),
+        .sides_TUSER(to_send_TUSER),
         
         `inst_axis_kl(hdr, log_with_hdr)
     );
@@ -790,7 +794,7 @@ MM Apr 1 / 2020 Updated to arbitrate on TLAST
 module axis_mux # (
     parameter DATA_WIDTH = 64
 ) (    
-	input wire clk,
+    input wire clk,
     input wire sel,
     
     //TERRIBLE UNFORGIVABLE HACK: This MUX needs to arbitrate on TLAST of
@@ -804,29 +808,29 @@ module axis_mux # (
     `out_axis_l(f, DATA_WIDTH)
 );
 
-	//This is a very subtle technique. We have a one-bit FSM whose two 
-	//states are "decided" and "undecided". When we are in the "decided"
-	//state, our current decision must be equal to whatever decision was
-	//last in effect. Otherwise, our current decision is the input sel.
-	//
-	//We start in the "undecided" state. 
-	//We transition to "decided" when there is a flit on the output (i.e.
-	//a new packet has started).
-	//We transition to the undecided state when there is a TLAST flit on the
-	//output. 
-	//Otherwise, no transition occurs.
-	reg decided = 0;
-	always @(posedge clk) begin
-		//decided <= `axis_flit(f) ? (f_TLAST ? 0 : 1) : decided;
-		decided <= headerizer_flit ? (headerizer_TLAST ? 0 : 1) : decided;
-	end
-	
-	reg prev_decision = 0;
-	wire decision;
-	always @(posedge clk) prev_decision <= decision;
-	
-	assign decision = decided ? prev_decision : sel;
-		
+    //This is a very subtle technique. We have a one-bit FSM whose two 
+    //states are "decided" and "undecided". When we are in the "decided"
+    //state, our current decision must be equal to whatever decision was
+    //last in effect. Otherwise, our current decision is the input sel.
+    //
+    //We start in the "undecided" state. 
+    //We transition to "decided" when there is a flit on the output (i.e.
+    //a new packet has started).
+    //We transition to the undecided state when there is a TLAST flit on the
+    //output. 
+    //Otherwise, no transition occurs.
+    reg decided = 0;
+    always @(posedge clk) begin
+        //decided <= `axis_flit(f) ? (f_TLAST ? 0 : 1) : decided;
+        decided <= headerizer_flit ? (headerizer_TLAST ? 0 : 1) : decided;
+    end
+    
+    reg prev_decision = 0;
+    wire decision;
+    always @(posedge clk) prev_decision <= decision;
+    
+    assign decision = decided ? prev_decision : sel;
+        
     assign f_TDATA = (decision == 1) ? B_TDATA : A_TDATA;
     assign f_TVALID = (decision == 1) ? B_TVALID : A_TVALID;
     assign f_TLAST = (decision == 1) ? B_TLAST : A_TLAST;

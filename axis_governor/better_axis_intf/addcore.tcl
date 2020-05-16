@@ -85,11 +85,11 @@ proc add_dbg_core_to_net {n inst {tdata_width 64} {tdest_width 8} {tid_width 8}}
     
     # Connect the dbg_guv to the loose endpoints
     if ![string compare [get_property MODE $left] Master] {
-        connect_bd_intf_net $g/out $right
-        connect_bd_intf_net $left $g/in
+        connect_bd_intf_net $g/dout $right
+        connect_bd_intf_net $left $g/din
     } else {
-        connect_bd_intf_net $g/out $left
-        connect_bd_intf_net $right $g/in
+        connect_bd_intf_net $g/dout $left
+        connect_bd_intf_net $right $g/din
     }
     
     return $g
@@ -197,16 +197,16 @@ proc rr_tree {msts {data_w 64}} {
 proc del_dbg_core {c} {
     startgroup
     
-    set left [get_bd_intf_nets -of_objects [get_bd_intf_pins $c/in]]
-    set mst [get_bd_intf_pins -of_objects $left -filter "PATH !~ $c/in" -quiet]
+    set left [get_bd_intf_nets -of_objects [get_bd_intf_pins $c/din]]
+    set mst [get_bd_intf_pins -of_objects $left -filter "PATH !~ $c/din" -quiet]
     if {[llength $mst] == 0} {
-        set mst [get_bd_intf_ports -of_objects $left -filter "PATH !~ $c/in" -quiet]
+        set mst [get_bd_intf_ports -of_objects $left -filter "PATH !~ $c/din" -quiet]
     }
     
-    set right [get_bd_intf_nets -of_objects [get_bd_intf_pins $c/out]]
-    set slv [get_bd_intf_pins -of_objects $right -filter "PATH !~ $c/out" -quiet]
+    set right [get_bd_intf_nets -of_objects [get_bd_intf_pins $c/dout]]
+    set slv [get_bd_intf_pins -of_objects $right -filter "PATH !~ $c/dout" -quiet]
     if {[llength $slv] == 0} {
-        set slv [get_bd_intf_ports -of_objects $right -filter "PATH !~ $c/in" -quiet]
+        set slv [get_bd_intf_ports -of_objects $right -filter "PATH !~ $c/din" -quiet]
     }
     
     delete_bd_objs [get_bd_intf_nets $left] [get_bd_intf_nets $right]
