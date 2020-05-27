@@ -24,7 +24,7 @@ open:	$(MODULE).vcd
 
 # Compile the Verilog into Icarus's special format
 $(MODULE).vvp:	$(MODULE).v $(MODULE)_tb.v $(MODULE)_drivers.mem
-	iverilog ${IVERILOG_WARNS} -DICARUS_VERILOG -I../ -I../../macros/ -I../../axis_headerizer -o $(MODULE).vvp $(MODULE)_tb.v
+	iverilog ${IVERILOG_WARNS} -DICARUS_VERILOG -Iaxis_governor/ -I../macros/ -I../axis_headerizer -o $(MODULE).vvp $(MODULE)_tb.v
 
 # Run the Verilog simulator
 $(MODULE).vcd:	$(MODULE).vvp
@@ -40,7 +40,7 @@ clean:
 ip: clean
 	rm -rf ${out_dir}
 	mkdir -p ${out_dir}/src
-	cp dbg_guv.v ../axis_governor.v ../../macros/macros.vh ../../axis_headerizer/axis_headerizer.v ${out_dir}/src
+	cp dbg_guv.v axis_governor/axis_governor.v ../macros/macros.vh ../axis_headerizer/axis_headerizer.v ${out_dir}/src
 	vivado -nolog -nojournal -notrace -mode batch -source ip_maker.tcl -tclargs ${out_dir} ${ip_name} ${part_no}
 	rm -rf ${ip_name}_tmp_proj
 	rm -f *log
@@ -48,6 +48,6 @@ ip: clean
 	rm -f vivado*
 
 syntax_check:
-	iverilog -DICARUS_VERILOG -I../ -I../../macros/ -I../../axis_headerizer -g2012 -o $(MODULE).vvp $(MODULE).v
+	iverilog ${IVERILOG_WARNS} -DICARUS_VERILOG -Iaxis_governor/ -I../macros/ -I../axis_headerizer -g2012 -o $(MODULE).vvp $(MODULE).v
 	rm -rf $(MODULE).vvp
  
