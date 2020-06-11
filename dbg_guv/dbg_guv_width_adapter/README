@@ -1,0 +1,7 @@
+To build the testbench, you will require sonar, an excellent tool developed
+by Varun Sharma:
+
+https://github.com/sharm294/sonar
+
+This takes a nice Python script and auto-generates the hiedous SystemVerilog
+that would otehrwise be necessary.
