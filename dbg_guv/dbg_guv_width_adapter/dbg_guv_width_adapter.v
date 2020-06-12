@@ -235,16 +235,30 @@ end else begin
 `genif (RESET_TYPE == `NO_RESET) begin
     //Keep track of how many payload words left to send
     always @(posedge clk) begin
-        keep_countdown[0] <= (state == STATE_SEND_HEADER) ?
-            payload_TKEEP[(WORD_SIZE/8)-1]
-            : (`axis_flit(adapted) ? keep_countdown[0] : 0)
+        keep_countdown[0] <=  
+            `si(state == STATE_SEND_HEADER) `prendre
+                payload_TKEEP[(WORD_SIZE/8)-1]
+            `autrement
+                `si(`axis_flit(adapted)) `prendre
+                    1'b0
+                `autrement
+                    keep_countdown[0]
+                `fin
+            `fin
         ;
     end
     for (i = 1; i < PAYLOAD_WORDS-1; i = i + 1) begin
         always @(posedge clk) begin
-            keep_countdown[i] <= (state == STATE_SEND_HEADER) ?
-                payload_TKEEP[(WORD_SIZE/8)*(i+1) -1]
-                : (`axis_flit(adapted) ? keep_countdown[i] : keep_countdown[i-1])
+            keep_countdown[i] <= 
+                `si(state == STATE_SEND_HEADER) `prendre
+                    payload_TKEEP[(WORD_SIZE/8)*(i+1) -1]
+                `autrement
+                    `si(`axis_flit(adapted)) `prendre
+                        keep_countdown[i-1]
+                    `autrement 
+                        keep_countdown[i]
+                    `fin
+                `fin
             ;
         end
     end
@@ -253,9 +267,16 @@ end else begin
     always @(posedge clk) begin
         if (rst_sig) keep_countdown[0] <= 0;
         else begin
-            keep_countdown[0] <= (state == STATE_SEND_HEADER) ?
-                payload_TKEEP[(WORD_SIZE/8)-1]
-                : (`axis_flit(adapted) ? keep_countdown[0] : 0)
+            keep_countdown[0] <= 
+                `si(state == STATE_SEND_HEADER) `prendre
+                    payload_TKEEP[(WORD_SIZE/8)-1]
+                `autrement
+                    `si(`axis_flit(adapted)) `prendre
+                        1'b0
+                    `autrement
+                        keep_countdown[0]
+                    `fin
+                `fin
             ;
         end
     end
@@ -263,9 +284,16 @@ end else begin
         always @(posedge clk) begin
             if (rst_sig) keep_countdown[i] <= 0;
             else begin
-                keep_countdown[i] <= (state == STATE_SEND_HEADER) ?
-                    payload_TKEEP[(WORD_SIZE/8)*(i+1) -1]
-                    : (`axis_flit(adapted) ? keep_countdown[i] : keep_countdown[i-1])
+                keep_countdown[i] <= 
+                    `si(state == STATE_SEND_HEADER) `prendre
+                        payload_TKEEP[(WORD_SIZE/8)*(i+1) -1]
+                    `autrement
+                        `si(`axis_flit(adapted)) `prendre
+                            keep_countdown[i-1]
+                        `autrement 
+                            keep_countdown[i]
+                        `fin
+                    `fin
                 ;
             end
         end

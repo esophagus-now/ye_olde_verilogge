@@ -13,6 +13,8 @@ clean_vivado:
 	rm -rf xelab*
 	rm -rf xvlog*
 	rm -rf xsim*
+	rm -rf vivado*
+	rm -rf .Xil
 
 clean: clean_vivado
 	rm -rf *sv

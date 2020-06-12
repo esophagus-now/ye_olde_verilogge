@@ -16,6 +16,7 @@ filepath = os.path.join(os.path.dirname(__file__), "./")
 
 # create a DUT module named 'DUT' and specify its signal ports
 dut = Module.default("DUT")
+dut.add_parameter("PAYLOAD_WORDS", 3)
 dut.add_clock_port("clk", "10ns")
 dut.add_reset_port("rst")
 dut.add_port("header", size=32, direction="input")
@@ -31,10 +32,10 @@ dut.add_interface(adapted)
 # of 64 and add it to the DUT.
 payload = AXIS("payload", "slave", "clk")
 payload.port.init_channels("empty")
-payload.port.add_channel('TDATA', 'tdata', 64)
+payload.port.add_channel('TDATA', 'tdata', 96)
 payload.port.add_channel('TVALID', 'tvalid')
 payload.port.add_channel('TREADY', 'tready')
-payload.port.add_channel('TKEEP', 'tkeep', 8)
+payload.port.add_channel('TKEEP', 'tkeep', 12)
 dut.add_interface(payload)
 
 # test vectors -------------------------------------------------------------
@@ -63,7 +64,7 @@ inputT = test_vector_0.add_thread()
 inputT.add_delay("100ns")
 inputT.init_timer()  # zeros a timer that can be evaluated for runtime
 inputT.set_signal("header", 0xCAFEBABE);
-payload.write(inputT, 0xFAFFADAFFABEDAFF) 
+payload.write(inputT, 0xFAFFADAFFABEDAFFABACADAB) 
 inputT.add_delay("110ns")
 inputT.set_flag(0)  # sets flag 0 that another thread may be waiting on
 
@@ -71,7 +72,8 @@ inputT.set_flag(0)  # sets flag 0 that another thread may be waiting on
 outputT = test_vector_0.add_thread()
 adapted.read(outputT, 0xCAFEBABE, tlast=0)  # AXIS implicitly waits for valid data
 adapted.read(outputT, 0xFAFFADAF, tlast=0)  # AXIS implicitly waits for valid data
-adapted.read(outputT, 0xFABEDAFF, tlast=1)  # AXIS implicitly waits for valid data
+adapted.read(outputT, 0xFABEDAFF, tlast=0)  # AXIS implicitly waits for valid data
+adapted.read(outputT, 0xABACADAB, tlast=1)  # AXIS implicitly waits for valid data
 outputT.wait_flag(0)  # waits for flag 0 to be set by another thread
 outputT.print_elapsed_time("End")  # prints string + time since last init
 outputT.display("The_simulation_is_finished")  # prints string
@@ -84,13 +86,15 @@ inthd = tv1.add_thread()
 inthd.add_delay("40ns")
 inthd.init_timer()
 inthd.set_signal("header", 0x1337BEEF)
-payload.write(inthd, 0xBAD4BEEFFEE1DEAD, tkeep=0x0)
+payload.write(inthd, 0xBAD4BEEFFEE1DEADCAFEBABE, tkeep=0xFC0)
 
 outthd = tv1.add_thread()
-adapted.read(outthd, 0x1337BEEF, tlast=1)
+adapted.read(outthd, 0x1337BEEF, tlast=0)
+adapted.read(outthd, 0xBAD4BEEF, tlast=0)
+adapted.read(outthd, 0xFEE1DEAD, tlast=1)
 outthd.display("The_following_AXI_Stream_read_should_time_out")
 outthd.display("(You_will_need_to_hit_CTRL_C)")
-adapted.read(outthd, 0xBAD4BEED, tlast=1)
+adapted.read(outthd, 0xCAFEBABE, tlast=1)
 outthd.add_delay("20ns")
 outthd.end_vector()
 
