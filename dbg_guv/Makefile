@@ -10,6 +10,10 @@ out_dir=${dst_dir}/${ip_name}
 # These variables are for running the testbench
 MODULE := dbg_guv
 
+IVERILOG_INCLUDE = -Iaxis_governor/
+IVERILOG_INCLUDE += -I../macros/
+IVERILOG_INCLUDE += -I../tkeep_to_len/
+IVERILOG_INCLUDE += -Idbg_guv_width_adapter/
 IVERILOG_WARNS=-Wanachronisms -Wimplicit -Wportbind -Wselect-range -Wsensitivity-entire-vector -Wsensitivity-entire-array
 
 # By default, package as an ip
@@ -24,7 +28,7 @@ open:	$(MODULE).vcd
 
 # Compile the Verilog into Icarus's special format
 $(MODULE).vvp:	$(MODULE).v $(MODULE)_tb.v $(MODULE)_drivers.mem
-	iverilog ${IVERILOG_WARNS} -DICARUS_VERILOG -Iaxis_governor/ -I../macros/ -I../axis_headerizer -o $(MODULE).vvp $(MODULE)_tb.v
+	iverilog ${IVERILOG_WARNS} -DICARUS_VERILOG ${IVERILOG_INCLUDE} -o $(MODULE).vvp $(MODULE)_tb.v
 
 # Run the Verilog simulator
 $(MODULE).vcd:	$(MODULE).vvp
@@ -48,6 +52,6 @@ ip: clean
 	rm -f vivado*
 
 syntax_check:
-	iverilog ${IVERILOG_WARNS} -DICARUS_VERILOG -Iaxis_governor/ -I../macros/ -I../axis_headerizer -g2012 -o $(MODULE).vvp $(MODULE).v
+	iverilog ${IVERILOG_WARNS} -DICARUS_VERILOG ${IVERILOG_INCLUDE} -g2012 -o $(MODULE).vvp $(MODULE).v
 	rm -rf $(MODULE).vvp
  
