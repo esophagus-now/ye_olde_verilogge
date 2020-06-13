@@ -55,11 +55,7 @@ set_property value 10 [ipx::get_user_parameters CNT_SIZE -of_objects [ipx::curre
 set_property value 10 [ipx::get_hdl_parameters CNT_SIZE -of_objects [ipx::current_core]]
 
 # ADDR_WIDTH parameter
-set_property display_name {Address width} [ipgui::get_guiparamspec -name "ADDR_WIDTH" -component [ipx::current_core] ]
-set_property tooltip {The width in bits of debug core addresses} [ipgui::get_guiparamspec -name "ADDR_WIDTH" -component [ipx::current_core] ]
-set_property widget {textEdit} [ipgui::get_guiparamspec -name "ADDR_WIDTH" -component [ipx::current_core] ]
-set_property value 8 [ipx::get_user_parameters ADDR_WIDTH -of_objects [ipx::current_core]]
-set_property value 8 [ipx::get_hdl_parameters ADDR_WIDTH -of_objects [ipx::current_core]]
+ipgui::remove_param -component [ipx::current_core] [ipgui::get_guiparamspec -name "ADDR_WIDTH" -component [ipx::current_core]]
 
 # ADDR parameter
 set_property display_name {Address} [ipgui::get_guiparamspec -name "ADDR" -component [ipx::current_core] ]
@@ -72,15 +68,6 @@ set_property tooltip {} [ipgui::get_guiparamspec -name "RESET_TYPE" -component [
 set_property widget {comboBox} [ipgui::get_guiparamspec -name "RESET_TYPE" -component [ipx::current_core] ]
 set_property value_validation_type pairs [ipx::get_user_parameters RESET_TYPE -of_objects [ipx::current_core]]
 set_property value_validation_pairs {None 0 {Active high} 1 {Active low} 2} [ipx::get_user_parameters RESET_TYPE -of_objects [ipx::current_core]]
-
-# STICKY_MODE parameter
-set_property display_name {Enable sticky mode} [ipgui::get_guiparamspec -name "STICKY_MODE" -component [ipx::current_core] ]
-set_property tooltip {When active, control registers are not reset to zero when latched} [ipgui::get_guiparamspec -name "STICKY_MODE" -component [ipx::current_core] ]
-set_property widget {checkBox} [ipgui::get_guiparamspec -name "STICKY_MODE" -component [ipx::current_core] ]
-set_property value true [ipx::get_user_parameters STICKY_MODE -of_objects [ipx::current_core]]
-set_property value true [ipx::get_hdl_parameters STICKY_MODE -of_objects [ipx::current_core]]
-set_property value_format bool [ipx::get_user_parameters STICKY_MODE -of_objects [ipx::current_core]]
-set_property value_format bool [ipx::get_hdl_parameters STICKY_MODE -of_objects [ipx::current_core]]
 
 # PIPE_STAGE parameter
 set_property display_name {Enable pipe stage} [ipgui::get_guiparamspec -name "PIPE_STAGE" -component [ipx::current_core] ]
@@ -135,11 +122,80 @@ set_property value_validation_type none [ipx::get_user_parameters DEFAULT_DROP -
 # Why did I even make this?
 ipgui::remove_param -component [ipx::current_core] [ipgui::get_guiparamspec -name "DEFAULT_INJECT" -component [ipx::current_core]]
 
+# DATA_HAS_TKEEP parameter
+set_property display_name {Has TKEEP} [ipgui::get_guiparamspec -name "DATA_HAS_TKEEP" -component [ipx::current_core] ]
+set_property tooltip {Mark as true if debugged stream has TKEEP} [ipgui::get_guiparamspec -name "DATA_HAS_TKEEP" -component [ipx::current_core] ]
+set_property widget {checkBox} [ipgui::get_guiparamspec -name "DATA_HAS_TKEEP" -component [ipx::current_core] ]
+set_property value true [ipx::get_user_parameters DATA_HAS_TKEEP -of_objects [ipx::current_core]]
+set_property value true [ipx::get_hdl_parameters DATA_HAS_TKEEP -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_user_parameters DATA_HAS_TKEEP -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_hdl_parameters DATA_HAS_TKEEP -of_objects [ipx::current_core]]
+
+# DATA_HAS_TLAST parameter
+set_property display_name {Has TLAST} [ipgui::get_guiparamspec -name "DATA_HAS_TLAST" -component [ipx::current_core] ]
+set_property tooltip {Mark true if underlying debugged stream has TLAST} [ipgui::get_guiparamspec -name "DATA_HAS_TLAST" -component [ipx::current_core] ]
+set_property widget {checkBox} [ipgui::get_guiparamspec -name "DATA_HAS_TLAST" -component [ipx::current_core] ]
+set_property value true [ipx::get_user_parameters DATA_HAS_TLAST -of_objects [ipx::current_core]]
+set_property value true [ipx::get_hdl_parameters DATA_HAS_TLAST -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_user_parameters DATA_HAS_TLAST -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_hdl_parameters DATA_HAS_TLAST -of_objects [ipx::current_core]]
+
+# DEST_WIDTH parameter
+set_property display_name {TDEST Width} [ipgui::get_guiparamspec -name "DEST_WIDTH" -component [ipx::current_core] ]
+set_property tooltip {Width of TDEST on debugged stream. Set to 0 to disable (the wire will still be visible, but Vivado will safely optimize it out)} [ipgui::get_guiparamspec -name "DEST_WIDTH" -component [ipx::current_core] ]
+set_property widget {textEdit} [ipgui::get_guiparamspec -name "DEST_WIDTH" -component [ipx::current_core] ]
+set_property value_validation_type range_long [ipx::get_user_parameters DEST_WIDTH -of_objects [ipx::current_core]]
+set_property value_validation_range_minimum 0 [ipx::get_user_parameters DEST_WIDTH -of_objects [ipx::current_core]]
+set_property value_validation_range_maximum 32 [ipx::get_user_parameters DEST_WIDTH -of_objects [ipx::current_core]]
+
+# ID_WIDTH parameter
+set_property display_name {TID Width} [ipgui::get_guiparamspec -name "ID_WIDTH" -component [ipx::current_core] ]
+set_property tooltip {Width of TID on debugged stream. Set to 0 to disable (the wire will still be visible, but Vivado will safely optimize it out)} [ipgui::get_guiparamspec -name "ID_WIDTH" -component [ipx::current_core] ]
+set_property widget {textEdit} [ipgui::get_guiparamspec -name "ID_WIDTH" -component [ipx::current_core] ]
+set_property value_validation_type range_long [ipx::get_user_parameters ID_WIDTH -of_objects [ipx::current_core]]
+set_property value_validation_range_minimum 0 [ipx::get_user_parameters ID_WIDTH -of_objects [ipx::current_core]]
+set_property value_validation_range_maximum 32 [ipx::get_user_parameters ID_WIDTH -of_objects [ipx::current_core]]
+
+# Try to arrange things nicely in the GUI window
+ipgui::add_group -name {Details of debugged stream} -component [ipx::current_core] -parent [ipgui::get_pagespec -name "Page 0" -component [ipx::current_core] ] -display_name {Details of debugged stream}
+ipgui::move_param -component [ipx::current_core] -order 0 [ipgui::get_guiparamspec -name "DATA_WIDTH" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_group -component [ipx::current_core] -order 0 [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]] -parent [ipgui::get_pagespec -name "Page 0" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 0 [ipgui::get_guiparamspec -name "DATA_HAS_TKEEP" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 1 [ipgui::get_guiparamspec -name "DATA_HAS_TKEEP" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 1 [ipgui::get_guiparamspec -name "DATA_HAS_TLAST" -component [ipx::current_core]] -parent [ipgui::get_pagespec -name "Page 0" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 1 [ipgui::get_guiparamspec -name "DATA_HAS_TLAST" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 2 [ipgui::get_guiparamspec -name "DATA_HAS_TLAST" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 2 [ipgui::get_guiparamspec -name "DEST_WIDTH" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 3 [ipgui::get_guiparamspec -name "DEST_WIDTH" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 3 [ipgui::get_guiparamspec -name "ID_WIDTH" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 4 [ipgui::get_guiparamspec -name "ID_WIDTH" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 4 [ipgui::get_guiparamspec -name "DUT_RST_VAL" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 5 [ipgui::get_guiparamspec -name "DUT_RST_VAL" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::add_group -name {Debug governor parameters} -component [ipx::current_core] -parent [ipgui::get_pagespec -name "Page 0" -component [ipx::current_core] ] -display_name {Debug governor parameters}
+ipgui::move_group -component [ipx::current_core] -order 0 [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]] -parent [ipgui::get_pagespec -name "Page 0" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 0 [ipgui::get_guiparamspec -name "ADDR" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 0 [ipgui::get_guiparamspec -name "SATCNT_WIDTH" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 1 [ipgui::get_guiparamspec -name "SATCNT_WIDTH" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 1 [ipgui::get_guiparamspec -name "CNT_SIZE" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 0 [ipgui::get_guiparamspec -name "DEFAULT_DROP" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 2 [ipgui::get_guiparamspec -name "DEFAULT_DROP" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 3 [ipgui::get_guiparamspec -name "DEFAULT_DROP" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 2 [ipgui::get_guiparamspec -name "DEFAULT_PAUSE" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 3 [ipgui::get_guiparamspec -name "DEFAULT_PAUSE" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 4 [ipgui::get_guiparamspec -name "DEFAULT_LOG" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 5 [ipgui::get_guiparamspec -name "PIPE_STAGE" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 6 [ipgui::get_guiparamspec -name "PIPE_STAGE" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 1 [ipgui::get_guiparamspec -name "DUT_RST_VAL" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 4 [ipgui::get_guiparamspec -name "DUT_RST_VAL" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 5 [ipgui::get_guiparamspec -name "DUT_RST_VAL" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Details of debugged stream" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 0 [ipgui::get_guiparamspec -name "RESET_TYPE" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 2 [ipgui::get_guiparamspec -name "RESET_TYPE" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+ipgui::move_param -component [ipx::current_core] -order 1 [ipgui::get_guiparamspec -name "RESET_TYPE" -component [ipx::current_core]] -parent [ipgui::get_groupspec -name "Debug governor parameters" -component [ipx::current_core]]
+
+
 ipx::create_xgui_files [ipx::current_core]
 ipx::update_checksums [ipx::current_core]
 ipx::save_core [ipx::current_core]
 close_project 
 exit
-
-
 

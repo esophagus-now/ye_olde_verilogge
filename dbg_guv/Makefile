@@ -44,7 +44,7 @@ clean:
 ip: clean
 	rm -rf ${out_dir}
 	mkdir -p ${out_dir}/src
-	cp dbg_guv.v axis_governor/axis_governor.v ../macros/macros.vh ../axis_headerizer/axis_headerizer.v ${out_dir}/src
+	cp dbg_guv.v axis_governor/axis_governor.v ../macros/macros.vh ../tkeep_to_len/tkeep_to_len.v dbg_guv_width_adapter/dbg_guv_width_adapter.v ${out_dir}/src
 	vivado -nolog -nojournal -notrace -mode batch -source ip_maker.tcl -tclargs ${out_dir} ${ip_name} ${part_no}
 	rm -rf ${ip_name}_tmp_proj
 	rm -f *log
