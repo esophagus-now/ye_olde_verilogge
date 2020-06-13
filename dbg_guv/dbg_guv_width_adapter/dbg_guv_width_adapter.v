@@ -182,7 +182,9 @@ module dbg_guv_width_adapter # (
     
     `out_axis_l(adapted, WORD_SIZE)
 );
+    genvar i;
     `localparam TKEEP_WIDTH = (WORD_SIZE*PAYLOAD_WORDS)/8;
+    
     //I really hate how Verilog forces you to do ugly things like this to
     //get around corner cases in defining vectors...
     `localparam SAFE_PAYLOAD_WORDS = `MAX(PAYLOAD_WORDS, 2);
@@ -194,7 +196,7 @@ module dbg_guv_width_adapter # (
     assign any_words_left = 0;
 `endgen
     reg [WORD_SIZE-1 :0] data_countdown[0: PAYLOAD_WORDS-1];
-    
+
     `wire_rst_sig;    
     
     //FSM logic
@@ -244,7 +246,6 @@ end else begin
 
     //Tricky business: if PAYLOAD_WORDS is equal to 1, then there is no
     //keep_countdown wire, so we shouldn't keep track of it
-    genvar i;
 `genif (PAYLOAD_WORDS > 1 && RESET_TYPE == `NO_RESET) begin
     //Keep track of how many payload words left to send
     always @(posedge clk) begin

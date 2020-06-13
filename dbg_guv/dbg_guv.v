@@ -60,7 +60,7 @@ Remaining tasks for implementing new interface:
 [x] Construct properly padded payload vector
 [x] Figure out how to replace the axis_mux thing
 [x] Add in the dbg_guv_width_adapter
-[ ] Oh yeah, don't forget the flit for sidechannels
+[x] Oh yeah, don't forget the flit for sidechannels
 [ ] Simulate the crap out of it
 */
 
@@ -587,7 +587,22 @@ module dbg_guv # (
 
     wire [`SAFE_ID_WIDTH -1:0] dout_TID_internal;
 `genif(ID_WIDTH > 0) begin
-    assign dout_TDEST = dout_TID_internal;
+    assign dout_TID = dout_TID_internal;
+`endgen
+
+    //Also need to treat situations when TLAST or TKEEP are not given
+    wire [KEEP_WIDTH -1:0] din_TKEEP_internal;
+`genif(DATA_HAS_TKEEP) begin
+    assign din_TKEEP_internal = din_TKEEP;
+`else_gen
+    assign din_TKEEP_internal = {KEEP_WIDTH{1'b1}};
+`endgen
+
+    wire din_TLAST_internal;
+`genif(DATA_HAS_TLAST) begin
+    assign din_TLAST_internal = din_TLAST;
+`else_gen
+    assign din_TLAST_internal = 1'b1; //One or zero here?
 `endgen
     
     axis_governor #(
@@ -601,10 +616,10 @@ module dbg_guv # (
         .in_TDATA(din_TDATA),
         .in_TVALID(din_TVALID),
         .in_TREADY(din_TREADY),
-        .in_TKEEP(din_TKEEP),
+        .in_TKEEP(din_TKEEP_internal),
         .in_TDEST(din_TDEST),
         .in_TID(din_TID),
-        .in_TLAST(din_TLAST),
+        .in_TLAST(din_TLAST_internal),
         
         //Inject AXI Stream. 
         .inj_TDATA(inj_TDATA),
@@ -662,11 +677,25 @@ module dbg_guv # (
     
     //Verilog is such a pain the ass sometimes...
     if (LOG_DEST_ID_PADDING > 0) begin
-        assign log_TDEST_TID_padded = {
-            {LOG_DEST_ID_PADDING{1'b0}},
-            log_TID,
-            log_TDEST
-        };
+        if (ID_WIDTH > 0) begin
+            if (DEST_WIDTH > 0) begin
+                assign log_TDEST_TID_padded = {
+                    {LOG_DEST_ID_PADDING{1'b0}},
+                    log_TID,
+                    log_TDEST
+                };
+            end else begin 
+                assign log_TDEST_TID_padded = {
+                    {LOG_DEST_ID_PADDING{1'b0}},
+                    log_TID
+                };
+            end
+        end else begin
+            assign log_TDEST_TID_padded = {
+                {LOG_DEST_ID_PADDING{1'b0}},
+                log_TDEST
+            };
+        end
     end else begin
         assign log_TDEST_TID_padded = {
             log_TID,
@@ -779,5 +808,7 @@ module dbg_guv # (
     
 endmodule
 
+`undef SAFE_DEST_WIDTH
+`undef SAFE_ID_WIDTH
 `undef MIN
 `undef MAX

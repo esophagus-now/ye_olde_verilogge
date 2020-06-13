@@ -17,7 +17,15 @@ cmd_in_TDATA    cmd_in_TVALID   Comments
 0000            0               
 000F            1               Latch
 0000            0               
-0000            0    
+0000            0                
+
+0029            1               Select dbg_core[2]::keep_logging
+0000            0               
+0001            1               Enable keep_logging
+0000            0               
+002F            1               Latch
+0000            0               
+0000            0   
 
 
            
