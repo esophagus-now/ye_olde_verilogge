@@ -55,11 +55,12 @@ Remaining tasks for implementing new interface:
 
 [x] Use shift register technique for INJECT_TDATA_r
 [N] Use "generate if" to get rid of TID, TDEST, TUSER if unused (forget it; it's too much trouble)
-[x] Construct correct headers for logs and command receipts
+[x] Construct correct headers for logs and command receipts
 [x] Construct properly padded payload vector
 [x] Figure out how to replace the axis_mux thing
-[x] Add in the dbg_guv_width_adapter
-[ ] Simulate the crap out of it
+[x] Add in the dbg_guv_width_adapter
+[ ] Oh yeah, don't forget the flit for sidechannels
+[ ] Simulate the crap out of it
 */
 
  `ifdef ICARUS_VERILOG
@@ -82,15 +83,16 @@ Remaining tasks for implementing new interface:
 `define SAFE_DEST_WIDTH (DEST_WIDTH < 1 ? 1 : DEST_WIDTH)
 
 `define MIN(x,y) (((x)<(y)) ? (x) : (y))
+`define MAX(x,y) (((x)>(y)) ? (x) : (y))
     
 module dbg_guv # (
     parameter DATA_WIDTH = 64,
     parameter DATA_HAS_TKEEP = 1,
     parameter DATA_HAS_TLAST = 1,
-    parameter DEST_WIDTH = 0,
-    parameter ID_WIDTH = 0,
+    parameter DEST_WIDTH = 0, /*range: 0-32 (inclusive)*/
+    parameter ID_WIDTH = 0, /*range: 0-32 (inclusive)*/
     parameter CNT_SIZE = 16,
-    /*DO NOT EDIT*/ parameter ADDR_WIDTH = 15, //This gives maximum 32768 simultaneous debug cores. That should be enough!
+    /*DO NOT EDIT*/ parameter ADDR_WIDTH = 13, //This gives maximum 8196 simultaneous debug cores. That should be enough!
     parameter [ADDR_WIDTH -1:0] ADDR = 0, //Set this to be different for each 
     parameter RESET_TYPE = `NO_RESET,
     parameter DUT_RST_VAL = 1, //The value of DUT_rst that will reset the DUT
@@ -455,7 +457,7 @@ module dbg_guv # (
     assign log_len = (DATA_WIDTH/8) -1;
 `endgen
     
-    assign log_header = {DEST_WIDTH[6:0], ID_WIDTH[6:0], log_TLAST, log_len, 1'b0, ADDR};   
+    assign log_header = {DEST_WIDTH[5:0], ID_WIDTH[5:0], log_TLAST, log_len, 1'b0, ADDR};   
     
     
     ////////////////////////
@@ -623,6 +625,42 @@ module dbg_guv # (
     /////////////////////
     //ADD WIDTH ADAPTER//
     /////////////////////
+    `localparam LOG_DEST_ID_SIZE = DEST_WIDTH + ID_WIDTH;
+    `localparam LOG_DEST_ID_PADDED_SIZE = (((LOG_DEST_ID_SIZE+31)/32)*32);
+    `localparam LOG_DEST_ID_NUM_WORDS = LOG_DEST_ID_PADDED_SIZE/32;
+    `localparam LOG_DEST_ID_EXTRA_KEEP_BITS = LOG_DEST_ID_PADDED_SIZE/8;
+    
+    //For some reason localparams aren't allowed in generate blocks
+    //This first parameter is used if DEST and ID fit in 32 bits
+    `localparam LOG_DEST_ID_PADDING = 32 - LOG_DEST_ID_SIZE;
+    //These two parameters are used if DEST and ID each need their own
+    //32 bit word
+    `localparam LOG_DEST_PADDING = 32 - DEST_WIDTH;
+    `localparam LOG_ID_PADDING = 32 - ID_WIDTH;
+    
+    wire log_TDEST_TID_padded[`MAX(LOG_DEST_ID_PADDED_SIZE,1) -1:0];
+`genif(LOG_DEST_ID_SIZE > 0 && LOG_DEST_ID_SIZE <= 32) begin
+    //DEST and ID together will fit in a single 32 bit word
+    assign log_TDEST_TID_padded = {
+        {LOG_DEST_ID_PADDING{1'b0}},
+        log_TID,
+        log_TDEST
+    };
+    
+`else_gen
+    //Note: our assumption is that neither of log_TDEST or log_TID is wider
+    //than 32 bits. Therefore, if their sum is larger than 32, both of them
+    //must be larger than 0.
+    //Each DEST and ID gets its own 32 bit word
+    
+    assign log_TDEST_TID_padded = {
+        {LOG_ID_PADDING{1'b0}},
+        log_TID,
+        {LOG_DEST_PADDING{1'b0}},
+        log_TDEST
+    };
+`endgen
+    
     
     //The dbg_guv_width_adapter requires that its input be a multiple of
     //32 bits
@@ -642,11 +680,26 @@ module dbg_guv # (
     assign log_TDATA_padded = log_TDATA;
     assign log_TKEEP_padded = log_TKEEP;
 `endgen
+
+    `localparam LOG_PAYLOAD_DATA_SIZE = LOG_DEST_ID_PADDED_SIZE + LOG_DATA_PADDED_SIZE;
+    `localparam LOG_PAYLOAD_NUM_WORDS = LOG_DEST_ID_NUM_WORDS + LOG_DATA_NUM_WORDS;
+    `localparam LOG_PAYLOAD_KEEP_BITS = LOG_DEST_ID_EXTRA_KEEP_BITS + KEEP_WIDTH + LOG_KEEP_PADDING;
+    
+    wire [LOG_PAYLOAD_DATA_SIZE -1:0] payload_TDATA;
+    wire [LOG_PAYLOAD_KEEP_BITS -1:0] payload_TKEEP;
+
+`genif(LOG_DEST_ID_SIZE > 0) begin
+    assign payload_TDATA = {log_TDEST_TID_padded, log_TDATA_padded};
+    assign payload_TKEEP = {{LOG_DEST_ID_EXTRA_KEEP_BITS{1'b1}}, log_TKEEP_padded};
+`else_gen
+    assign payload_TDATA = log_TDATA_padded;
+    assign payload_TKEEP = log_TKEEP_padded;
+`endgen
     
     wire adapter_TREADY;
 
     dbg_guv_width_adapter # (
-        .PAYLOAD_WORDS(LOG_DATA_NUM_WORDS),
+        .PAYLOAD_WORDS(LOG_PAYLOAD_NUM_WORDS),
         .RESET_TYPE(RESET_TYPE)
     ) adapter (
         .clk(clk),
@@ -658,8 +711,8 @@ module dbg_guv # (
         //IP)
         //ASSUMPTION: no TLAST here
         .header(receipt_TVALID ? receipt_header : log_header),
-        .payload_TDATA(log_TDATA_padded),
-        .payload_TKEEP(receipt_TVALID ? log_TKEEP_padded : {LOG_KEEP_PADDED_SIZE{1'b0}}),
+        .payload_TDATA(payload_TDATA),
+        .payload_TKEEP(receipt_TVALID ? {LOG_PAYLOAD_KEEP_BITS{1'b0}} : payload_TKEEP),
         .payload_TVALID(log_TVALID | receipt_TVALID),
         .payload_TREADY(adapter_TREADY),
         
@@ -698,3 +751,6 @@ module dbg_guv # (
     assign DUT_rst = dut_reset;
     
 endmodule
+
+`undef MIN
+`undef MAX

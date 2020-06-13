@@ -46,20 +46,20 @@ cmd_in_TDATA    cmd_in_TVALID   Comments
 0000            0   
 
 
-0018            1               Select dbg_core[1]::log_cnt
+0018            1               Select dbg_core[1]::keep_pausing
 0001            1               Set to 1
-0011            1               Select dbg_core[1]::keep_pausing
+0011            1               Select dbg_core[1]::log_cnt
 0001            1               Enable keep_pausing
 0000            0               
 001F            1               Latch (performs single step)
 0000            0               
 0000            0               
 0000            0               
-001F            1               Latch (performs single step if STICKY_MODE == 1, otherwise, disables keep_pausing)
+001F            1               Latch (performs single step)
 0000            0               
 0000            0               
 0000            0               
-001F            1               Latch (performs single step if STICKY_MODE == 1, otherwise, disables keep_pausing)
+001F            1               Latch (performs single step)
 0000            0               
 0000            0               
 0000            0               
@@ -106,6 +106,10 @@ cmd_in_TDATA    cmd_in_TVALID   Comments
 0001            1               Set to 1
 001A            1               Select dbg_core[1]::keep_dropping
 0001            1               Enable keep_dropping
+0011            1               Select dbg_core[1]::log_cnt
+0000            1               Set to 0
+0018            1               Select dbg_core[1]::keep_pausing
+0000            1               Disable keep_pausing
 001F            1               Latch (performs single injection)             
 0000            0 
 001F            1               Latch (performs single injection)             

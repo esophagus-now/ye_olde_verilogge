@@ -147,18 +147,22 @@ module dbg_guv_tb # (
     end
     
     reg [31:0] whatever;
+    integer keep_bits1 = 0;
+    integer keep_bits2 = 0;
     
     always @(posedge clk) begin
         if (`axis_flit(in1)) begin
             in1_TDATA <= in1_TDATA + 2;
-            in1_TKEEP = ((1 << ($random & 32'b111)) -1);
+            keep_bits1 = ($random & 32'b111);
+            in1_TKEEP = 9'h100-(8'b1 << keep_bits1);
             in1_TLAST = $random;
             in1_TDEST = $random;
             in1_TID = $random;
         end
         if (`axis_flit(in2)) begin
             in2_TDATA <= in2_TDATA + 2;
-            in2_TKEEP = ((1 << ($random & 32'b111)) -1);
+            keep_bits2 = ($random & 32'b11);
+            in2_TKEEP = 5'h10-(4'b1 << keep_bits2);
             in2_TLAST = $random;
             in2_TDEST = $random;
             in2_TID = $random;

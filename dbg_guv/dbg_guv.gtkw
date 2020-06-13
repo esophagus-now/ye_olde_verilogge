@@ -1,20 +1,20 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Jun 13 00:35:23 2020
+[*] Sat Jun 13 01:42:58 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/dbg_guv/dbg_guv.vcd"
-[dumpfile_mtime] "Sat Jun 13 00:35:14 2020"
-[dumpfile_size] 131536
+[dumpfile_mtime] "Sat Jun 13 01:38:31 2020"
+[dumpfile_size] 172170
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/dbg_guv/dbg_guv.gtkw"
-[timestart] 0
+[timestart] 888700
 [size] 1916 1060
 [pos] -1 -1
-*-15.724583 39500 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.871175 1080700 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dbg_guv_tb.
 [treeopen] dbg_guv_tb.ctl1.
 [treeopen] dbg_guv_tb.ctl2.
 [treeopen] dbg_guv_tb.ctl2.ello_guvna.
-[sst_width] 229
+[sst_width] 349
 [signals_width] 390
 [sst_expanded] 1
 [sst_vpaned_height] 575
@@ -25,7 +25,7 @@ dbg_guv_tb.rst
 dbg_guv_tb.cmd_in_TDATA[31:0]
 @28
 dbg_guv_tb.cmd_in_TVALID
-@800200
+@c00200
 -in1
 @24
 [color] 2
@@ -46,9 +46,9 @@ dbg_guv_tb.in1_TLAST
 dbg_guv_tb.in1_TDEST[15:0]
 [color] 2
 dbg_guv_tb.in1_TID[15:0]
-@1000200
+@1401200
 -in1
-@800200
+@c00200
 -out1
 @c00024
 dbg_guv_tb.out1_TDATA[63:0]
@@ -129,9 +129,9 @@ dbg_guv_tb.out1_TLAST
 @22
 dbg_guv_tb.out1_TDEST[15:0]
 dbg_guv_tb.out1_TID[15:0]
-@1000200
+@1401200
 -out1
-@800200
+@c00200
 -log1
 @c00022
 dbg_guv_tb.log1_TDATA[31:0]
@@ -174,7 +174,7 @@ dbg_guv_tb.log1_TDATA[31:0]
 dbg_guv_tb.log1_TVALID
 dbg_guv_tb.log1_TREADY
 dbg_guv_tb.log1_TLAST
-@1000200
+@1401200
 -log1
 @800200
 -in2
@@ -186,9 +186,20 @@ dbg_guv_tb.in2_TDATA[31:0]
 dbg_guv_tb.in2_TVALID
 [color] 2
 dbg_guv_tb.in2_TREADY
-@22
+@c00022
 [color] 2
 dbg_guv_tb.in2_TKEEP[3:0]
+@28
+[color] 2
+(0)dbg_guv_tb.in2_TKEEP[3:0]
+[color] 2
+(1)dbg_guv_tb.in2_TKEEP[3:0]
+[color] 2
+(2)dbg_guv_tb.in2_TKEEP[3:0]
+[color] 2
+(3)dbg_guv_tb.in2_TKEEP[3:0]
+@1401200
+-group_end
 @28
 [color] 2
 dbg_guv_tb.in2_TLAST
@@ -225,5 +236,16 @@ dbg_guv_tb.log2_TREADY
 dbg_guv_tb.log2_TLAST
 @1000200
 -log2
+@28
+dbg_guv_tb.ctl2.keep_dropping
+@22
+dbg_guv_tb.ctl2.log_cnt[15:0]
+@28
+dbg_guv_tb.ctl2.keep_logging
+dbg_guv_tb.ctl2.ello_guvna.in_TREADY
+dbg_guv_tb.ctl2.ello_guvna.drop
+dbg_guv_tb.ctl2.ello_guvna.pause
+@29
+dbg_guv_tb.ctl2.inj_failed
 [pattern_trace] 1
 [pattern_trace] 0

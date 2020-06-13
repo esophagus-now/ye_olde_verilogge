@@ -21,3 +21,8 @@ clean: clean_vivado
 	rm -rf *json
 	rm -rf *dat
 	rm -rf *wdb
+
+syntax_check:
+	iverilog -Wall -Wno-timescale -I../../macros dbg_guv_width_adapter.v -o tmp.vvp
+	rm -rf tmp.vvp
+

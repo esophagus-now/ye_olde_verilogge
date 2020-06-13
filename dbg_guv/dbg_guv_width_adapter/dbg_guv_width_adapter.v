@@ -161,6 +161,8 @@ COMMENTS
 
 `include "macros.vh"
 
+`define MAX(x,y) (((x)>(y))?(x):(y))
+
 module dbg_guv_width_adapter # (
     parameter WORD_SIZE = 32,
     parameter PAYLOAD_WORDS = 2,
@@ -181,7 +183,16 @@ module dbg_guv_width_adapter # (
     `out_axis_l(adapted, WORD_SIZE)
 );
     `localparam TKEEP_WIDTH = (WORD_SIZE*PAYLOAD_WORDS)/8;
-    reg [PAYLOAD_WORDS-1 -1:0] keep_countdown = 0;
+    //I really hate how Verilog forces you to do ugly things like this to
+    //get around corner cases in defining vectors...
+    `localparam SAFE_PAYLOAD_WORDS = `MAX(PAYLOAD_WORDS, 2);
+    wire any_words_left;
+    reg [SAFE_PAYLOAD_WORDS-1 -1:0] keep_countdown = 0;
+`genif(PAYLOAD_WORDS > 1) begin
+    assign any_words_left = keep_countdown[PAYLOAD_WORDS-1 -1];
+`else_gen
+    assign any_words_left = 0;
+`endgen
     reg [WORD_SIZE-1 :0] data_countdown[0: PAYLOAD_WORDS-1];
     
     `wire_rst_sig;    
@@ -202,7 +213,7 @@ module dbg_guv_width_adapter # (
         end
         STATE_SEND_PAYLOAD: begin
             state <= `axis_flit(adapted) ?
-                (keep_countdown[PAYLOAD_WORDS-1 -1] ? STATE_SEND_PAYLOAD : STATE_SEND_HEADER)
+                (any_words_left ? STATE_SEND_PAYLOAD : STATE_SEND_HEADER)
                 : STATE_SEND_PAYLOAD
             ;
         end
@@ -222,7 +233,7 @@ end else begin
             end
             STATE_SEND_PAYLOAD: begin
                 state <= `axis_flit(adapted) ?
-                    (keep_countdown[(WORD_SIZE/8)-1 -1] ? STATE_SEND_PAYLOAD : STATE_SEND_HEADER)
+                    (any_words_left ? STATE_SEND_PAYLOAD : STATE_SEND_HEADER)
                     : STATE_SEND_PAYLOAD
                 ;
             end
@@ -231,8 +242,10 @@ end else begin
     end
 `endgen
 
+    //Tricky business: if PAYLOAD_WORDS is equal to 1, then there is no
+    //keep_countdown wire, so we shouldn't keep track of it
     genvar i;
-`genif (RESET_TYPE == `NO_RESET) begin
+`genif (PAYLOAD_WORDS > 1 && RESET_TYPE == `NO_RESET) begin
     //Keep track of how many payload words left to send
     always @(posedge clk) begin
         keep_countdown[0] <=  
@@ -262,7 +275,7 @@ end else begin
             ;
         end
     end
-end else begin
+`else_genif(PAYLOAD_WORDS > 1) begin
     //Keep track of how many payload words left to send
     always @(posedge clk) begin
         if (rst_sig) keep_countdown[0] <= 0;
@@ -323,7 +336,7 @@ end else begin
     
     assign adapted_TLAST = (state == STATE_SEND_HEADER) ? 
           ~payload_TKEEP[TKEEP_WIDTH-1]
-        : ~keep_countdown[PAYLOAD_WORDS-1 -1]
+        : ~any_words_left
     ;
     
     assign adapted_TDATA = (state == STATE_SEND_HEADER) ?
@@ -335,4 +348,4 @@ end else begin
     
 endmodule
     
-    
+`undef MAX
