@@ -1,14 +1,10 @@
 # These procs are used to automatically insert dbg_guvs into a design
 
 # Replaces the bd_intf_net n with a dbg_guv core named "inst"
-proc add_dbg_core_to_net {n inst {tdata_width 64} {tdest_width 8} {tid_width 8}} {
+proc add_dbg_core_to_net {n inst} {
     puts "add_dbg_core_to_net args:"
     puts "n = $n"
     puts "inst = $inst"
-    puts "tdata_width = $tdata_width"
-    puts "tdest_width = $tdest_width"
-    puts "tid_width = $tid_width"
-    puts "----"
     
     # Get the two endpoints of this net
     set pins [get_bd_intf_pins -of_objects $n -quiet]
@@ -46,6 +42,9 @@ proc add_dbg_core_to_net {n inst {tdata_width 64} {tdest_width 8} {tid_width 8}}
         set right [lindex $ports 1]
     }
     
+    list_property $left
+    list_property $right
+    
     # Double-check that they are in fact AXI Stream
     if {[string compare [get_property VLNV $left] "xilinx.com:interface:axis_rtl:1.0"] != 0} {
         puts "Warning: this is not an AXI Stream interface"
@@ -81,7 +80,23 @@ proc add_dbg_core_to_net {n inst {tdata_width 64} {tdest_width 8} {tid_width 8}}
     set prefix [lindex [regexp -inline {(.*)\/[^\/]*$} "[get_property PATH $n]"] 1]
     set g [create_bd_cell -vlnv mmerlini:yov:dbg_guv $prefix/$inst]
     
-    set_property -dict [list CONFIG.DATA_WIDTH $tdata_width CONFIG.DEST_WIDTH $tdest_width CONFIG.ID_WIDTH $tid_width] [get_bd_cells $g]
+    set tdata_width [expr 8 * [get_property CONFIG.TDATA_NUM_BYTES $left]]
+    set has_tkeep [get_property CONFIG.HAS_TKEEP $left]
+    if {$has_tkeep} {
+    	set has_tkeep {true}
+    } else {
+    	set has_tkeep {false}
+    }
+    set has_tlast [get_property CONFIG.HAS_TLAST $left]
+    if {$has_tlast} {
+    	set has_tlast {true}
+    } else {
+    	set has_tlast {false}
+    }
+    set tdest_width [get_property CONFIG.TDEST_WIDTH $left]
+    set tid_width [get_property CONFIG.TID_WIDTH $left]
+    
+    set_property -dict [list CONFIG.DATA_WIDTH $tdata_width CONFIG.DATA_HAS_TKEEP $has_tkeep CONFIG.DATA_HAS_TLAST $has_tlast CONFIG.DEST_WIDTH $tdest_width CONFIG.ID_WIDTH $tid_width] [get_bd_cells $g]
     
     # Connect the dbg_guv to the loose endpoints
     if ![string compare [get_property MODE $left] Master] {
@@ -113,10 +128,11 @@ proc get_next_dbg_core_id {} {
     return $next_id
 }
 
+
 # Given a list of AXI Stream masters (with only TDATA, TREADY, TVALID, and TLAST)
 # hooks up an automatically sized arbiter tree
 # Returns a reference to the tree's final output
-proc rr_tree {msts {data_w 64}} {
+proc rr_tree {msts {data_w 32}} {
     puts "rr_tree args:"
     puts "msts = $msts"
     puts "data_w = $data_w"
@@ -182,17 +198,8 @@ proc rr_tree {msts {data_w 64}} {
     }
     endgroup
     
-    # UGLY BAND-AID FIX: until I have a more robust method of handling generic
-    # choices for AXI Stream channel widths, I've added in an axis_unconcat to
-    # bridge the gap here
-    set uncat [create_bd_cell -type ip -vlnv mmerlini:yov:axis_unconcat:1.0 DBG_GUV_UNCONCAT]
-    set_property -dict [list CONFIG.DATA_WIDTH $data_w CONFIG.OUT_ENABLE_KEEP {true} CONFIG.IN_ENABLE_LAST {1} CONFIG.OUT_ENABLE_LAST {true}] $uncat
-    connect_bd_intf_net [get_bd_intf_pins $arbiter_out] [get_bd_intf_pins $uncat/left]
-    connect_bd_net [get_bd_pins /DBG_GUV_TREE/clk] [get_bd_pins $uncat/clk]
-    
-    return [get_bd_intf_pins $uncat/right]
+    return $arbiter_out
 }
-
 
 proc del_dbg_core {c} {
     startgroup
@@ -242,19 +249,13 @@ proc del_all_dbg_cores {} {
 # disable it in Galapagos's automatic generator; you normally want this to be on
 # Finally, this proc returns a list containing the first cmd_in in the dbg_guv
 # daisy chain, and the last output of the arbiter tree
-proc add_dbg_core_to_list {nets {safe_mode 1} {tdata_width 64} {tdest_width 8} {tid_width 8}} {
+proc add_dbg_core_to_list {nets} {
     puts "add_dbg_core_to_list args:"
     puts "nets = $nets"
-    puts "safe_mode = $safe_mode"
-    puts "tdata_width = $tdata_width"
-    puts "tdest_width = $tdest_width"
-    puts "tid_width = $tid_width"
     puts "----"
     startgroup
     
-    if {$safe_mode} {
-        del_all_dbg_cores
-    }
+    del_all_dbg_cores
     
     # Stores the list of log outputs to run through the arbiter tree
     set log_outs {}
@@ -272,7 +273,7 @@ proc add_dbg_core_to_list {nets {safe_mode 1} {tdata_width 64} {tdest_width 8} {
         set next_id [get_next_dbg_core_id]
         
         # g holds a reference to the newly create dbg_guv cell
-        set g [add_dbg_core_to_net $n GUV_$next_id $tdata_width $tdest_width $tid_width]
+        set g [add_dbg_core_to_net $n GUV_$next_id]
         if {$g == 0} {
             # add_dbg_core_to_net (correctly) did not add a dbg_guv
             continue
@@ -285,7 +286,7 @@ proc add_dbg_core_to_list {nets {safe_mode 1} {tdata_width 64} {tdest_width 8} {
         set_property CONFIG.ADDR $next_id $g
         
         # Add $g/log to the list of log outputs
-        lappend log_outs $g/log_catted
+        lappend log_outs $g/logs_receipts
         
         # If last_cmd is not empty, connect its cmd_out to $g/cmd_in
         if {[llength $last_cmd] == 1} {
@@ -299,7 +300,7 @@ proc add_dbg_core_to_list {nets {safe_mode 1} {tdata_width 64} {tdest_width 8} {
     }
     
     # Put in the arbiter tree
-    set tree_out [rr_tree $log_outs $tdata_width]
+    set tree_out [rr_tree $log_outs 32]
     
     # Connect up the clocks
     # TODO: If I ever plan to allow multiple clock domains, this will have to 
@@ -312,8 +313,8 @@ proc add_dbg_core_to_list {nets {safe_mode 1} {tdata_width 64} {tdest_width 8} {
     return [list $first_cmd_in $tree_out]
 }
 
-proc add_dbg_core_to_highlighted {{safe_mode 1} {tdata_width 64} {tdest_width 8} {tid_width 8}} {
-    add_dbg_core_to_list [get_bd_intf_nets [get_highlighted_objects]] $safe_mode $tdata_width $tdest_width $tid_width
+proc add_dbg_core_to_highlighted {} {
+    add_dbg_core_to_list [get_bd_intf_nets [get_highlighted_objects]]
 }
 
 proc del_highlighted_dbg_cores {} {
