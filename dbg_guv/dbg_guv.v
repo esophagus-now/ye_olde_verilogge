@@ -574,6 +574,22 @@ module dbg_guv # (
     //INSTANTIATE AXIS GOVERNOR//
     /////////////////////////////
     
+    //Ugly hack: to make sure Vivado optimizes out the unused TDEST and TID
+    //(if they're unused, of course) save them in a separate wire and then
+    //only assign them to the real output conditionally.
+    
+    //It would be nice if Verilog had some form of optional module 
+    //parameters, but this is the best I know how to do right now.
+    wire [`SAFE_DEST_WIDTH -1:0] dout_TDEST_internal;
+`genif(DEST_WIDTH > 0) begin
+    assign dout_TDEST = dout_TDEST_internal;
+`endgen
+
+    wire [`SAFE_ID_WIDTH -1:0] dout_TID_internal;
+`genif(ID_WIDTH > 0) begin
+    assign dout_TDEST = dout_TID_internal;
+`endgen
+    
     axis_governor #(
         .DATA_WIDTH(DATA_WIDTH),
         .DEST_WIDTH(`SAFE_DEST_WIDTH),
@@ -604,8 +620,8 @@ module dbg_guv # (
         .out_TVALID(dout_TVALID),
         .out_TREADY(dout_TREADY),
         .out_TKEEP(dout_TKEEP),
-        .out_TDEST(dout_TDEST),
-        .out_TID(dout_TID),
+        .out_TDEST(dout_TDEST_internal),
+        .out_TID(dout_TID_internal),
         .out_TLAST(dout_TLAST),
         
         //Log AXI Stream. 
@@ -622,7 +638,8 @@ module dbg_guv # (
         .drop(drop),
         .log_en(log_en)
     );    
-        
+    
+    
     /////////////////////
     //ADD WIDTH ADAPTER//
     /////////////////////
