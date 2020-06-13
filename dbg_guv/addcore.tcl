@@ -128,10 +128,27 @@ proc get_next_dbg_core_id {} {
     return $next_id
 }
 
+# Searches current BD to get next ID to use for an rr_tree
+proc get_next_rr_tree_id {} {
+    puts "get_next_dbg_core_id args:"
+    puts "----"
+    set cells [get_bd_cells -hierarchical -filter {NAME =~ RR_TREE*} -quiet]
+    set next_id 0
+    foreach c $cells {
+        set name [get_property NAME $c]
+        if {[string first "RR_TREE_" $name] == 0} {
+            set idnum [string range $name 9 [string length $name]]
+            if [string is integer $idnum] {
+                set next_id [expr max($next_id,$idnum+1)]
+            }
+        }
+    }
+    return $next_id
+}
 
 # Given a list of AXI Stream masters (with only TDATA, TREADY, TVALID, and TLAST)
 # hooks up an automatically sized arbiter tree
-# Returns a reference to the tree's final output
+# Returns a reference to the top-level hierarchy cell
 proc rr_tree {msts {data_w 32}} {
     puts "rr_tree args:"
     puts "msts = $msts"
@@ -181,24 +198,25 @@ proc rr_tree {msts {data_w 32}} {
         set slvs [lreplace $slvs 0 0]
     }
     
+    
     if {[llength $nodes] > 0} {
         # The user is not allowed to use this name
-        set h [create_bd_cell -type hier -name DBG_GUV_TREE]
+        set h [create_bd_cell -type hier -name RR_TREE_[get_next_rr_tree_id]]
         
         move_bd_cells $h $nodes
         
-        create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 DBG_GUV_TREE/o
-        connect_bd_intf_net [get_bd_intf_pins DBG_GUV_TREE/o] [get_bd_intf_pins DBG_GUV_TREE/node_1/o]
-        create_bd_pin -dir I DBG_GUV_TREE/clk
+        create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 $h/o
+        connect_bd_intf_net [get_bd_intf_pins $h/o] [get_bd_intf_pins $h/node_1/o]
+        create_bd_pin -dir I $h/clk
         
-        connect_bd_net [list [get_bd_pins /DBG_GUV_TREE/*/clk] [get_bd_pins /DBG_GUV_TREE/clk]]
+        connect_bd_net [list [get_bd_pins $h/*/clk] [get_bd_pins $h/clk]]
         
         # Update arbiter_out now that the tree is generated
-        set arbiter_out [get_bd_intf_pins /DBG_GUV_TREE/o]
+        set arbiter_out [get_bd_intf_pins $h/o]
     }
     endgroup
     
-    return $arbiter_out
+    return $h
 }
 
 proc del_dbg_core {c} {
@@ -228,7 +246,7 @@ proc del_dbg_core {c} {
 
 proc del_all_dbg_cores {} {
     startgroup
-    delete_bd_objs [get_bd_cells DBG_GUV_TREE -quiet] -quiet
+    delete_bd_objs [get_bd_cells -hierarchical -filter {NAME =~ RR_TREE*} -quiet] -quiet
     delete_bd_objs [get_bd_cells DBG_GUV_UNCONCAT -quiet] -quiet
     set dbg_guvs [get_bd_cells -hierarchical -filter {VLNV =~ "*dbg_guv*"} -quiet]
     foreach d $dbg_guvs {
@@ -243,19 +261,12 @@ proc del_all_dbg_cores {} {
 # Given a list of nets, instrument each one with a dbg_guv. This code handles a
 # number of common issues, such as not adding dbg_guvs if there is already one 
 # there, checking if the net is actually an AXI Stream, and of course, the 
-# frustrating special cases of port vs. pin
-# The safe_mode argument will, when set to 1, delete all existing debug infra
-# before adding in new cores. I only made this a parameter so that I could
-# disable it in Galapagos's automatic generator; you normally want this to be on
-# Finally, this proc returns a list containing the first cmd_in in the dbg_guv
-# daisy chain, and the last output of the arbiter tree
+# frustrating special cases of port vs. pin. 
 proc add_dbg_core_to_list {nets} {
     puts "add_dbg_core_to_list args:"
     puts "nets = $nets"
     puts "----"
     startgroup
-    
-    del_all_dbg_cores
     
     # Stores the list of log outputs to run through the arbiter tree
     set log_outs {}
@@ -299,23 +310,24 @@ proc add_dbg_core_to_list {nets} {
         set last_cmd $g/cmd_out
     }
     
-    # Put in the arbiter tree
-    set tree_out [rr_tree $log_outs 32]
-    
     # Connect up the clocks
     # TODO: If I ever plan to allow multiple clock domains, this will have to 
     # change
     if {[llength $log_outs] > 1} {
-        connect_bd_net [list [get_bd_pins -of_objects [get_bd_cells -hierarchical  -filter {VLNV == mmerlini:yov:dbg_guv:1.0}] -filter {NAME == clk}] [get_bd_pins /DBG_GUV_TREE/clk]]
+        # Put in the arbiter tree
+        set tree_cell [rr_tree $log_outs 32]
+        
+        connect_bd_net [list [get_bd_pins -of_objects [get_bd_cells -hierarchical  -filter {VLNV == mmerlini:yov:dbg_guv:1.0}] -filter {NAME == clk}] [get_bd_pins $tree_cell/clk]]
     }
-    endgroup
     
-    return [list $first_cmd_in $tree_out]
+    endgroup
 }
 
 proc add_dbg_core_to_highlighted {} {
+    del_all_dbg_cores
     add_dbg_core_to_list [get_bd_intf_nets [get_highlighted_objects]]
 }
+
 
 proc del_highlighted_dbg_cores {} {
     startgroup
