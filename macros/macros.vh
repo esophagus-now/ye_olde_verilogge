@@ -1,6 +1,3 @@
-`ifndef MACROS_VH_INCLUDE_GUARD
-`define MACROS_VH_INCLUDE_GUARD 1
-
 `ifdef ICARUS_VERILOG
 `define localparam parameter
 `else /*For Vivado*/
@@ -218,6 +215,3 @@ wire unused_dummy_in_wire_rst_sig_macro
 `define prendre (
 `define autrement ) : (
 `define fin ))
-
-
-`endif

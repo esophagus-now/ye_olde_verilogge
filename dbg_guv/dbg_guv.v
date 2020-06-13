@@ -61,7 +61,7 @@ Remaining tasks for implementing new interface:
 [x] Figure out how to replace the axis_mux thing
 [x] Add in the dbg_guv_width_adapter
 [x] Oh yeah, don't forget the flit for sidechannels
-[ ] Simulate the crap out of it
+[x] Simulate the crap out of it
 */
 
  `ifdef ICARUS_VERILOG
