@@ -277,6 +277,9 @@ proc add_dbg_core_to_list {nets} {
     # Stores the first cmd_in in the daisy chain
     set first_cmd_in {}
     
+    # Keeps track of created dbg_guvs
+    set guvs {}
+    
     foreach n $nets {
         # Choose an ID. get_next_dbg_core_id guarantees it will be unique, and 
         # if some dbg_guvs don't get added (e.g. if the highlighted net was 
@@ -293,6 +296,8 @@ proc add_dbg_core_to_list {nets} {
             puts "Warning: I can no longer guarantee that the debug cores will work! You may need to add them manually"
             continue
         }
+        
+        lappend guvs $g
         
         set_property CONFIG.ADDR $next_id $g
         
@@ -317,7 +322,7 @@ proc add_dbg_core_to_list {nets} {
         # Put in the arbiter tree
         set tree_cell [rr_tree $log_outs 32]
         
-        connect_bd_net [list [get_bd_pins -of_objects [get_bd_cells -hierarchical  -filter {VLNV == mmerlini:yov:dbg_guv:1.0}] -filter {NAME == clk}] [get_bd_pins $tree_cell/clk]]
+        connect_bd_net [list [get_bd_pins -of_objects $guvs -filter {NAME == clk}] [get_bd_pins $tree_cell/clk]]
     }
     
     endgroup
