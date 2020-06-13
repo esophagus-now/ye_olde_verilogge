@@ -28,17 +28,18 @@ is really handy for doing up module instantiations
 
 module dbg_guv_tb # (
     parameter DATA_WIDTH = 64,
+    parameter DATA_HAS_TKEEP = 1,
+    parameter DATA_HAS_TLAST = 1,
     parameter DEST_WIDTH = 16,
     parameter ID_WIDTH = 16,
     parameter CNT_SIZE = 16,
-    parameter ADDR_WIDTH = 11, //This gives 2048 simultaneous debug cores
     parameter ADDR = 0, //Set this to be different for each 
     parameter RESET_TYPE = `NO_RESET,
     parameter DUT_RST_VAL = 0, //The value of DUT_rst that will reset the DUT
     parameter STICKY_MODE = 1, //If 1, latching registers does not reset them
     parameter PIPE_STAGE = 0, //This causes a delay on cmd_out in case fanout is
                               //an issue
-    parameter SATCNT_WIDTH = 3 //Saturating ocunter for number of cycles slave
+    parameter SATCNT_WIDTH = 3 //Saturating counter for number of cycles slave
                                //has not been ready
 );
 	reg clk = 0;    
@@ -50,12 +51,12 @@ module dbg_guv_tb # (
     //How does this work if you have a bunch of streams of different sizes that
     //you want to debug? Also, what about the rr_tree in that case?
     //Also, this core cannot assert backpressure
-    reg [DATA_WIDTH -1:0] cmd_in_TDATA = 0;
+    reg [31:0] cmd_in_TDATA = 0;
     reg cmd_in_TVALID = 0;
     
     //All the controllers are daisy-chained. If in incoming command is not for
     //this controller, send it to the next one
-    wire [DATA_WIDTH -1:0] cmd_out_TDATA;
+    wire [31:0] cmd_out_TDATA;
     wire cmd_out_TVALID;
     
     //Also,since this module is intended to wrap around axis_governor, we need
@@ -71,13 +72,15 @@ module dbg_guv_tb # (
     reg in1_TLAST = 0;
     
     //Input2 AXI Stream.
-    reg [DATA_WIDTH-1:0] in2_TDATA = 1;
+    reg [DATA_WIDTH2-1:0] in2_TDATA = 1;
     reg in2_TVALID = 1;
     wire in2_TREADY;
-    reg [DATA_WIDTH/8 -1:0] in2_TKEEP = 1;
+    reg [DATA_WIDTH2/8 -1:0] in2_TKEEP = 1;
     reg [DEST_WIDTH -1:0] in2_TDEST = 1;
     reg [ID_WIDTH -1:0] in2_TID = 1;
     reg in2_TLAST = 0;
+    
+    `localparam DATA_WIDTH2 = 32;
     
     //Output1 AXI Stream.
     wire [DATA_WIDTH-1:0] out1_TDATA;
@@ -89,10 +92,10 @@ module dbg_guv_tb # (
     wire out1_TLAST;
     
     //Output2 AXI Stream.
-    wire [DATA_WIDTH-1:0] out2_TDATA;
+    wire [DATA_WIDTH2-1:0] out2_TDATA;
     wire out2_TVALID;
     reg out2_TREADY = 1;
-    wire [DATA_WIDTH/8 -1:0] out2_TKEEP;
+    wire [DATA_WIDTH2/8 -1:0] out2_TKEEP;
     wire [DEST_WIDTH -1:0] out2_TDEST;
     wire [ID_WIDTH -1:0] out2_TID;
     wire out2_TLAST;
@@ -100,12 +103,12 @@ module dbg_guv_tb # (
     //Log1 AXI Stream. 
     //This core takes care of concatting the sidechannels into the data part
     //of the flit
-    `sim_out_axis_l(log_catted1, DATA_WIDTH + DATA_WIDTH/8);
+    `sim_out_axis_l(log1, 32);
     
     //Log2 AXI Stream. 
     //This core takes care of concatting the sidechannels into the data part
     //of the flit
-    `sim_out_axis_l(log_catted2, DATA_WIDTH + DATA_WIDTH/8);
+    `sim_out_axis_l(log2, 32);
     
     integer fd, dummy;
     
@@ -162,25 +165,25 @@ module dbg_guv_tb # (
         end
         
         whatever = $random;
-        log_catted1_TREADY <= (| whatever[2:0]);
+        log1_TREADY <= (| whatever[2:0]);
         //log_catted2_TREADY <= (| whatever[5:3]);
         out1_TREADY <= (| whatever[8:6]);
         out2_TREADY <= whatever[9];
     end
     
     //Wires from ctl1 to ctl2
-    wire [DATA_WIDTH -1:0] cmd12_TDATA;
+    wire [31:0] cmd12_TDATA;
     wire cmd12_TVALID;
     
     dbg_guv # (
 		.DATA_WIDTH(DATA_WIDTH),
+        .DATA_HAS_TKEEP(DATA_HAS_TKEEP),
+        .DATA_HAS_TLAST(DATA_HAS_TLAST),
 		.DEST_WIDTH(DEST_WIDTH),
 		.ID_WIDTH(ID_WIDTH),
 		.CNT_SIZE(CNT_SIZE),
-		.ADDR_WIDTH(ADDR_WIDTH), //This gives 1024 simultaneous debug cores
 		.ADDR(0), //Set this to be different for each 
 		.RESET_TYPE(RESET_TYPE),
-		.STICKY_MODE(STICKY_MODE), //If 1, latching registers does not reset them
 		.PIPE_STAGE(PIPE_STAGE) //This causes a delay on cmd_out in case fanout is
                                 //an issue
     ) ctl1 (
@@ -214,19 +217,19 @@ module dbg_guv_tb # (
         //Log AXI Stream. 
         //This core takes care of concatting the sidechannels into the data part
         //of the flit
-        `inst_axis_l(log_catted, log_catted1)
+        `inst_axis_l(logs_receipts, log1)
     );
     
     dbg_guv # (
-		.DATA_WIDTH(DATA_WIDTH),
+		.DATA_WIDTH(DATA_WIDTH2),
+        .DATA_HAS_TKEEP(DATA_HAS_TKEEP),
+        .DATA_HAS_TLAST(DATA_HAS_TLAST),
 		.DEST_WIDTH(DEST_WIDTH),
 		.ID_WIDTH(ID_WIDTH),
 		.CNT_SIZE(CNT_SIZE),
-		.ADDR_WIDTH(ADDR_WIDTH), //This gives 1024 simultaneous debug cores
 		.ADDR(1), //Set this to be different for each 
 		.RESET_TYPE(RESET_TYPE),
         .DUT_RST_VAL(DUT_RST_VAL),
-		.STICKY_MODE(STICKY_MODE), //If 1, latching registers does not reset them
 		.PIPE_STAGE(PIPE_STAGE), //This causes a delay on cmd_out in case fanout is
                                  //an issue
         .SATCNT_WIDTH(SATCNT_WIDTH)
@@ -261,7 +264,7 @@ module dbg_guv_tb # (
         //Log AXI Stream. 
         //This core takes care of concatting the sidechannels into the data part
         //of the flit
-        `inst_axis_l(log_catted, log_catted2)
+        `inst_axis_l(logs_receipts, log2)
     );
 
 endmodule

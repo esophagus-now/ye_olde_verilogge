@@ -14,7 +14,7 @@ IVERILOG_INCLUDE = -Iaxis_governor/
 IVERILOG_INCLUDE += -I../macros/
 IVERILOG_INCLUDE += -I../tkeep_to_len/
 IVERILOG_INCLUDE += -Idbg_guv_width_adapter/
-IVERILOG_WARNS=-Wanachronisms -Wimplicit -Wportbind -Wselect-range -Wsensitivity-entire-vector -Wsensitivity-entire-array
+IVERILOG_WARNS=-Wall -Wno-timescale
 
 # By default, package as an ip
 default: ip

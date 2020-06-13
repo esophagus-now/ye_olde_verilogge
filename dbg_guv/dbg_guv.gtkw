@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Wed Apr  1 13:50:40 2020
+[*] Sat Jun 13 00:35:23 2020
 [*]
-[dumpfile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.vcd"
-[dumpfile_mtime] "Wed Apr  1 13:50:27 2020"
-[dumpfile_size] 185057
-[savefile] "/home/mahkoe/research/ye_olde_verilogge/axis_governor/better_axis_intf/dbg_guv.gtkw"
-[timestart] 252600
-[size] 1920 1057
+[dumpfile] "/home/mahkoe/research/ye_olde_verilogge/dbg_guv/dbg_guv.vcd"
+[dumpfile_mtime] "Sat Jun 13 00:35:14 2020"
+[dumpfile_size] 131536
+[savefile] "/home/mahkoe/research/ye_olde_verilogge/dbg_guv/dbg_guv.gtkw"
+[timestart] 0
+[size] 1916 1060
 [pos] -1 -1
-*-15.640755 350900 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.724583 39500 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dbg_guv_tb.
 [treeopen] dbg_guv_tb.ctl1.
 [treeopen] dbg_guv_tb.ctl2.
@@ -17,14 +17,14 @@
 [sst_width] 229
 [signals_width] 390
 [sst_expanded] 1
-[sst_vpaned_height] 660
+[sst_vpaned_height] 575
 @28
 dbg_guv_tb.clk
 dbg_guv_tb.rst
 @22
-dbg_guv_tb.cmd_in_TDATA[63:0]
+dbg_guv_tb.cmd_in_TDATA[31:0]
 @28
-dbg_guv_tb.cmd_out_TVALID
+dbg_guv_tb.cmd_in_TVALID
 @800200
 -in1
 @24
@@ -50,8 +50,75 @@ dbg_guv_tb.in1_TID[15:0]
 -in1
 @800200
 -out1
-@24
+@c00024
 dbg_guv_tb.out1_TDATA[63:0]
+@28
+(0)dbg_guv_tb.out1_TDATA[63:0]
+(1)dbg_guv_tb.out1_TDATA[63:0]
+(2)dbg_guv_tb.out1_TDATA[63:0]
+(3)dbg_guv_tb.out1_TDATA[63:0]
+(4)dbg_guv_tb.out1_TDATA[63:0]
+(5)dbg_guv_tb.out1_TDATA[63:0]
+(6)dbg_guv_tb.out1_TDATA[63:0]
+(7)dbg_guv_tb.out1_TDATA[63:0]
+(8)dbg_guv_tb.out1_TDATA[63:0]
+(9)dbg_guv_tb.out1_TDATA[63:0]
+(10)dbg_guv_tb.out1_TDATA[63:0]
+(11)dbg_guv_tb.out1_TDATA[63:0]
+(12)dbg_guv_tb.out1_TDATA[63:0]
+(13)dbg_guv_tb.out1_TDATA[63:0]
+(14)dbg_guv_tb.out1_TDATA[63:0]
+(15)dbg_guv_tb.out1_TDATA[63:0]
+(16)dbg_guv_tb.out1_TDATA[63:0]
+(17)dbg_guv_tb.out1_TDATA[63:0]
+(18)dbg_guv_tb.out1_TDATA[63:0]
+(19)dbg_guv_tb.out1_TDATA[63:0]
+(20)dbg_guv_tb.out1_TDATA[63:0]
+(21)dbg_guv_tb.out1_TDATA[63:0]
+(22)dbg_guv_tb.out1_TDATA[63:0]
+(23)dbg_guv_tb.out1_TDATA[63:0]
+(24)dbg_guv_tb.out1_TDATA[63:0]
+(25)dbg_guv_tb.out1_TDATA[63:0]
+(26)dbg_guv_tb.out1_TDATA[63:0]
+(27)dbg_guv_tb.out1_TDATA[63:0]
+(28)dbg_guv_tb.out1_TDATA[63:0]
+(29)dbg_guv_tb.out1_TDATA[63:0]
+(30)dbg_guv_tb.out1_TDATA[63:0]
+(31)dbg_guv_tb.out1_TDATA[63:0]
+(32)dbg_guv_tb.out1_TDATA[63:0]
+(33)dbg_guv_tb.out1_TDATA[63:0]
+(34)dbg_guv_tb.out1_TDATA[63:0]
+(35)dbg_guv_tb.out1_TDATA[63:0]
+(36)dbg_guv_tb.out1_TDATA[63:0]
+(37)dbg_guv_tb.out1_TDATA[63:0]
+(38)dbg_guv_tb.out1_TDATA[63:0]
+(39)dbg_guv_tb.out1_TDATA[63:0]
+(40)dbg_guv_tb.out1_TDATA[63:0]
+(41)dbg_guv_tb.out1_TDATA[63:0]
+(42)dbg_guv_tb.out1_TDATA[63:0]
+(43)dbg_guv_tb.out1_TDATA[63:0]
+(44)dbg_guv_tb.out1_TDATA[63:0]
+(45)dbg_guv_tb.out1_TDATA[63:0]
+(46)dbg_guv_tb.out1_TDATA[63:0]
+(47)dbg_guv_tb.out1_TDATA[63:0]
+(48)dbg_guv_tb.out1_TDATA[63:0]
+(49)dbg_guv_tb.out1_TDATA[63:0]
+(50)dbg_guv_tb.out1_TDATA[63:0]
+(51)dbg_guv_tb.out1_TDATA[63:0]
+(52)dbg_guv_tb.out1_TDATA[63:0]
+(53)dbg_guv_tb.out1_TDATA[63:0]
+(54)dbg_guv_tb.out1_TDATA[63:0]
+(55)dbg_guv_tb.out1_TDATA[63:0]
+(56)dbg_guv_tb.out1_TDATA[63:0]
+(57)dbg_guv_tb.out1_TDATA[63:0]
+(58)dbg_guv_tb.out1_TDATA[63:0]
+(59)dbg_guv_tb.out1_TDATA[63:0]
+(60)dbg_guv_tb.out1_TDATA[63:0]
+(61)dbg_guv_tb.out1_TDATA[63:0]
+(62)dbg_guv_tb.out1_TDATA[63:0]
+(63)dbg_guv_tb.out1_TDATA[63:0]
+@1401200
+-group_end
 @28
 dbg_guv_tb.out1_TVALID
 dbg_guv_tb.out1_TREADY
@@ -66,124 +133,66 @@ dbg_guv_tb.out1_TID[15:0]
 -out1
 @800200
 -log1
-@28
-dbg_guv_tb.ctl1.latch_sig
-dbg_guv_tb.ctl1.inj_TVALID
-dbg_guv_tb.ctl1.inj_TREADY
-dbg_guv_tb.ctl1.inj_failed
 @c00022
-dbg_guv_tb.ctl1.receipt_TDATA[63:0]
+dbg_guv_tb.log1_TDATA[31:0]
 @28
-(0)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(1)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(2)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(3)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(4)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(5)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(6)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(7)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(8)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(9)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(10)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(11)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(12)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(13)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(14)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(15)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(16)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(17)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(18)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(19)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(20)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(21)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(22)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(23)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(24)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(25)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(26)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(27)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(28)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(29)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(30)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(31)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(32)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(33)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(34)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(35)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(36)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(37)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(38)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(39)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(40)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(41)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(42)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(43)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(44)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(45)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(46)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(47)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(48)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(49)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(50)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(51)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(52)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(53)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(54)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(55)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(56)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(57)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(58)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(59)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(60)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(61)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(62)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
-(63)dbg_guv_tb.ctl1.receipt_TDATA[63:0]
+(0)dbg_guv_tb.log1_TDATA[31:0]
+(1)dbg_guv_tb.log1_TDATA[31:0]
+(2)dbg_guv_tb.log1_TDATA[31:0]
+(3)dbg_guv_tb.log1_TDATA[31:0]
+(4)dbg_guv_tb.log1_TDATA[31:0]
+(5)dbg_guv_tb.log1_TDATA[31:0]
+(6)dbg_guv_tb.log1_TDATA[31:0]
+(7)dbg_guv_tb.log1_TDATA[31:0]
+(8)dbg_guv_tb.log1_TDATA[31:0]
+(9)dbg_guv_tb.log1_TDATA[31:0]
+(10)dbg_guv_tb.log1_TDATA[31:0]
+(11)dbg_guv_tb.log1_TDATA[31:0]
+(12)dbg_guv_tb.log1_TDATA[31:0]
+(13)dbg_guv_tb.log1_TDATA[31:0]
+(14)dbg_guv_tb.log1_TDATA[31:0]
+(15)dbg_guv_tb.log1_TDATA[31:0]
+(16)dbg_guv_tb.log1_TDATA[31:0]
+(17)dbg_guv_tb.log1_TDATA[31:0]
+(18)dbg_guv_tb.log1_TDATA[31:0]
+(19)dbg_guv_tb.log1_TDATA[31:0]
+(20)dbg_guv_tb.log1_TDATA[31:0]
+(21)dbg_guv_tb.log1_TDATA[31:0]
+(22)dbg_guv_tb.log1_TDATA[31:0]
+(23)dbg_guv_tb.log1_TDATA[31:0]
+(24)dbg_guv_tb.log1_TDATA[31:0]
+(25)dbg_guv_tb.log1_TDATA[31:0]
+(26)dbg_guv_tb.log1_TDATA[31:0]
+(27)dbg_guv_tb.log1_TDATA[31:0]
+(28)dbg_guv_tb.log1_TDATA[31:0]
+(29)dbg_guv_tb.log1_TDATA[31:0]
+(30)dbg_guv_tb.log1_TDATA[31:0]
+(31)dbg_guv_tb.log1_TDATA[31:0]
 @1401200
 -group_end
-@22
-dbg_guv_tb.ctl1.log_with_hdr_TDATA[63:0]
-[color] 3
-dbg_guv_tb.log_catted1_TDATA[71:0]
 @28
-[color] 3
-dbg_guv_tb.log_catted1_TVALID
-[color] 3
-dbg_guv_tb.log_catted1_TREADY
-[color] 3
-dbg_guv_tb.log_catted1_TLAST
+dbg_guv_tb.log1_TVALID
+dbg_guv_tb.log1_TREADY
+dbg_guv_tb.log1_TLAST
 @1000200
 -log1
-@800200
--dbg_guv1
-@28
-dbg_guv_tb.ctl1.DUT_rst
-[color] 7
-dbg_guv_tb.ctl1.pause
-[color] 7
-dbg_guv_tb.ctl1.drop
-[color] 7
-dbg_guv_tb.ctl1.keep_dropping
-[color] 7
-dbg_guv_tb.ctl1.log_en
-[color] 7
-dbg_guv_tb.ctl1.keep_logging
-@1000200
--dbg_guv1
 @800200
 -in2
 @22
 [color] 2
-dbg_guv_tb.in2_TDATA[63:0]
+dbg_guv_tb.in2_TDATA[31:0]
 @28
 [color] 2
 dbg_guv_tb.in2_TVALID
 [color] 2
 dbg_guv_tb.in2_TREADY
+@22
+[color] 2
+dbg_guv_tb.in2_TKEEP[3:0]
+@28
 [color] 2
 dbg_guv_tb.in2_TLAST
 @22
-[color] 2
-dbg_guv_tb.in2_TKEEP[7:0]
 [color] 2
 dbg_guv_tb.in2_TDEST[15:0]
 [color] 2
@@ -193,12 +202,12 @@ dbg_guv_tb.in2_TID[15:0]
 @800200
 -out2
 @22
-dbg_guv_tb.out2_TDATA[63:0]
+dbg_guv_tb.out2_TDATA[31:0]
 @28
 dbg_guv_tb.out2_TVALID
 dbg_guv_tb.out2_TREADY
 @22
-dbg_guv_tb.out2_TKEEP[7:0]
+dbg_guv_tb.out2_TKEEP[3:0]
 @28
 dbg_guv_tb.out2_TLAST
 @22
@@ -206,28 +215,15 @@ dbg_guv_tb.out2_TDEST[15:0]
 dbg_guv_tb.out2_TID[15:0]
 @1000200
 -out2
-@28
-dbg_guv_tb.ctl2.select_receipt_vs_log.clk
-dbg_guv_tb.ctl2.select_receipt_vs_log.sel
-dbg_guv_tb.ctl2.select_receipt_vs_log.f_TREADY
-dbg_guv_tb.ctl2.select_receipt_vs_log.f_TVALID
-@29
-dbg_guv_tb.ctl2.select_receipt_vs_log.f_TLAST
-@28
-dbg_guv_tb.ctl2.select_receipt_vs_log.decided
-dbg_guv_tb.ctl2.select_receipt_vs_log.prev_decision
-dbg_guv_tb.ctl2.select_receipt_vs_log.decision
-dbg_guv_tb.ctl2.latch_sig
+@800200
+-log2
 @22
-dbg_guv_tb.ctl2.log_cnt[15:0]
+dbg_guv_tb.log2_TDATA[31:0]
 @28
-dbg_guv_tb.ctl2.keep_logging
-@22
-dbg_guv_tb.ctl2.log_with_hdr_TDATA[63:0]
-dbg_guv_tb.log_catted2_TDATA[71:0]
-@28
-dbg_guv_tb.log_catted2_TVALID
-dbg_guv_tb.log_catted2_TREADY
-dbg_guv_tb.log_catted2_TLAST
+dbg_guv_tb.log2_TVALID
+dbg_guv_tb.log2_TREADY
+dbg_guv_tb.log2_TLAST
+@1000200
+-log2
 [pattern_trace] 1
 [pattern_trace] 0

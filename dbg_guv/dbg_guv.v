@@ -56,9 +56,9 @@ Remaining tasks for implementing new interface:
 [x] Use shift register technique for INJECT_TDATA_r
 [N] Use "generate if" to get rid of TID, TDEST, TUSER if unused (forget it; it's too much trouble)
 [x] Construct correct headers for logs and command receipts
-[ ] Construct properly padded payload vector
-[ ] Figure out how to replace the axis_mux thing
-[ ] Add in the dbg_guv_width_adapter
+[x] Construct properly padded payload vector
+[x] Figure out how to replace the axis_mux thing
+[x] Add in the dbg_guv_width_adapter
 [ ] Simulate the crap out of it
 */
 
@@ -96,7 +96,7 @@ module dbg_guv # (
     parameter DUT_RST_VAL = 1, //The value of DUT_rst that will reset the DUT
     parameter PIPE_STAGE = 1, //This causes a delay on cmd_out in case fanout is
                               //an issue
-    parameter SATCNT_WIDTH = 3, //Saturating ocunter for number of cycles slave
+    parameter SATCNT_WIDTH = 3, //Saturating counter for number of cycles slave
                                //has not been ready
     parameter DEFAULT_DROP = 0,
     parameter DEFAULT_LOG = 0,
@@ -107,12 +107,12 @@ module dbg_guv # (
     input wire rst,
     
     //Input command stream
-    input wire [32:0] cmd_in_TDATA,
+    input wire [31:0] cmd_in_TDATA,
     input wire cmd_in_TVALID,
     
     //All the controllers are daisy-chained. If in incoming command is not for
     //this controller, send it to the next one
-    output wire [DATA_WIDTH -1:0] cmd_out_TDATA,
+    output wire [31:0] cmd_out_TDATA,
     output wire cmd_out_TVALID,
     
     //Also,since this module is intended to wrap around axis_governor, we need
@@ -447,9 +447,9 @@ module dbg_guv # (
         .len(log_len[$clog2(DATA_WIDTH/8) -1:0])
     );
     
-    /*if (LOG_LEN_SZ > $clog2(DATA_WIDTH/8)) begin
+    if (LOG_LEN_SZ > $clog2(DATA_WIDTH/8)) begin
         assign log_len[LOG_LEN_SZ -1: $clog2(DATA_WIDTH/8)] = 0;
-    end*/
+    end
     
 `else_gen
     assign log_len = (DATA_WIDTH/8) -1;
