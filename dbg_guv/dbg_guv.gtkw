@@ -1,20 +1,22 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Jun 13 17:21:46 2020
+[*] Sat Jun 13 20:44:24 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/dbg_guv/dbg_guv.vcd"
-[dumpfile_mtime] "Sat Jun 13 17:14:52 2020"
-[dumpfile_size] 258892
+[dumpfile_mtime] "Sat Jun 13 20:44:11 2020"
+[dumpfile_size] 274806
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/dbg_guv/dbg_guv.gtkw"
-[timestart] 250500
+[timestart] 0
 [size] 1916 1060
 [pos] -1 -1
-*-15.984589 531200 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.984589 531200 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dbg_guv_tb.
 [treeopen] dbg_guv_tb.ctl1.
 [treeopen] dbg_guv_tb.ctl2.
 [treeopen] dbg_guv_tb.ctl2.ello_guvna.
+[treeopen] dbg_guv_tb.ctl2.genblk10.
 [treeopen] dbg_guv_tb.ctl3.
+[treeopen] dbg_guv_tb.ctl3.genblk10.
 [sst_width] 349
 [signals_width] 390
 [sst_expanded] 1
@@ -227,7 +229,7 @@ dbg_guv_tb.out2_TDEST[15:0]
 dbg_guv_tb.out2_TID[15:0]
 @1401200
 -out2
-@c00201
+@c00200
 -log2
 @c00024
 #{DEST width} (0)dbg_guv_tb.log2_TDATA[31:0] (1)dbg_guv_tb.log2_TDATA[31:0] (2)dbg_guv_tb.log2_TDATA[31:0] (3)dbg_guv_tb.log2_TDATA[31:0] (4)dbg_guv_tb.log2_TDATA[31:0] (5)dbg_guv_tb.log2_TDATA[31:0]
@@ -238,7 +240,7 @@ dbg_guv_tb.out2_TID[15:0]
 (3)dbg_guv_tb.log2_TDATA[31:0]
 (4)dbg_guv_tb.log2_TDATA[31:0]
 (5)dbg_guv_tb.log2_TDATA[31:0]
-@1401204
+@1401200
 -group_end
 @c00024
 +{ID width} #{DEST len} (7)dbg_guv_tb.log2_TDATA[31:0] (8)dbg_guv_tb.log2_TDATA[31:0] (9)dbg_guv_tb.log2_TDATA[31:0] (10)dbg_guv_tb.log2_TDATA[31:0] (11)dbg_guv_tb.log2_TDATA[31:0]
@@ -249,7 +251,7 @@ dbg_guv_tb.out2_TID[15:0]
 (9)dbg_guv_tb.log2_TDATA[31:0]
 (10)dbg_guv_tb.log2_TDATA[31:0]
 (11)dbg_guv_tb.log2_TDATA[31:0]
-@1401204
+@1401200
 -group_end
 @28
 +{log_TLAST} (12)dbg_guv_tb.log2_TDATA[31:0]
@@ -261,7 +263,7 @@ dbg_guv_tb.out2_TID[15:0]
 (15)dbg_guv_tb.log2_TDATA[31:0]
 (16)dbg_guv_tb.log2_TDATA[31:0]
 (17)dbg_guv_tb.log2_TDATA[31:0]
-@1401204
+@1401200
 -group_end
 @28
 +{L/C} (18)dbg_guv_tb.log2_TDATA[31:0]
@@ -281,7 +283,7 @@ dbg_guv_tb.out2_TID[15:0]
 (29)dbg_guv_tb.log2_TDATA[31:0]
 (30)dbg_guv_tb.log2_TDATA[31:0]
 (31)dbg_guv_tb.log2_TDATA[31:0]
-@1401204
+@1401200
 -group_end
 @22
 dbg_guv_tb.log2_TDATA[31:0]
@@ -289,14 +291,18 @@ dbg_guv_tb.log2_TDATA[31:0]
 dbg_guv_tb.log2_TVALID
 dbg_guv_tb.log2_TREADY
 dbg_guv_tb.log2_TLAST
-@1401201
+@1401200
 -log2
 @800200
 -in3
 @22
 [color] 2
-dbg_guv_tb.in3_TDATA[7:0]
+dbg_guv_tb.in3_TDATA[15:0]
+@420
+dbg_guv_tb.keep_bits3
 @28
+[color] 2
+dbg_guv_tb.in3_TKEEP[1:0]
 [color] 2
 dbg_guv_tb.in3_TVALID
 [color] 2
@@ -310,8 +316,9 @@ dbg_guv_tb.in3_TID
 @800200
 -out3
 @22
-dbg_guv_tb.out3_TDATA[7:0]
+dbg_guv_tb.out3_TDATA[15:0]
 @28
+dbg_guv_tb.in3_TKEEP[1:0]
 dbg_guv_tb.out3_TVALID
 dbg_guv_tb.out3_TREADY
 dbg_guv_tb.out3_TLAST
@@ -323,6 +330,7 @@ dbg_guv_tb.out3_TID
 @22
 dbg_guv_tb.log3_TDATA[31:0]
 @28
+dbg_guv_tb.out3_TKEEP[1:0]
 dbg_guv_tb.log3_TVALID
 dbg_guv_tb.log3_TREADY
 dbg_guv_tb.log3_TLAST

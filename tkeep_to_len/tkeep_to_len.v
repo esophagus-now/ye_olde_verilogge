@@ -16,26 +16,34 @@ TKEEP value     Comments
 */
 
 `include "macros.vh"
+`define MAX(x,y) (((x)>(y))?(x):(y))
 
 module tkeep_to_len # (
     parameter TKEEP_WIDTH = 8
 ) (
     input wire [TKEEP_WIDTH - 1:0] tkeep,
     
-    output wire [$clog2(TKEEP_WIDTH) -1:0] len
+    output wire [`MAX($clog2(TKEEP_WIDTH),1) -1:0] len
 );
     
+    //Special cases for small TKEEP_WIDTH
+`genif (TKEEP_WIDTH == 1) begin
+    assign len = 0;
+`else_genif( TKEEP_WIDTH == 2) begin
+    assign len = tkeep[0];
+`else_gen
+    
     //This Verilog code is essentially a generic binary encoder
-	`localparam NUM_LEVELS = $clog2(TKEEP_WIDTH);
+	localparam NUM_LEVELS = $clog2(TKEEP_WIDTH);
 
     //Pad TKEEP on the right with zeroes
 	wire [2**NUM_LEVELS -1:0] tkeep_padded;
-	`localparam PAD_WIDTH = 2**NUM_LEVELS - TKEEP_WIDTH;
-    generate if (PAD_WIDTH > 0) begin
+	localparam PAD_WIDTH = 2**NUM_LEVELS - TKEEP_WIDTH;
+    if (PAD_WIDTH > 0) begin
         assign tkeep_padded = {tkeep, {PAD_WIDTH{1'b0}}};
     end else begin
         assign tkeep_padded = tkeep;
-    end endgenerate
+    end
     
     
     //Wire which stores the one-hot encoding of where the last TKEEP bit
@@ -49,7 +57,7 @@ module tkeep_to_len # (
 		assign one_hot[i] = tkeep_padded[i] ^ tkeep_padded[i - 1];
 	end
     
-    //Subsets of bits which have a '1' in a particular position of their 
+    //Subsets of bits which have a '0' in a particular position of their 
     //index. Specifically, subsets[i] is the concatenation of
     //
     //  {one_hot[j] | the (NUM_LEVELS)-bit binary representation of j has a 
@@ -98,5 +106,8 @@ module tkeep_to_len # (
     for (i = 0; i < NUM_LEVELS; i = i + 1) begin
         assign len[i] = |subsets[i];
     end
+`endgen
 
 endmodule
+
+`undef MAX

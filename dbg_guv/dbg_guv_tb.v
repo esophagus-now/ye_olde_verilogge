@@ -101,11 +101,12 @@ module dbg_guv_tb # (
     wire out2_TLAST;
     
         
-    `localparam DATA_WIDTH3 = 8;
+    `localparam DATA_WIDTH3 = 16;
     `localparam ID_WIDTH3 = 1;
     `localparam DEST_WIDTH3 = 0;
     //Input3 AXI Stream.
     reg [DATA_WIDTH3-1:0] in3_TDATA = 1;
+    reg [DATA_WIDTH3/8-1:0] in3_TKEEP = 1;
     reg in3_TVALID = 1;
     wire in3_TREADY;
     reg [ID_WIDTH3 -1:0] in3_TID = 0;
@@ -113,6 +114,7 @@ module dbg_guv_tb # (
     
     //Output3 AXI Stream.
     wire [DATA_WIDTH3-1:0] out3_TDATA;
+    wire [DATA_WIDTH3/8-1:0] out3_TKEEP;
     wire out3_TVALID ;
     reg out3_TREADY = 1;
     wire [ID_WIDTH3 -1:0] out3_TID;
@@ -167,6 +169,7 @@ module dbg_guv_tb # (
     reg [31:0] whatever;
     integer keep_bits1 = 0;
     integer keep_bits2 = 0;
+    integer keep_bits3 = 0;
     
     always @(posedge clk) begin
         if (`axis_flit(in1)) begin
@@ -187,6 +190,8 @@ module dbg_guv_tb # (
         end
         if (`axis_flit(in3)) begin
             in3_TDATA <= in3_TDATA + 3;
+            keep_bits3 = ($random & 32'b1);
+            in3_TKEEP <= 3'b100-(2'b1 << keep_bits3);
             in3_TLAST <= $random;
             in3_TID <= $random;
         end
@@ -300,7 +305,7 @@ module dbg_guv_tb # (
 
     dbg_guv # (
 		.DATA_WIDTH(DATA_WIDTH3),
-        .DATA_HAS_TKEEP(0),
+        .DATA_HAS_TKEEP(1),
         .DATA_HAS_TLAST(1),
 		.DEST_WIDTH(DEST_WIDTH3),
 		.ID_WIDTH(ID_WIDTH3),
@@ -323,6 +328,7 @@ module dbg_guv_tb # (
         
         //Input AXI Stream.
 		.din_TDATA(in3_TDATA),
+		.din_TKEEP(in3_TKEEP),
 		.din_TVALID(in3_TVALID),
 		.din_TREADY(in3_TREADY),
 		.din_TID(in3_TID),
@@ -330,6 +336,7 @@ module dbg_guv_tb # (
         
         //Output AXI Stream.
 		.dout_TDATA(out3_TDATA),
+		.dout_TKEEP(out3_TKEEP),
 		.dout_TVALID(out3_TVALID),
 		.dout_TREADY(out3_TREADY),
 		.dout_TID(out3_TID),
