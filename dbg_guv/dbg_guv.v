@@ -1,4 +1,5 @@
 `timescale 1ns / 1ps
+`default_nettype none
 
 /*
 
@@ -638,14 +639,23 @@ module dbg_guv # (
     `localparam LOG_DEST_PADDING = 32 - DEST_WIDTH;
     `localparam LOG_ID_PADDING = 32 - ID_WIDTH;
     
-    wire log_TDEST_TID_padded[`MAX(LOG_DEST_ID_PADDED_SIZE,1) -1:0];
-`genif(LOG_DEST_ID_SIZE > 0 && LOG_DEST_ID_SIZE <= 32) begin
+    wire [`MAX(LOG_DEST_ID_PADDED_SIZE,1) -1:0] log_TDEST_TID_padded;
+`genif((LOG_DEST_ID_SIZE > 0) && (LOG_DEST_ID_SIZE <= 32)) begin
     //DEST and ID together will fit in a single 32 bit word
-    assign log_TDEST_TID_padded = {
-        {LOG_DEST_ID_PADDING{1'b0}},
-        log_TID,
-        log_TDEST
-    };
+    
+    //Verilog is such a pain the ass sometimes...
+    if (LOG_DEST_ID_PADDING > 0) begin
+        assign log_TDEST_TID_padded = {
+            {LOG_DEST_ID_PADDING{1'b0}},
+            log_TID,
+            log_TDEST
+        };
+    end else begin
+        assign log_TDEST_TID_padded = {
+            log_TID,
+            log_TDEST
+        };
+    end
     
 `else_gen
     //Note: our assumption is that neither of log_TDEST or log_TID is wider
