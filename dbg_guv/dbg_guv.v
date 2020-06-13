@@ -331,7 +331,7 @@ module dbg_guv # (
     for (i = 32; i < DATA_WIDTH; i = i + 1) begin
         always @(posedge clk) begin
             if (cmd_in_TVALID && (cmd_fsm_state == CMD_FSM_DATA) && (saved_reg_addr == 'd2)) begin
-                inj_TDATA_r <= inj_TDATA_r[i - 32];
+                inj_TDATA_r[i] <= inj_TDATA_r[i - 32];
             end
         end
     end
