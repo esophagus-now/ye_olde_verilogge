@@ -64,7 +64,7 @@ Remaining tasks for implementing new interface:
 [x] Simulate the crap out of it
 */
 
- `ifdef ICARUS_VERILOG
+`ifdef ICARUS_VERILOG
 `include "axis_governor.v"
 `include "dbg_guv_width_adapter.v"
 `include "tkeep_to_len.v"

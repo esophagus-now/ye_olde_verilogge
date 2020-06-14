@@ -1,5 +1,110 @@
 THIS IS VERY QUICK AND DIRTY I PROMISE I WILL MAKE BETTER DOCS AT SOME POINT
 
+
+=============
+NEW INTERFACE
+=============
+
+Commands
+--------
+
+Commands have exactly the same format, except they are always 32 bits wide.
+No ifs, ands, or buts.
+
+Logs and Command Receipts
+-------------------------
+
+Note that all logs and command receipts have a 32-bit header. Bits 13:0 of
+this header match between the two types of messages (which is how you can
+tell the two apart; see the meaning of the L/C bit).
+
+Command receipts occur over a single 32-bit flit and have the following 
+structure:
+
++------+----------+--------------------------------------------------------+
+|BITS  | NAME     | MEANING                                                |
++------+----------+--------------------------------------------------------+
+|31:22 | dout_not_| The number of cycles since the TREADY input to the dbg |
+|      | ready_cnt| guv was last asserted                                  |
++------+----------+--------------------------------------------------------+
+|21    |inj_failed| Whether the most recent injection has failed           |
++------+----------+--------------------------------------------------------+
+|20    | dut_rst  | The value of the dut_rst register in the dbg_guv       |
++------+----------+--------------------------------------------------------+
+|19    |inj_TVALID| The dbg_guv's inj_TVALID register value                |
++------+----------+--------------------------------------------------------+
+|18    | drop_cnt | Whether the dbg_guv's drop_cnt is greater than zero    |
++------+----------+--------------------------------------------------------+
+|17    | log_cnt  | Whether the dbg_guv's log_cnt is greater than zero     |
++------+----------+--------------------------------------------------------+
+|16    | keep_    | The value of the keep_dropping register in the dbg_guv |
+|      | dropping |                                                        |
++------+----------+--------------------------------------------------------+
+|15    | keep_    | The value of the keep_logging register in the dbg_guv  |
+|      | logging  |                                                        |
++------+----------+--------------------------------------------------------+
+|14    | keep_    | The value of the keep_pausing register in the dbg_guv  |
+|      | pausing  |                                                        |
++------+----------+--------------------------------------------------------+
+|13    | L/C      | This bit (which also corresponds to bit 13 in the log  |
+|      |          | header) is always a constant 1 for command receipts.   |
++------+----------+--------------------------------------------------------+
+|12:0  | ADDR     | The address of the debug guv                           |
++------+----------+--------------------------------------------------------+
+
+
+Logs occur over multiple flits. The header has the following format:
+
++------+----------+--------------------------------------------------------+
+|BITS  | NAME     | MEANING                                                |
++------+----------+--------------------------------------------------------+
+|31:26 | DEST_    | The number of DEST bits of this logged flit            |
+|      | WIDTH    |                                                        |
++------+----------+--------------------------------------------------------+
+|25:20 | ID_WIDTH | The number of ID bits of this logged flit              |
++------+----------+--------------------------------------------------------+
+|19    | log_last | The value of TLAST of this logged flit                 |
++------+----------+--------------------------------------------------------+
+|18:14 | log_len  | The number of TDATA bytes in this log                  |
++------+----------+--------------------------------------------------------+
+|13    | L/C      | This bit (which also corresponds to bit 13 in the      |
+|      |          | command receipt) is always a constant 0 for logs.      |
++------+----------+--------------------------------------------------------+
+|12:0  | ADDR     | The address of the debug guv                           |
++------+----------+--------------------------------------------------------+
+
+Here's where things get a little messy. The values of DEST_WIDTH, ID_WIDTH,
+and log_len determine how many 32-bit payload words will follow the header.
+Use the following procedure to read the logged flit information
+
+ 1. Look at DEST_WIDTH and ID_WIDTH. If they are both zero, then this logged
+    flit does not include those sidechannels. Move on to reading the TDATA 
+    bytes (step four). 
+    
+ 2. If (DEST_WIDTH + ID_WIDTH) <= 32, then one payload word follows with 
+    the format {zero padding, log_TID, log_DEST}. Read it, and move on to
+    step four.
+
+ 3. Otherwise, if (DEST_WIDTH + ID_WIDTH) > 32, then two paylaod words 
+    follow. The first has the format {zero padding, log_TID}, and the second
+    has the format {zero padding, log_TDEST}. Read these two words and move
+    on to step four.
+
+ 4. Calculate the number of TDATA words as ceil(log_len/4). The log's TDATA
+    information is padded _at the end_ (contrary to the left-padding used 
+    for TID and TDEST). For example, if we had 9 bytes of TDATA, then you
+    would read 3 payload words which would have the following format:
+    
+        TDATA payload flit 1 = TDATA[71:40]                (first 4 bytes)
+        TDATA payload flit 2 = TDATA[39:8]                 (second 4 bytes)
+        TDATA payload flit 3 = {TDATA[7:0], zero padding}  (last byte)
+        
+
+
+=============
+OLD INTERFACE
+=============
+
 All values are big-endian and right-aligned
 
 Commands
