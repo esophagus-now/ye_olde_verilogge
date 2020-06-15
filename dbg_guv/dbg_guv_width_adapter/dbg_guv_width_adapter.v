@@ -345,7 +345,7 @@ end else begin
         : data_countdown[PAYLOAD_WORDS-1]
     ;
     
-    assign payload_TREADY = (state == STATE_SEND_HEADER); //Unintuitive
+    assign payload_TREADY = (state == STATE_SEND_HEADER && adapted_TREADY); //Unintuitive
     
 endmodule
     

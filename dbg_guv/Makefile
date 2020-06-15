@@ -39,6 +39,7 @@ clean:
 	rm -rf $(MODULE).vcd
 	rm -rf ${out_dir}
 	rm -rf ${ip_name}_tmp_proj
+	rm -f logs_receipts_parser
 
 # Packages into a Vivado IP
 ip: clean
@@ -50,6 +51,9 @@ ip: clean
 	rm -f *log
 	rm -rf .Xil
 	rm -f vivado*
+
+logs_receipts_parser: logs_receipts_parser.c
+	gcc -g -Wall -fno-diagnostics-show-caret -o logs_receipts_parser logs_receipts_parser.c
 
 syntax_check:
 	iverilog ${IVERILOG_WARNS} -DICARUS_VERILOG ${IVERILOG_INCLUDE} -g2012 -o $(MODULE).vvp $(MODULE).v
