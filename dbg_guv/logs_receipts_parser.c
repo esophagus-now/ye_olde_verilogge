@@ -19,15 +19,15 @@ void print_TDEST(int size, unsigned TDEST) {
 }
 void print_receipt(unsigned rx) {
     printf("Command receipt:\n");
-    printf("\tADDR          = %u\n", (rx & 0x1FFF));
-    printf("\tkeep_pausing  = %u\n", ((rx>>14) & 1));
-    printf("\tkeep_logging  = %u\n", ((rx>>15) & 1));
-    printf("\tkeep_dropping = %u\n", ((rx>>16) & 1));
-    printf("\t| log_cnt     = %u\n", ((rx>>17) & 1));
-    printf("\t| drop_cnt    = %u\n", ((rx>>18) & 1));
-    printf("\tinj_TVALID    = %u\n", ((rx>>19) & 1));
-    printf("\tdut_reset     = %u\n", ((rx>>20) & 1));
-    printf("\tinj_failed    = %u\n", ((rx>>21) & 1));
+    printf("\tADDR          = %u\n", (rx & 0xFFF));
+    printf("\tkeep_pausing  = %u\n", ((rx>>13) & 1));
+    printf("\tkeep_logging  = %u\n", ((rx>>14) & 1));
+    printf("\tkeep_dropping = %u\n", ((rx>>15) & 1));
+    printf("\t| log_cnt     = %u\n", ((rx>>16) & 1));
+    printf("\t| drop_cnt    = %u\n", ((rx>>17) & 1));
+    printf("\tinj_TVALID    = %u\n", ((rx>>18) & 1));
+    printf("\tdut_reset     = %u\n", ((rx>>19) & 1));
+    printf("\tinj_failed    = %u\n", ((rx>>20) & 1));
     printf("\tdout_not_rdy  = %u\n", (rx>>22));
 }
 
@@ -60,7 +60,7 @@ int main() {
         }
         
         //Check if command or log
-        if ((word>>13) & 1) {
+        if ((word>>12) & 1) {
             print_receipt(word);
             continue;
         }
@@ -73,7 +73,7 @@ int main() {
         //Figure out sizes of AXI Stream channels
         int TID_width = ((word>>20) & 0x3F);
         int TDEST_width = ((word>>26) & 0x3F);
-        int log_len = ((word>>14) & 0x1F) + 1; //Size of TDATA in bytes
+        int log_len = ((word>>13) & 0x3F) + 1; //Size of TDATA in bytes
         
         //Print out TID and TDEST, if present
         int sum = TID_width + TDEST_width;

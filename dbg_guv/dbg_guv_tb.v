@@ -120,6 +120,26 @@ module dbg_guv_tb # (
     wire [ID_WIDTH3 -1:0] out3_TID;
     wire out3_TLAST;
     
+    `localparam DATA_WIDTH4 = 512;
+    `localparam ID_WIDTH4 = 32;
+    `localparam DEST_WIDTH4 = 32;
+    //Input4 AXI Stream.
+    reg [DATA_WIDTH4-1:0] in4_TDATA = 512'hAABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCCDDAABBCC00;
+    reg [DATA_WIDTH4/8-1:0] in4_TKEEP = 1;
+    reg in4_TVALID = 1;
+    wire in4_TREADY;
+    reg [ID_WIDTH4 -1:0] in4_TID = 0;
+    reg [ID_WIDTH4 -1:0] in4_TDEST = 0;
+    reg in4_TLAST = 0;
+    
+    //Output3 AXI Stream.
+    wire [DATA_WIDTH4-1:0] out4_TDATA;
+    wire [DATA_WIDTH4/8-1:0] out4_TKEEP;
+    wire out4_TVALID ;
+    reg out4_TREADY = 1;
+    wire [ID_WIDTH4 -1:0] out4_TID;
+    wire [ID_WIDTH4 -1:0] out4_TDEST;
+    wire out4_TLAST;
     
     //Log1 AXI Stream. 
     `sim_out_axis_l(log1, 32);
@@ -130,12 +150,15 @@ module dbg_guv_tb # (
     //Log3 AXI Stream. 
     `sim_out_axis_l(log3, 32);
     
+    //Log4 AXI Stream. 
+    `sim_out_axis_l(log4, 32);
+    
     integer fd, dummy;
     
     initial begin
         $dumpfile("dbg_guv.vcd");
         $dumpvars;
-        $dumplimit(512000);
+        $dumplimit(2048000);
                 
         fd = $fopen("dbg_guv_drivers.mem", "r");
         if (fd == 0) begin
@@ -170,11 +193,12 @@ module dbg_guv_tb # (
     integer keep_bits1 = 0;
     integer keep_bits2 = 0;
     integer keep_bits3 = 0;
+    integer keep_bits4 = 0;
     
     always @(posedge clk) begin
         if (`axis_flit(in1)) begin
             in1_TDATA <= in1_TDATA + 2;
-            keep_bits1 = ($random & 32'b111);
+            keep_bits1 = ($random & 'b111);
             in1_TKEEP <= 9'h100-(8'b1 << keep_bits1);
             in1_TLAST <= $random;
             in1_TDEST <= $random;
@@ -182,7 +206,7 @@ module dbg_guv_tb # (
         end
         if (`axis_flit(in2)) begin
             in2_TDATA <= in2_TDATA + 2;
-            keep_bits2 = ($random & 32'b11);
+            keep_bits2 = ($random & 'b11);
             in2_TKEEP <= 5'h10-(4'b1 << keep_bits2);
             in2_TLAST <= $random;
             in2_TDEST <= $random;
@@ -190,10 +214,18 @@ module dbg_guv_tb # (
         end
         if (`axis_flit(in3)) begin
             in3_TDATA <= in3_TDATA + 3;
-            keep_bits3 = ($random & 32'b1);
-            in3_TKEEP <= 3'b100-(2'b1 << keep_bits3);
+            keep_bits3 = ($random & 'b1);
+            in3_TKEEP <= 3'b100-(3'b1 << keep_bits3);
             in3_TLAST <= $random;
             in3_TID <= $random;
+        end
+        if (`axis_flit(in4)) begin
+            in4_TDATA <= in4_TDATA + 1;
+            keep_bits4 = ($random & 'd63);
+            in4_TKEEP <= 65'h10000000000000000 - (65'b1 << keep_bits4);
+            in4_TLAST <= $random;
+            in4_TID <= $random;
+            in4_TDEST <= $random;
         end
         
         whatever = $random;
@@ -201,6 +233,7 @@ module dbg_guv_tb # (
         out1_TREADY <= (| whatever[8:6]);
         out2_TREADY <= whatever[9];
         out3_TREADY <= (| whatever[12:9]);
+        out4_TREADY <= (| whatever[12:9]);
     end
     
     //Wires from ctl1 to ctl2
@@ -303,6 +336,9 @@ module dbg_guv_tb # (
         `inst_axis_l(logs_receipts, log2)
     );
 
+    //Wires from ctl3 to ctl4
+    wire [31:0] cmd34_TDATA;
+    wire cmd34_TVALID;
     dbg_guv # (
 		.DATA_WIDTH(DATA_WIDTH3),
         .DATA_HAS_TKEEP(1),
@@ -323,8 +359,8 @@ module dbg_guv_tb # (
 		.cmd_in_TDATA(cmd23_TDATA),
 		.cmd_in_TVALID(cmd23_TVALID),
         
-		.cmd_out_TDATA(cmd_out_TDATA),
-		.cmd_out_TVALID(cmd_out_TVALID),
+		.cmd_out_TDATA(cmd34_TDATA),
+		.cmd_out_TVALID(cmd34_TVALID),
         
         //Input AXI Stream.
 		.din_TDATA(in3_TDATA),
@@ -346,6 +382,51 @@ module dbg_guv_tb # (
         //This core takes care of concatting the sidechannels into the data part
         //of the flit
         `inst_axis_l(logs_receipts, log3)
+    );
+
+    dbg_guv # (
+		.DATA_WIDTH(DATA_WIDTH4),
+        .DATA_HAS_TKEEP(1),
+        .DATA_HAS_TLAST(1),
+		.DEST_WIDTH(DEST_WIDTH4),
+		.ID_WIDTH(ID_WIDTH4),
+		.CNT_SIZE(CNT_SIZE),
+		.ADDR(3), //Set this to be different for each 
+		.RESET_TYPE(RESET_TYPE),
+		.PIPE_STAGE(PIPE_STAGE) //This causes a delay on cmd_out in case fanout is
+                                //an issue
+    ) ctl4 (
+		.clk(clk),
+		.rst(rst),
+        
+		.cmd_in_TDATA(cmd34_TDATA),
+		.cmd_in_TVALID(cmd34_TVALID),
+        
+		.cmd_out_TDATA(cmd_out_TDATA),
+		.cmd_out_TVALID(cmd_out_TVALID),
+        
+        //Input AXI Stream.
+		.din_TDATA(in4_TDATA),
+		.din_TVALID(in4_TVALID),
+		.din_TREADY(in4_TREADY),
+		.din_TKEEP(in4_TKEEP),
+		.din_TDEST(in4_TDEST),
+		.din_TID(in4_TID),
+		.din_TLAST(in4_TLAST),
+        
+        //Output AXI Stream.
+		.dout_TDATA(out4_TDATA),
+		.dout_TVALID(out4_TVALID),
+		.dout_TREADY(out4_TREADY),
+		.dout_TKEEP(out4_TKEEP),
+		.dout_TDEST(out4_TDEST),
+		.dout_TID(out4_TID),
+		.dout_TLAST(out4_TLAST),
+        
+        //Log AXI Stream. 
+        //This core takes care of concatting the sidechannels into the data part
+        //of the flit
+        `inst_axis_l(logs_receipts, log4)
     );
 
 endmodule

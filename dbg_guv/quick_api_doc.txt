@@ -24,32 +24,32 @@ structure:
 +------+----------+--------------------------------------------------------+
 |BITS  | NAME     | MEANING                                                |
 +------+----------+--------------------------------------------------------+
-|31:22 | dout_not_| The number of cycles since the TREADY input to the dbg |
+|31:21 | dout_not_| The number of cycles since the TREADY input to the dbg |
 |      | ready_cnt| guv was last asserted                                  |
 +------+----------+--------------------------------------------------------+
-|21    |inj_failed| Whether the most recent injection has failed           |
+|20    |inj_failed| Whether the most recent injection has failed           |
 +------+----------+--------------------------------------------------------+
-|20    | dut_rst  | The value of the dut_rst register in the dbg_guv       |
+|19    | dut_rst  | The value of the dut_rst register in the dbg_guv       |
 +------+----------+--------------------------------------------------------+
-|19    |inj_TVALID| The dbg_guv's inj_TVALID register value                |
+|18    |inj_TVALID| The dbg_guv's inj_TVALID register value                |
 +------+----------+--------------------------------------------------------+
-|18    | drop_cnt | Whether the dbg_guv's drop_cnt is greater than zero    |
+|17    | drop_cnt | Whether the dbg_guv's drop_cnt is greater than zero    |
 +------+----------+--------------------------------------------------------+
-|17    | log_cnt  | Whether the dbg_guv's log_cnt is greater than zero     |
+|16    | log_cnt  | Whether the dbg_guv's log_cnt is greater than zero     |
 +------+----------+--------------------------------------------------------+
-|16    | keep_    | The value of the keep_dropping register in the dbg_guv |
+|15    | keep_    | The value of the keep_dropping register in the dbg_guv |
 |      | dropping |                                                        |
 +------+----------+--------------------------------------------------------+
-|15    | keep_    | The value of the keep_logging register in the dbg_guv  |
+|14    | keep_    | The value of the keep_logging register in the dbg_guv  |
 |      | logging  |                                                        |
 +------+----------+--------------------------------------------------------+
-|14    | keep_    | The value of the keep_pausing register in the dbg_guv  |
+|13    | keep_    | The value of the keep_pausing register in the dbg_guv  |
 |      | pausing  |                                                        |
 +------+----------+--------------------------------------------------------+
-|13    | L/C      | This bit (which also corresponds to bit 13 in the log  |
+|12    | L/C      | This bit (which also corresponds to bit 13 in the log  |
 |      |          | header) is always a constant 1 for command receipts.   |
 +------+----------+--------------------------------------------------------+
-|12:0  | ADDR     | The address of the debug guv                           |
+|11:0  | ADDR     | The address of the debug guv                           |
 +------+----------+--------------------------------------------------------+
 
 
@@ -65,12 +65,12 @@ Logs occur over multiple flits. The header has the following format:
 +------+----------+--------------------------------------------------------+
 |19    | log_last | The value of TLAST of this logged flit                 |
 +------+----------+--------------------------------------------------------+
-|18:14 | log_len  | The number of TDATA bytes in this log                  |
+|18:13 | log_len  | The number of TDATA bytes in this log                  |
 +------+----------+--------------------------------------------------------+
-|13    | L/C      | This bit (which also corresponds to bit 13 in the      |
+|12    | L/C      | This bit (which also corresponds to bit 13 in the      |
 |      |          | command receipt) is always a constant 0 for logs.      |
 +------+----------+--------------------------------------------------------+
-|12:0  | ADDR     | The address of the debug guv                           |
+|11:0  | ADDR     | The address of the debug guv                           |
 +------+----------+--------------------------------------------------------+
 
 Here's where things get a little messy. The values of DEST_WIDTH, ID_WIDTH,

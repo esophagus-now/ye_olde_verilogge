@@ -1,28 +1,28 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Jun 13 20:44:24 2020
+[*] Mon Jun 22 20:15:36 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/dbg_guv/dbg_guv.vcd"
-[dumpfile_mtime] "Sat Jun 13 20:44:11 2020"
-[dumpfile_size] 274806
+[dumpfile_mtime] "Mon Jun 22 20:15:32 2020"
+[dumpfile_size] 862206
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/dbg_guv/dbg_guv.gtkw"
-[timestart] 0
+[timestart] 727200
 [size] 1916 1060
 [pos] -1 -1
-*-17.984589 531200 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-14.984589 840300 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] dbg_guv_tb.
 [treeopen] dbg_guv_tb.ctl1.
 [treeopen] dbg_guv_tb.ctl2.
 [treeopen] dbg_guv_tb.ctl2.ello_guvna.
-[treeopen] dbg_guv_tb.ctl2.genblk10.
 [treeopen] dbg_guv_tb.ctl3.
-[treeopen] dbg_guv_tb.ctl3.genblk10.
+[treeopen] dbg_guv_tb.ctl4.
 [sst_width] 349
 [signals_width] 390
 [sst_expanded] 1
 [sst_vpaned_height] 575
-@28
+@29
 dbg_guv_tb.clk
+@28
 dbg_guv_tb.rst
 @22
 dbg_guv_tb.cmd_in_TDATA[31:0]
@@ -293,7 +293,7 @@ dbg_guv_tb.log2_TREADY
 dbg_guv_tb.log2_TLAST
 @1401200
 -log2
-@800200
+@c00200
 -in3
 @22
 [color] 2
@@ -311,9 +311,9 @@ dbg_guv_tb.in3_TREADY
 dbg_guv_tb.in3_TLAST
 [color] 2
 dbg_guv_tb.in3_TID
-@1000200
+@1401200
 -in3
-@800200
+@c00200
 -out3
 @22
 dbg_guv_tb.out3_TDATA[15:0]
@@ -323,9 +323,9 @@ dbg_guv_tb.out3_TVALID
 dbg_guv_tb.out3_TREADY
 dbg_guv_tb.out3_TLAST
 dbg_guv_tb.out3_TID
-@1000200
+@1401200
 -out3
-@800200
+@c00200
 -log3
 @22
 dbg_guv_tb.log3_TDATA[31:0]
@@ -334,7 +334,45 @@ dbg_guv_tb.out3_TKEEP[1:0]
 dbg_guv_tb.log3_TVALID
 dbg_guv_tb.log3_TREADY
 dbg_guv_tb.log3_TLAST
-@1000200
+@1401200
 -log3
+@800200
+-in4
+@22
+dbg_guv_tb.in4_TDATA[511:0]
+dbg_guv_tb.in4_TKEEP[63:0]
+@28
+dbg_guv_tb.in4_TVALID
+dbg_guv_tb.in4_TREADY
+dbg_guv_tb.in4_TLAST
+@22
+dbg_guv_tb.in4_TDEST[31:0]
+dbg_guv_tb.in4_TID[31:0]
+@1000200
+-in4
+@800200
+-out4
+@22
+dbg_guv_tb.out4_TDATA[511:0]
+dbg_guv_tb.out4_TKEEP[63:0]
+@28
+dbg_guv_tb.out4_TVALID
+dbg_guv_tb.out4_TREADY
+dbg_guv_tb.out4_TLAST
+@22
+dbg_guv_tb.out4_TDEST[31:0]
+dbg_guv_tb.out4_TID[31:0]
+@1000200
+-out4
+@800200
+-log4
+@22
+dbg_guv_tb.log4_TDATA[31:0]
+@28
+dbg_guv_tb.log4_TREADY
+dbg_guv_tb.log4_TVALID
+dbg_guv_tb.log4_TLAST
+@1000200
+-log4
 [pattern_trace] 1
 [pattern_trace] 0

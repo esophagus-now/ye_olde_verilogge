@@ -27,8 +27,71 @@ cmd_in_TDATA    cmd_in_TVALID   Comments
 0000            0               
 0000            0   
 
+          
 
-           
+0039            1               Select dbg_core[3]::keep_logging
+0000            0               
+0001            1               Enable keep_logging
+0000            0               
+003F            1               Latch
+0000            0               
+0000            0   
+
+
+0032            1               Select dbg_core[3]::inj_TDATA
+DEADBEEF        1               Push 0xDEADBEEF
+0032            1               Select dbg_core[3]::inj_TDATA
+BABECAFE        1               Push 0xBABECAFE  
+0032            1               Select dbg_core[3]::inj_TDATA
+FEE1DEAD        1               Push 0xFEE1DEAD 
+0032            1               Select dbg_core[3]::inj_TDATA
+FEEDBADB        1               Push 0xFEEDBADB
+0032            1               Select dbg_core[3]::inj_TDATA
+EEF2BABE        1               Push 0xFEEDBADB
+0032            1               Select dbg_core[3]::inj_TDATA
+53180008        1               Push 0x53180008  
+0032            1               Select dbg_core[3]::inj_TDATA
+11111111        1               Push 0x11111111  
+0032            1               Select dbg_core[3]::inj_TDATA
+22222222        1               Push 0x22222222  
+0032            1               Select dbg_core[3]::inj_TDATA
+33333333        1               Push 0x33333333 
+0032            1               Select dbg_core[3]::inj_TDATA
+44444444        1               Push 0x44444444 
+0032            1               Select dbg_core[3]::inj_TDATA
+55555555        1               Push 0x55555555 
+0032            1               Select dbg_core[3]::inj_TDATA
+66666666        1               Push 0x66666666  
+0032            1               Select dbg_core[3]::inj_TDATA
+77777777        1               Push 0x77777777 
+0032            1               Select dbg_core[3]::inj_TDATA
+88888888        1               Push 0x88888888  
+0032            1               Select dbg_core[3]::inj_TDATA
+99999999        1               Push 0x99999999  
+0032            1               Select dbg_core[3]::inj_TDATA
+AaAaAaAa        1               Push 0xAaAaAaAa  
+0000            0               
+0000            0    
+0035            1               Select dbg_core[3]::inj_TKEEP
+FFFFFFFF        1               Push 0xFFFFFFFF
+0035            1               Select dbg_core[3]::inj_TKEEP
+FFFFFFFC        1               Push 0xFFFFFFFC  
+0000            0 
+0037            1               Select dbg_core[3]::inj_TID
+FAFFADAF        1               Set to 0xFAFFADAF
+0000            0 
+0036            1               Select dbg_core[3]::inj_TDEST
+FABEDAFF        1               Set to 0xFABEDAFF
+0000            0 
+0034            1               Select dbg_core[3]::inj_TLAST
+0001            1               Set to 1
+0000            0 
+0033            1               Select dbg_core[3]::inj_TVALID
+0001            1               Set to 1
+0000            0 
+003F            1               Latch
+
+
 0000            0               This next test is to recreate a problem I see in hardware
 0018            1               Select dbg_core[1]::keep_pausing
 0018            0               

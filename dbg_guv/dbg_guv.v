@@ -51,19 +51,6 @@ Jun 12 / 2020 Removed STICKY_MODE. S1 registers always retain their values.
 
 */
 
-/*
-Remaining tasks for implementing new interface:
-
-[x] Use shift register technique for INJECT_TDATA_r
-[N] Use "generate if" to get rid of TID, TDEST, TUSER if unused (forget it; it's too much trouble)
-[x] Construct correct headers for logs and command receipts
-[x] Construct properly padded payload vector
-[x] Figure out how to replace the axis_mux thing
-[x] Add in the dbg_guv_width_adapter
-[x] Oh yeah, don't forget the flit for sidechannels
-[x] Simulate the crap out of it
-*/
-
 `ifdef ICARUS_VERILOG
 `include "axis_governor.v"
 `include "dbg_guv_width_adapter.v"
@@ -93,7 +80,7 @@ module dbg_guv # (
     parameter DEST_WIDTH = 0, /*range: 0-32 (inclusive)*/
     parameter ID_WIDTH = 0, /*range: 0-32 (inclusive)*/
     parameter CNT_SIZE = 16,
-    /*DO NOT EDIT*/ parameter ADDR_WIDTH = 13, //This gives maximum 8196 simultaneous debug cores. That should be enough!
+    /*DO NOT EDIT*/ parameter ADDR_WIDTH = 12, //This gives maximum 4096 simultaneous debug cores. That should be enough!
     parameter [ADDR_WIDTH -1:0] ADDR = 0, //Set this to be different for each 
     parameter RESET_TYPE = `NO_RESET,
     parameter DUT_RST_VAL = 1, //The value of DUT_rst that will reset the DUT
@@ -169,6 +156,9 @@ module dbg_guv # (
     //Helper wire to indicate when a latch command is received
     wire latch_sig;
     
+    //Helper wire to indicate when we are writing to a shadow register
+    wire wr_shadow;
+    
     //Named subfields of command
     wire [ADDR_WIDTH -1:0] cmd_core_addr = cmd_in_TDATA[ADDR_WIDTH + REG_ADDR_WIDTH -1 -: ADDR_WIDTH];
     wire [REG_ADDR_WIDTH -1:0] cmd_reg_addr = cmd_in_TDATA[REG_ADDR_WIDTH -1:0];  
@@ -207,6 +197,7 @@ module dbg_guv # (
     //The user puts in a reg address of all ones to commit register values
     wire reg_addr_all_ones = (cmd_reg_addr == {REG_ADDR_WIDTH{1'b1}});
     assign latch_sig = (cmd_fsm_state == CMD_FSM_ADDR) && msg_for_us && cmd_in_TVALID && reg_addr_all_ones;
+    assign wr_shadow = cmd_in_TVALID && (cmd_fsm_state == CMD_FSM_DATA);
     
     //TODO: If Vivado is truly inefficient, I'll rewrite this code in a more
     //optimized way
@@ -229,7 +220,7 @@ module dbg_guv # (
                         2:  inj_TDATA_r[`MIN(32, DATA_WIDTH) -1:0] <= cmd_in_TDATA;
                         3:  inj_TVALID_r <= cmd_in_TDATA[0];
                         4:  inj_TLAST_r <= cmd_in_TDATA[0];
-                        5:  inj_TKEEP_r <= cmd_in_TDATA[KEEP_WIDTH -1:0];
+                        //5:inj_TKEEP_r <= handled separately in order to deal with HAS_KEEP
                         6:  inj_TDEST_r <= cmd_in_TDATA[`SAFE_DEST_WIDTH -1:0];
                         7:  inj_TID_r <= cmd_in_TDATA[`SAFE_ID_WIDTH -1:0];
                         8:  keep_pausing_r <= cmd_in_TDATA[0];
@@ -287,10 +278,10 @@ module dbg_guv # (
                         0:  drop_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
                         1:  log_cnt_r <= cmd_in_TDATA[CNT_SIZE -1:0];
                         //Remaining inj_TDATA_r bits handled later
-                        2:  inj_TDATA_r[`MIN(32, DATA_WIDTH) -1:0] <= cmd_in_TDATA;
+                        2:  inj_TDATA_r[`MIN(32, DATA_WIDTH) -1:0] <= cmd_in_TDATA[`MIN(32, DATA_WIDTH) -1:0];
                         3:  inj_TVALID_r <= cmd_in_TDATA[0];
                         4:  inj_TLAST_r <= cmd_in_TDATA[0];
-                        5:  inj_TKEEP_r <= cmd_in_TDATA[KEEP_WIDTH -1:0];
+                        //5:inj_TKEEP_r <= handled separately in order to deal with HAS_KEEP
                         6:  inj_TDEST_r <= cmd_in_TDATA[`SAFE_DEST_WIDTH -1:0];
                         7:  inj_TID_r <= cmd_in_TDATA[`SAFE_ID_WIDTH -1:0];
                         8:  keep_pausing_r <= cmd_in_TDATA[0];
@@ -326,11 +317,30 @@ module dbg_guv # (
     end
 `endgen
     
-    //Logic for remaining inj_TDATA_r bits
     genvar i;
+    //Logic for inj_TKEEP_r
+    wire wr_shadow_tkeep = wr_shadow && (saved_reg_addr == 'd5);
+`genif (DATA_HAS_TKEEP) begin
+    always @(posedge clk) begin
+        if (wr_shadow_tkeep) begin
+            inj_TKEEP_r[`MIN(32, KEEP_WIDTH) -1:0] <= cmd_in_TDATA[`MIN(32, KEEP_WIDTH) -1:0];
+        end
+    end
+    
+    //Do a shift register if KEEP is wider than 32 bits
+    for (i = 32; i < KEEP_WIDTH; i = i + 1) begin
+        always @(posedge clk) begin
+            if (wr_shadow_tkeep) begin
+                inj_TKEEP_r[i] <= inj_TKEEP_r[i - 32];
+            end
+        end
+    end
+`endgen
+    
+    //Logic for remaining inj_TDATA_r bits
     for (i = 32; i < DATA_WIDTH; i = i + 1) begin
         always @(posedge clk) begin
-            if (cmd_in_TVALID && (cmd_fsm_state == CMD_FSM_DATA) && (saved_reg_addr == 'd2)) begin
+            if (wr_shadow && (saved_reg_addr == 'd2)) begin
                 inj_TDATA_r[i] <= inj_TDATA_r[i - 32];
             end
         end
@@ -438,7 +448,7 @@ module dbg_guv # (
     
     wire [31:0] log_header;
     
-    `localparam LOG_LEN_SZ = 5;
+    `localparam LOG_LEN_SZ = 6;
     wire [LOG_LEN_SZ -1:0] log_len;
 
     //Always assuming DATA_WIDTH is a multiple of 8
@@ -447,7 +457,7 @@ module dbg_guv # (
         .TKEEP_WIDTH(DATA_WIDTH/8)
     ) compute_len (
         .tkeep(log_TKEEP),
-        .len(log_len[$clog2(DATA_WIDTH/8) -1:0])
+        .len(log_len[`MAX($clog2(DATA_WIDTH/8),1) -1:0])
     );
     
     if (LOG_LEN_SZ > $clog2(DATA_WIDTH/8)) begin
