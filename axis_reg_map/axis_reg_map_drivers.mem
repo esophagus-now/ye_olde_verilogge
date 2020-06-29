@@ -1,0 +1,169 @@
+cmd_in_TDATA    cmd_in_TVALID   Comments
+0000            0               
+0000            0               
+0000            0               
+
+0008            1               Select dbg_core[0]::keep_pausing
+0000            0               
+0001            1               Enable keep_pausing
+0000            0               
+0000            0               
+0000            0               
+
+0008            1               Select dbg_core[0]::keep_pausing
+0000            0               
+0000            1               Disable keep_pausing
+0000            0               
+0000            0               
+0000            0                
+
+0029            1               Select dbg_core[2]::keep_logging
+0000            0               
+0001            1               Enable keep_logging
+0000            0               
+0000            0               
+0000            0   
+
+          
+
+0039            1               Select dbg_core[3]::keep_logging
+0000            0               
+0001            1               Enable keep_logging
+0000            0               
+0000            0               
+0000            0   
+
+
+0032            1               Select dbg_core[3]::inj_TDATA
+DEADBEEF        1               Push 0xDEADBEEF
+0032            1               Select dbg_core[3]::inj_TDATA
+BABECAFE        1               Push 0xBABECAFE  
+0032            1               Select dbg_core[3]::inj_TDATA
+FEE1DEAD        1               Push 0xFEE1DEAD 
+0032            1               Select dbg_core[3]::inj_TDATA
+FEEDBADB        1               Push 0xFEEDBADB
+0032            1               Select dbg_core[3]::inj_TDATA
+EEF2BABE        1               Push 0xFEEDBADB
+0032            1               Select dbg_core[3]::inj_TDATA
+53180008        1               Push 0x53180008  
+0032            1               Select dbg_core[3]::inj_TDATA
+11111111        1               Push 0x11111111  
+0032            1               Select dbg_core[3]::inj_TDATA
+22222222        1               Push 0x22222222  
+0032            1               Select dbg_core[3]::inj_TDATA
+33333333        1               Push 0x33333333 
+0032            1               Select dbg_core[3]::inj_TDATA
+44444444        1               Push 0x44444444 
+0032            1               Select dbg_core[3]::inj_TDATA
+55555555        1               Push 0x55555555 
+0032            1               Select dbg_core[3]::inj_TDATA
+66666666        1               Push 0x66666666  
+0032            1               Select dbg_core[3]::inj_TDATA
+77777777        1               Push 0x77777777 
+0032            1               Select dbg_core[3]::inj_TDATA
+88888888        1               Push 0x88888888  
+0032            1               Select dbg_core[3]::inj_TDATA
+99999999        1               Push 0x99999999  
+0032            1               Select dbg_core[3]::inj_TDATA
+AaAaAaAa        1               Push 0xAaAaAaAa  
+0000            0               
+0000            0    
+0035            1               Select dbg_core[3]::inj_TKEEP
+FFFFFFFF        1               Push 0xFFFFFFFF
+0035            1               Select dbg_core[3]::inj_TKEEP
+FFFFFFFC        1               Push 0xFFFFFFFC  
+0000            0 
+0037            1               Select dbg_core[3]::inj_TID
+FAFFADAF        1               Set to 0xFAFFADAF
+0000            0 
+0036            1               Select dbg_core[3]::inj_TDEST
+FABEDAFF        1               Set to 0xFABEDAFF
+0000            0 
+0034            1               Select dbg_core[3]::inj_TLAST
+0001            1               Set to 1
+0000            0 
+0033            1               Select dbg_core[3]::inj_TVALID
+0001            1               Set to 1
+0000            0 
+
+
+0000            0               This next test is to recreate a problem I see in hardware
+0018            1               Select dbg_core[1]::keep_pausing
+0018            0               
+0018            0               
+0018            0               
+0018            0               
+0018            0               
+0018            0               
+000F            1               Enable keep_pausing, but also test that dbg_guv[0] does not latch
+000F            0               
+000F            0               
+000F            0               
+000F            0               
+000F            0               
+000F            0                      
+0018            1               Select dbg_core[1]::keep_pausing
+0000            1               Disable keep_pausing       
+
+
+0000            0               
+0000            0   
+
+
+0018            1               Select dbg_core[1]::keep_pausing
+0001            1               Set to 1
+0011            1               Select dbg_core[1]::log_cnt
+0001            1               Set to 1
+0000            0               
+0000            0               
+0000            0               
+0000            0               
+0011            1               Select dbg_core[1]::log_cnt
+0002            2               Set to 2
+0000            0               
+0000            0               
+0000            0               
+
+
+000B            1               Select dbg_core[0]::dut_reset
+0001            1               Issue reset        
+0000            0               
+0000            0   
+000B            1               Select dbg_core[0]::dut_reset
+0000            1               Come out of reset
+
+
+
+0012            1               Select dbg_core[1]::inj_TDATA
+0055            1               Set to 0x55
+0013            1               Select dbg_core[1]::inj_TVALID
+0001            1               Set to 1
+0011            1               Select dbg_core[1]::keep_pausing
+0001            1               Enable keep_pausing
+0000            0               
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+001F            0               Latch (but command not valid!!!!)
+0000            0               
+0000            0               
+
+
+0000            0               Try to create a situation where we will see failed injections
+
+0012            1               Select dbg_core[1]::inj_TDATA
+0066            1               Set to 0x66
+0013            1               Select dbg_core[1]::inj_TVALID
+0001            1               Set to 1
+001A            1               Select dbg_core[1]::keep_dropping
+0001            1               Enable keep_dropping
+0011            1               Select dbg_core[1]::log_cnt
+0000            1               Set to 0
+0018            1               Select dbg_core[1]::keep_pausing
+0000            1               Disable keep_pausing

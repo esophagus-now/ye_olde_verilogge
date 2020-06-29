@@ -1,0 +1,61 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Mon Jun 29 19:27:53 2020
+[*]
+[dumpfile] "/home/mahkoe/research/ye_olde_verilogge/axis_reg_map/axis_reg_map.vcd"
+[dumpfile_mtime] "Mon Jun 29 19:27:06 2020"
+[dumpfile_size] 39788
+[savefile] "/home/mahkoe/research/ye_olde_verilogge/axis_reg_map/axis_reg_map.gtkw"
+[timestart] 1306800
+[size] 1916 1060
+[pos] -1 -1
+*-14.658386 1415000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] dbg_guv_tb.
+[sst_width] 228
+[signals_width] 182
+[sst_expanded] 1
+[sst_vpaned_height] 308
+@28
+dbg_guv_tb.clk
+dbg_guv_tb.rst
+@22
+[color] 2
+dbg_guv_tb.cmd_in_TDATA[31:0]
+@28
+[color] 2
+dbg_guv_tb.cmd_in_TVALID
+@800200
+-Regmap 0
+@22
+dbg_guv_tb.reg_addr0[3:0]
+dbg_guv_tb.reg_data0[31:0]
+@28
+dbg_guv_tb.reg_strb0
+@1000200
+-Regmap 0
+@800200
+-Regmap 1
+@22
+dbg_guv_tb.reg_addr1[3:0]
+dbg_guv_tb.reg_data1[31:0]
+@28
+dbg_guv_tb.reg_strb1
+@1000200
+-Regmap 1
+@800200
+-Regmap 2
+@22
+dbg_guv_tb.reg_addr2[3:0]
+dbg_guv_tb.reg_data2[31:0]
+@28
+dbg_guv_tb.reg_strb2
+@1000200
+-Regmap 2
+@23
+[color] 2
+dbg_guv_tb.cmd_out_TDATA[31:0]
+@29
+[color] 2
+dbg_guv_tb.cmd_out_TVALID
+[pattern_trace] 1
+[pattern_trace] 0
