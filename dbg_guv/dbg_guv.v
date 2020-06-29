@@ -264,6 +264,7 @@ module dbg_guv # (
             keep_logging_r <= 0;
             keep_dropping_r <= 0;
             dut_reset_r <= !DUT_RST_VAL;
+            cmd_fsm_state = CMD_FSM_ADDR;
         end else if (cmd_in_TVALID) begin
             case (cmd_fsm_state)
                 CMD_FSM_ADDR: begin
@@ -794,7 +795,7 @@ module dbg_guv # (
 
 `genif (PIPE_STAGE) begin
     //Delay by one cycle for timing
-    reg [DATA_WIDTH -1:0] cmd_out_TDATA_r = 0;
+    reg [31:0] cmd_out_TDATA_r = 0;
     reg cmd_out_TVALID_r = 0;
     
     always @(posedge clk) begin
