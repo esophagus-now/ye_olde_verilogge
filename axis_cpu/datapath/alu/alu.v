@@ -38,11 +38,12 @@ module alu # (
     
     wire [3:0] ALU_sel_i;
     reg  [3:0] ALU_sel_saved = 0;
-    reg ALU_en_r[0:3];
-    initial ALU_en_r[0] = 0;
-    initial ALU_en_r[1] = 0;
-    initial ALU_en_r[2] = 0;
-    initial ALU_en_r[3] = 0;
+    reg ALU_en_r[0:4]; //Shift register for ALU_en_r
+        initial ALU_en_r[0] = 0;
+        initial ALU_en_r[1] = 0;
+        initial ALU_en_r[2] = 0;
+        initial ALU_en_r[3] = 0;
+        initial ALU_en_r[4] = 0;
     
     wire [31:0] ADD_res;
     wire [31:0] SUB_res;
@@ -55,11 +56,11 @@ module alu # (
     wire one_cycle_op_vld = ALU_en_r[0];
     
     wire [63:0] MUL_res;
-    wire MUL_vld = ALU_en_r[3];
+    wire MUL_vld = ALU_en_r[4]; //Multiplies take a lot of cycles...
     
     wire [31:0] DIV_res;
     wire [31:0] MOD_res;
-    wire divmod_vld;
+    wire divmod_vld; //...but not nearly as many as divisions!
     
     wire eq_i, gt_i, ge_i, set_i;
     `logic [31:0] ALU_out_i;
@@ -78,7 +79,26 @@ module alu # (
     /****************/
     /**Do the logic**/
     /****************/
-      
+    
+    //We use ALU_en delayed by 4 to get MUL_vld
+    always @(posedge clk) begin
+        if(rst) begin
+            ALU_en_r[0] <= 0;
+        end else begin
+            ALU_en_r[0] <= ALU_en;
+        end
+    end
+    genvar i;
+    for (i = 1; i < 5; i = i + 1) begin
+        always @(posedge clk) begin
+            if (rst) begin
+                ALU_en_r[i] <= 0;
+            end else begin
+                ALU_en_r[i] <= ALU_en_r[i - 1];
+            end
+        end
+    end
+    
     always @(posedge clk) begin
         if (ALU_en) begin
             ALU_sel_saved <= ALU_sel;

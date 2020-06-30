@@ -1,14 +1,14 @@
 A       B       ALU_sel ALU_en  ALU_ack     ALU_out ALU_vld set eq  gt  ge  Comments
 0       0       0000    0       0           0       0       0   0   0   0   Time 5
-5       10      0000    1       0           0       0       0   0   0   0   Time 25
-10      20      0001    1       1           15      1       0   0   0   0   Time 35
-0       0       0000    0       0           -10     1       0   0   0   0   Time 45
-1       8       0101    1       1           -10     1       0   0   0   0   Time 55
-134     63      1010    1       0           256     1       0   0   0   0   Time 65
+5       10      0000    1       0           0       0       0   0   0   0   Time 25, start an addition
+10      20      0001    1       1           15      1       0   0   0   0   Time 35, start a subtraction
+0       0       0000    0       0           -10     1       0   0   0   0   Time 45, Don't acknowledge right away
+1       8       0101    1       1           -10     1       0   0   0   0   Time 55, Acknowledge and start a left-shift
+134     63      1010    1       1           256     1       0   0   0   0   Time 65, Acknowledge, and start a modulo
 
-0       0       0000    0       0           256     1       1   0   1   1   Time 75
-0       0       0000    0       0           256     1       1   0   1   1   Time 85
-0       0       0000    0       1           256     1       1   0   1   1   Time 95
+0       0       0000    0       0           256     0       1   0   1   1   Time 75
+0       0       0000    0       0           256     0       1   0   1   1   Time 85
+0       0       0000    0       1           256     0       1   0   1   1   Time 95
 0       0       0000    0       0           256     0       1   0   1   1   Time 105
 0       0       0000    0       0           256     0       1   0   1   1   Time 115
 0       0       0000    0       0           256     0       1   0   1   1   Time 125
@@ -40,4 +40,12 @@ A       B       ALU_sel ALU_en  ALU_ack     ALU_out ALU_vld set eq  gt  ge  Comm
 0       0       0000    0       1           256     0       1   0   1   1   Time 385
 0       0       0000    0       1           8       1       1   0   1   1   Time 395
 
-0       0       0000    0       0           8       0       1   0   1   1   Time 405
+5       7       1000    1       0           8       0       1   0   1   1   Time 405, start a multiply
+5       6       1000    0       0           8       0       1   0   0   0   Time 415
+8       7       1000    0       0           8       0       1   0   0   0   Time 425
+5       7       1000    0       0           8       0       1   0   0   0   Time 435
+40      7       1000    0       0           8       0       1   0   0   0   Time 445
+5       10      1000    0       0           8       0       1   0   0   0   Time 455
+5       7       1000    0       0           35      1       1   0   0   0   Time 465
+5       7       1000    0       1           35      1       1   0   0   0   Time 475
+5       7       1000    0       0           35      0       1   0   0   0   Time 485

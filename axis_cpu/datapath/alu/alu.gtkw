@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Tue Jun 30 15:49:00 2020
+[*] Tue Jun 30 15:59:52 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/axis_cpu/datapath/alu/alu.vcd"
-[dumpfile_mtime] "Tue Jun 30 15:48:22 2020"
-[dumpfile_size] 9108
+[dumpfile_mtime] "Tue Jun 30 15:59:35 2020"
+[dumpfile_size] 10367
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/axis_cpu/datapath/alu/alu.gtkw"
 [timestart] 0
 [size] 1916 1060
 [pos] -1 -1
-*-15.801232 58800 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.070419 435010 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] alu_tb.
 [treeopen] alu_tb.DUT.
 [sst_width] 233
@@ -20,7 +20,7 @@
 alu_tb.clk
 @200
 -Inputs
-@421
+@420
 alu_tb.A[31:0]
 alu_tb.B[31:0]
 @28
@@ -32,18 +32,22 @@ alu_tb.ALU_ack
 @28
 [color] 2
 alu_tb.eq
+[color] 2
 alu_tb.eq_exp
-[color] 2
+[color] 3
 alu_tb.ge
+[color] 3
 alu_tb.ge_exp
-[color] 2
+[color] 4
 alu_tb.gt
+[color] 4
 alu_tb.gt_exp
 [color] 2
 alu_tb.set
+[color] 2
 alu_tb.set_exp
 @c00420
-[color] 2
+[color] 3
 alu_tb.ALU_out[31:0]
 @28
 [color] 2
@@ -113,10 +117,12 @@ alu_tb.ALU_out[31:0]
 @1401200
 -group_end
 @420
+[color] 3
 alu_tb.ALU_out_exp[31:0]
 @28
-[color] 2
+[color] 4
 alu_tb.ALU_vld
+[color] 4
 alu_tb.ALU_vld_exp
 @200
 -internal
@@ -163,6 +169,17 @@ alu_tb.DUT.ADD_res[31:0]
 (31)alu_tb.DUT.ADD_res[31:0]
 @1401200
 -group_end
+@200
+-multiplier
+@420
+alu_tb.DUT.mult.A[31:0]
+alu_tb.DUT.mult.B[31:0]
+alu_tb.DUT.mult.RES[63:0]
+@28
+alu_tb.DUT.mult.clk
+@421
+alu_tb.DUT.mult.rA[31:0]
+alu_tb.DUT.mult.rB[31:0]
 @200
 -divider
 @28
