@@ -37,7 +37,7 @@ module alu # (
     /************************************/
     
     wire [3:0] ALU_sel_i;
-    reg  [3:0] ALU_sel_saved;
+    reg  [3:0] ALU_sel_saved = 0;
     reg ALU_en_r[0:3];
     initial ALU_en_r[0] = 0;
     initial ALU_en_r[1] = 0;
@@ -109,7 +109,7 @@ module alu # (
     assign XOR_res = A ^ B;
     assign NOT_res = ~A;
     assign LSH_res = A << B[5:0];
-    assign ADD_res = A >> B[5:0];
+    assign RSH_res = A >> B[5:0];
     
     always @(*) begin
         case (ALU_sel_i)
@@ -146,7 +146,7 @@ module alu # (
     assign ge_i = gt_i | eq_i;
     assign set_i = ((A & B) != 32'h00000000) ? 1'b1 : 1'b0;
 
-    assign ALU_vld_i = is_one_cycle_op | (is_mul ? MUL_vld : divmod_vld);
+    assign ALU_vld_i = is_one_cycle_op | (is_mul ? MUL_vld : is_div_mod && divmod_vld);
     
     
     /****************************************/
@@ -241,6 +241,9 @@ module divmod(
         end
     end
     
+    assign div = div_r;
+    assign mod = mod_r;
+    assign res_vld = calc_done;
 
 endmodule
 

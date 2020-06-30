@@ -1,18 +1,19 @@
 [*]
-[*] GTKWave Analyzer v3.3.102 (w)1999-2019 BSI
-[*] Mon Nov 18 19:01:03 2019
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Tue Jun 30 15:36:27 2020
 [*]
-[dumpfile] "/home/mahkoe/research/fpga-bpf/sources/packetfilt_core/bpfcpu/datapath/alu/alu.vcd"
-[dumpfile_mtime] "Mon Nov 18 19:00:49 2019"
-[dumpfile_size] 2674
-[savefile] "/home/mahkoe/research/fpga-bpf/sources/packetfilt_core/bpfcpu/datapath/alu/alu.gtkw"
+[dumpfile] "/home/mahkoe/research/ye_olde_verilogge/axis_cpu/datapath/alu/alu.vcd"
+[dumpfile_mtime] "Tue Jun 30 15:36:10 2020"
+[dumpfile_size] 5266
+[savefile] "/home/mahkoe/research/ye_olde_verilogge/axis_cpu/datapath/alu/alu.gtkw"
 [timestart] 0
-[size] 956 520
-[pos] 0 539
-*-15.820892 75000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[size] 1916 1060
+[pos] -1 -1
+*-13.323202 55010 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] alu_tb.
+[treeopen] alu_tb.DUT.
 [sst_width] 233
-[signals_width] 170
+[signals_width] 262
 [sst_expanded] 1
 [sst_vpaned_height] 137
 @28
@@ -25,18 +26,143 @@ alu_tb.B[31:0]
 @28
 alu_tb.ALU_sel[3:0]
 alu_tb.ALU_en
-@29
 alu_tb.ALU_ack
 @200
 -Outputs
 @28
+[color] 2
 alu_tb.eq
+alu_tb.eq_exp
+[color] 2
 alu_tb.ge
+alu_tb.ge_exp
+[color] 2
 alu_tb.gt
+alu_tb.gt_exp
+[color] 2
 alu_tb.set
-@420
+alu_tb.set_exp
+@c00420
+[color] 2
 alu_tb.ALU_out[31:0]
 @28
+[color] 2
+(0)alu_tb.ALU_out[31:0]
+[color] 2
+(1)alu_tb.ALU_out[31:0]
+[color] 2
+(2)alu_tb.ALU_out[31:0]
+[color] 2
+(3)alu_tb.ALU_out[31:0]
+[color] 2
+(4)alu_tb.ALU_out[31:0]
+[color] 2
+(5)alu_tb.ALU_out[31:0]
+[color] 2
+(6)alu_tb.ALU_out[31:0]
+[color] 2
+(7)alu_tb.ALU_out[31:0]
+[color] 2
+(8)alu_tb.ALU_out[31:0]
+[color] 2
+(9)alu_tb.ALU_out[31:0]
+[color] 2
+(10)alu_tb.ALU_out[31:0]
+[color] 2
+(11)alu_tb.ALU_out[31:0]
+[color] 2
+(12)alu_tb.ALU_out[31:0]
+[color] 2
+(13)alu_tb.ALU_out[31:0]
+[color] 2
+(14)alu_tb.ALU_out[31:0]
+[color] 2
+(15)alu_tb.ALU_out[31:0]
+[color] 2
+(16)alu_tb.ALU_out[31:0]
+[color] 2
+(17)alu_tb.ALU_out[31:0]
+[color] 2
+(18)alu_tb.ALU_out[31:0]
+[color] 2
+(19)alu_tb.ALU_out[31:0]
+[color] 2
+(20)alu_tb.ALU_out[31:0]
+[color] 2
+(21)alu_tb.ALU_out[31:0]
+[color] 2
+(22)alu_tb.ALU_out[31:0]
+[color] 2
+(23)alu_tb.ALU_out[31:0]
+[color] 2
+(24)alu_tb.ALU_out[31:0]
+[color] 2
+(25)alu_tb.ALU_out[31:0]
+[color] 2
+(26)alu_tb.ALU_out[31:0]
+[color] 2
+(27)alu_tb.ALU_out[31:0]
+[color] 2
+(28)alu_tb.ALU_out[31:0]
+[color] 2
+(29)alu_tb.ALU_out[31:0]
+[color] 2
+(30)alu_tb.ALU_out[31:0]
+[color] 2
+(31)alu_tb.ALU_out[31:0]
+@1401200
+-group_end
+@420
+alu_tb.ALU_out_exp[31:0]
+@28
+[color] 2
 alu_tb.ALU_vld
+@29
+alu_tb.ALU_vld_exp
+@200
+-internal
+@28
+alu_tb.DUT.ALU_vld_i
+alu_tb.DUT.is_one_cycle_op
+@420
+alu_tb.DUT.A[31:0]
+alu_tb.DUT.B[31:0]
+@c00022
+alu_tb.DUT.ADD_res[31:0]
+@28
+(0)alu_tb.DUT.ADD_res[31:0]
+(1)alu_tb.DUT.ADD_res[31:0]
+(2)alu_tb.DUT.ADD_res[31:0]
+(3)alu_tb.DUT.ADD_res[31:0]
+(4)alu_tb.DUT.ADD_res[31:0]
+(5)alu_tb.DUT.ADD_res[31:0]
+(6)alu_tb.DUT.ADD_res[31:0]
+(7)alu_tb.DUT.ADD_res[31:0]
+(8)alu_tb.DUT.ADD_res[31:0]
+(9)alu_tb.DUT.ADD_res[31:0]
+(10)alu_tb.DUT.ADD_res[31:0]
+(11)alu_tb.DUT.ADD_res[31:0]
+(12)alu_tb.DUT.ADD_res[31:0]
+(13)alu_tb.DUT.ADD_res[31:0]
+(14)alu_tb.DUT.ADD_res[31:0]
+(15)alu_tb.DUT.ADD_res[31:0]
+(16)alu_tb.DUT.ADD_res[31:0]
+(17)alu_tb.DUT.ADD_res[31:0]
+(18)alu_tb.DUT.ADD_res[31:0]
+(19)alu_tb.DUT.ADD_res[31:0]
+(20)alu_tb.DUT.ADD_res[31:0]
+(21)alu_tb.DUT.ADD_res[31:0]
+(22)alu_tb.DUT.ADD_res[31:0]
+(23)alu_tb.DUT.ADD_res[31:0]
+(24)alu_tb.DUT.ADD_res[31:0]
+(25)alu_tb.DUT.ADD_res[31:0]
+(26)alu_tb.DUT.ADD_res[31:0]
+(27)alu_tb.DUT.ADD_res[31:0]
+(28)alu_tb.DUT.ADD_res[31:0]
+(29)alu_tb.DUT.ADD_res[31:0]
+(30)alu_tb.DUT.ADD_res[31:0]
+(31)alu_tb.DUT.ADD_res[31:0]
+@1401200
+-group_end
 [pattern_trace] 1
 [pattern_trace] 0

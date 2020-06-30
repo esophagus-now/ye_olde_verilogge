@@ -5,9 +5,6 @@
 
 //Please remember to set this as "global include" in Vivado's sources panel
 
-`ifndef AXIS_CPU_DEFS_VH
-`define AXIS_CPU_DEFS_VH 1
-
 /* instruction classes */
 `define		AXIS_CPU_LD		3'b000
 `define		AXIS_CPU_LDX	3'b001
@@ -66,5 +63,3 @@
 `define		PC_SEL_PLUS_JF	2'b10
 `define		PC_SEL_PLUS_IMM	2'b11
 
-
-`endif
