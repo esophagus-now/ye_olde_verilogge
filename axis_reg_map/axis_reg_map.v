@@ -7,7 +7,9 @@ and then editing it slightly
 
 */
 
+`ifdef ICARUS_VERILOG
 `include "macros.vh"
+`endif
 
 module axis_reg_map # (
     parameter REG_ADDR_WIDTH = 4,
