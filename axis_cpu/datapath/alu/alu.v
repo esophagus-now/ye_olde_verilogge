@@ -174,11 +174,13 @@ module alu # (
 		end
         if (ALU_vld_i) begin
             ALU_out_r <= ALU_out_i;
+        end 
+        if (ALU_en) begin
             eq_r <= eq_i;
             gt_r <= gt_i;
             ge_r <= ge_i;
             set_r <= set_i;
-        end 
+        end
     end
     
     assign ALU_out = ALU_out_r;
@@ -209,7 +211,7 @@ module divmod(
     
     reg [62:0] div_shifted = 0;
     wire upper_zeroes = !(|div_shifted[62:32]); //Not really efficient, but who cares?
-    wire subtrahend = div_shifted[31:0];
+    wire [31:0] subtrahend = div_shifted[31:0];
     
     wire do_subtract = upper_zeroes && (mod_r > subtrahend);
     
@@ -222,7 +224,7 @@ module divmod(
             cycles_left <= 0;
             calc_done <= 0;
         end else begin
-            calc_done <= (cycles_left == 0) && !calc_done;
+            calc_done <= (cycles_left == 1);
             if (start) begin
                 cycles_left <= 'd31;
                 div_shifted <= {B, {31{1'b0}}};

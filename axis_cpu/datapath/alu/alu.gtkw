@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Tue Jun 30 15:36:27 2020
+[*] Tue Jun 30 15:49:00 2020
 [*]
 [dumpfile] "/home/mahkoe/research/ye_olde_verilogge/axis_cpu/datapath/alu/alu.vcd"
-[dumpfile_mtime] "Tue Jun 30 15:36:10 2020"
-[dumpfile_size] 5266
+[dumpfile_mtime] "Tue Jun 30 15:48:22 2020"
+[dumpfile_size] 9108
 [savefile] "/home/mahkoe/research/ye_olde_verilogge/axis_cpu/datapath/alu/alu.gtkw"
 [timestart] 0
 [size] 1916 1060
 [pos] -1 -1
-*-13.323202 55010 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-15.801232 58800 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] alu_tb.
 [treeopen] alu_tb.DUT.
 [sst_width] 233
@@ -20,7 +20,7 @@
 alu_tb.clk
 @200
 -Inputs
-@420
+@421
 alu_tb.A[31:0]
 alu_tb.B[31:0]
 @28
@@ -117,7 +117,6 @@ alu_tb.ALU_out_exp[31:0]
 @28
 [color] 2
 alu_tb.ALU_vld
-@29
 alu_tb.ALU_vld_exp
 @200
 -internal
@@ -164,5 +163,31 @@ alu_tb.DUT.ADD_res[31:0]
 (31)alu_tb.DUT.ADD_res[31:0]
 @1401200
 -group_end
+@200
+-divider
+@28
+alu_tb.DUT.divider.clk
+alu_tb.DUT.divider.rst
+alu_tb.DUT.divider.start
+@420
+alu_tb.DUT.divider.A[31:0]
+alu_tb.DUT.divider.B[31:0]
+@28
+alu_tb.DUT.divider.calc_done
+@24
+alu_tb.DUT.divider.cycles_left[4:0]
+alu_tb.DUT.divider.subtrahend[31:0]
+@28
+alu_tb.DUT.divider.do_subtract
+@24
+alu_tb.DUT.divider.div_r[31:0]
+@420
+alu_tb.DUT.divider.mod_r[31:0]
+@28
+alu_tb.DUT.divider.res_vld
+@24
+alu_tb.DUT.divider.div_shifted[62:0]
+@28
+alu_tb.DUT.divider.upper_zeroes
 [pattern_trace] 1
 [pattern_trace] 0
