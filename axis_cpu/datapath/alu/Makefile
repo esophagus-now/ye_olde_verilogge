@@ -1,18 +1,29 @@
-default:	alu.vcd
+MODULE :=alu
 
-alu.vcd:	alu.vvp
-	vvp alu.vvp
+IVERILOG_INCLUDE = -I../../../macros/
+IVERILOG_INCLUDE += -I../../
+IVERILOG_WARNS=-Wall -Wno-timescale
 
-alu.vvp:	alu.v alu_tb.v alu_drivers.mem
-	iverilog -DFROM_ALU -g2012 -o alu.vvp alu_tb.v
+# This is to run the testbench
+tb: $(MODULE).vcd
 
-open:	alu.vcd
-	gtkwave alu.vcd --autosavename &
+# This opens the testbench in gtkwave
+open:	$(MODULE).vcd
+	gtkwave $(MODULE).vcd --autosavename &
+
+# Compile the Verilog into Icarus's special format
+$(MODULE).vvp:	$(MODULE).v $(MODULE)_tb.v $(MODULE)_drivers.mem
+	iverilog ${IVERILOG_WARNS} -DICARUS_VERILOG ${IVERILOG_INCLUDE} -o $(MODULE).vvp $(MODULE)_tb.v
+
+# Run the Verilog simulator
+$(MODULE).vcd:	$(MODULE).vvp
+	vvp $(MODULE).vvp
 
 clean:
-	rm -rf alu.vvp
-	rm -rf alu.vcd
+	rm -rf $(MODULE).vvp
+	rm -rf $(MODULE).vcd
 
-force:
-	touch alu_tb.v
-	make
+syntax_check:
+	iverilog ${IVERILOG_WARNS} -DICARUS_VERILOG ${IVERILOG_INCLUDE} -g2012 -o $(MODULE).vvp $(MODULE).v
+	rm -rf $(MODULE).vvp
+ 
