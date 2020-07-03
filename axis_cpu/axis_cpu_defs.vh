@@ -8,12 +8,17 @@
 /* instruction classes, always compare to instr[7:5] */
 `define		AXIS_CPU_LD		3'b000
 `define		AXIS_CPU_LDX	3'b001
-`define		AXIS_CPU_ST		3'b010
-`define		AXIS_CPU_STX	3'b011
 `define		AXIS_CPU_ALU	3'b100
 `define		AXIS_CPU_JMP	3'b101
 
 /* Specific opdocdes for instructions, always compare to instr[7:4] */
+//Very subtle kludge here: notice that ST and OUT (and STX and OUTX) share
+//a prefix of 010 (and 011). This is used inside the stage2 module to say
+//whether A or X is read
+`define		AXIS_CPU_ST		        4'b0100
+`define		AXIS_CPU_OUT	        4'b0101
+`define		AXIS_CPU_STX	        4'b0110
+`define		AXIS_CPU_OUTX	        4'b0111
 `define     AXIS_CPU_TAX            4'b1100
 `define     AXIS_CPU_TXA            4'b1101
 `define     AXIS_CPU_SET_JMP_OFF    4'b1110

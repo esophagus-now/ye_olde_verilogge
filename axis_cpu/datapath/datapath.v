@@ -10,6 +10,7 @@
 `include "alu.v"
 `include "regfile.v"
 `include "sdp_lut_ram.v"
+`include "inst_mem.v"
 `default_nettype none
 `endif
 
@@ -19,8 +20,9 @@ module datapath # (
     input wire clk,
     input wire rst,
     
-    //Inputs for instruction memory
+    //Signals for instruction memory
     input wire inst_rd_en,
+    output wire [7:0] instr,
     
     //Inputs for A register
     input wire [2:0] A_sel,
@@ -67,6 +69,11 @@ module datapath # (
     input wire [7:0] jmp_off_wr_data,
     input wire [3:0] jmp_off_wr_addr,
     input wire jmp_off_wr_en,
+    
+    //Signals for writing new instructions
+    input wire [CODE_ADDR_WIDTH -1:0] inst_mem_wr_addr,
+    input wire [7:0] inst_mem_wr_data,
+    input wire inst_mem_wr_en,
     
     //This is my little hack for dealing with the effects of pipelining.
     //Basically, the jump offsets are relative to the jump instruction 
@@ -211,5 +218,16 @@ module datapath # (
     );
     
     //Instruction memory
-    //TODO
+    inst_mem # (
+        .ADDR_WIDTH(CODE_ADDR_WIDTH),
+        .DATA_WIDTH(8)
+    ) insts (
+		.clk(clk),
+		.wr_addr(inst_mem_wr_addr),
+		.wr_data(inst_mem_wr_data),
+		.wr_en(inst_mem_wr_en),
+		.rd_addr(PC),
+		.rd_data(instr),
+		.rd_en(inst_rd_en)
+    );
 endmodule

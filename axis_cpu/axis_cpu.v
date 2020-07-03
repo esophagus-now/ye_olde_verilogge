@@ -7,7 +7,7 @@
 [x] Edit and rename bpf_defs.vh to match new ISA
 [x] Add MUL/DIV/MOD into ALU with proper handshaking
 [x] Add immediate and jump offset memory to datapath
-[ ] Instantiate instruction memory in datapath
+[x] Instantiate instruction memory in datapath
 [ ] Implement instructions for setting imm and jmp_off
 [ ] Implement instructions for reading/writing to stream 
     -> Include "PASS" instruction?
@@ -127,6 +127,7 @@ module axis_cpu # (
         .PC_sel(PC_sel),
         .PC_en(PC_en),
         .inst_rd_en(inst_rd_en),
+        .instr(instr),
         .B_sel(B_sel),
         .ALU_sel(ALU_sel),
         .ALU_en(ALU_en),
