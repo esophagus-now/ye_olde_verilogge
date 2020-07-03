@@ -12,8 +12,8 @@ Implements the writeback stage. Can assert the branch_mispredict signal.
 Depending on the opcode, this stage may wait for a valid signal on the memory 
 or ALU.
 
-This stage also takes care of decrementing jt and jf (see the README in this 
-folder)
+This stage also takes care of decrementing jump offsets (see the README in
+this folder)
 
 Even though the packet memory and ALU are all pipelined with an II of 1, I 
 didn't feel the need to take advantage of it here; at any given moment, only 
@@ -36,6 +36,7 @@ understand it for myself.
 `ifdef ICARUS_VERILOG
 `include "axis_cpu_defs.vh"
 `include "macros.vh"
+`default_nettype none
 `endif
 
 module stage2 # (
@@ -47,8 +48,11 @@ module stage2 # (
     //Inputs from last stage:
     input wire [7:0] instr_in,
     
+    //Inputs from outside world streams:
+    input wire din_TVALID,
+    input wire dout_TREADY,
+    
     //Inputs from datapath:
-    input wire mem_vld,
     input wire eq,
     input wire gt,
     input wire ge,
@@ -56,23 +60,22 @@ module stage2 # (
     input wire ALU_vld,
     
     //Outputs for this stage:
-    output wire [7:0] jt_out,
-    output wire [7:0] jf_out,
     output wire [1:0] PC_sel, //branch_mispredict signifies when to use stage2's PC_sel over stage0's
     output wire [2:0] A_sel,
     output wire A_en,
     output wire [2:0] X_sel,
     output wire X_en,
-    output wire [3:0] regfile_sel_stage2,
-    output wire [31:0] imm_stage2,
+    output wire regfile_sel, //selects A or X as input to register file
+    output wire [3:0] regfile_wr_addr,
+    output wire regfile_wr_en,
     output wire ALU_ack,
     output wire branch_mispredict,
     
-    output wire acc,
-    output wire rej,
+    //Outputs to outside world streams
+    output wire din_TREADY,
+    output wire dout_TVALID,
     
     //Signals for stall logic
-    output wire stage2_reads_regfile, 
     output wire stage2_writes_A,
     output wire stage2_writes_X,
     
@@ -84,18 +87,12 @@ module stage2 # (
     
     //Handshaking signals
     input wire prev_vld,
-    output `logic rdy
+    output wire rdy
 );
     
     /************************************/
     /**Forward-declare internal signals**/
     /************************************/
-    
-    //Named subfields of instruction
-    wire [7:0] opcode_i;
-    wire [7:0] jt_i;
-    wire [7:0] jf_i;
-    wire [31:0] imm_i;
     
     //Inputs from datapath:
     wire mem_vld_i;
@@ -106,23 +103,17 @@ module stage2 # (
     wire ALU_vld_i;
     
     //Outputs for this stage:
-    wire [CODE_ADDR_WIDTH-1:0] jt_out_i;
-    wire [CODE_ADDR_WIDTH-1:0] jf_out_i;
-    `logic [1:0] PC_sel_i; //branch_mispredict signifies when to use stage2's PC_sel over stage0's
+    wire [1:0] PC_sel_i; //branch_mispredict signifies when to use stage2's PC_sel over stage0's
     `logic [2:0] A_sel_i;
     `logic A_en_i;
     `logic [2:0] X_sel_i;
     `logic X_en_i;
-    wire regfile_sel_stage2_i;
-    wire [31:0] imm_stage2_i;
+    wire regfile_sel_i;
+    wire regfile_wr_en_i;
     wire ALU_ack_i;
-    `logic branch_mispredict_i;
-    
-    wire acc_i;
-    wire rej_i;
+    wire branch_mispredict_i;
     
     //Stall signals
-    wire stage2_reads_regfile_i;
     wire stage2_writes_A_i;
     wire stage2_writes_X_i;
     
@@ -137,14 +128,7 @@ module stage2 # (
     
     //count_i has special rules: see logic section
     
-    //Named subfields of instruction
-    assign opcode_i = instr_in[55:48];
-    assign jt_i = instr_in[47:40];
-    assign jf_i = instr_in[39:32];
-    assign imm_i = instr_in[31:0];
-    
     //Inputs from datapath:
-    assign mem_vld_i  = mem_vld;
     assign eq_i       = eq;
     assign gt_i       = gt;
     assign ge_i       = ge;
@@ -158,103 +142,72 @@ module stage2 # (
     /**Helpful names for neatening code**/
     /************************************/
     
-    //Named subfields of opcode
-    wire [2:0] opcode_class;
-    assign opcode_class = opcode_i[2:0];
-    wire [2:0] addr_type;
-    assign addr_type = opcode_i[7:5];
-    wire [2:0] jmp_type;
-    assign jmp_type = opcode_i[6:4];
-    wire [4:0] miscop;
-    assign miscop = opcode_i[7:3];
-    wire [1:0] retval;
-    assign retval = opcode_i[4:3];
+    wire [2:0] jmp_type = instr_in[2:0];
+    wire [2:0] addr_type = instr_in[2:0];
     
-    //Helper booleans 
-    wire miscop_is_zero;
-    assign miscop_is_zero = (miscop == 0);
-    wire is_TAX_instruction;
-    assign is_TAX_instruction = (opcode_class == `BPF_MISC) && (miscop_is_zero);
-    wire is_TXA_instruction;
-    assign is_TXA_instruction = (opcode_class == `BPF_MISC) && (!miscop_is_zero);
-    wire is_RETA_instruction;
-    assign is_RETA_instruction = (opcode_class == `BPF_RET) && (retval == `RET_A);
-    wire is_RETX_instruction;
-    assign is_RETX_instruction = (opcode_class == `BPF_RET) && (retval == `RET_X);
-    wire is_RETIMM_instruction;
-    assign is_RETIMM_instruction = (opcode_class == `BPF_RET && retval == `RET_IMM);
+    //Helper booleans
+    wire is_lda = (instr_in[7:5] == `AXIS_CPU_LD);
+    wire is_ldx = (instr_in[7:5] == `AXIS_CPU_LDX);
+    wire is_sta = (instr_in[7:5] == `AXIS_CPU_ST);
+    wire is_stx = (instr_in[7:5] == `AXIS_CPU_STX);
+    wire is_alu = (instr_in[7:5] == `AXIS_CPU_ALU);
+    wire is_jmp = (instr_in[7:5] == `AXIS_CPU_JMP);
+    wire is_tax = (instr_in[7:4] == `AXIS_CPU_TAX);
+    wire is_txa = (instr_in[7:4] == `AXIS_CPU_TXA);
+    wire is_set_jmp = (instr_in[7:4] == `AXIS_CPU_SET_JMP_OFF);
+    wire is_set_imm = (instr_in[7:4] == `AXIS_CPU_SET_IMM);
+    
+    wire alu_b_sel_x = instr_in[4]; //1 for X, 0 for IMM
+    wire jmp_cmp_x = instr_in[4]; //1 for X, 0 for IMM
     
     //If we are awaiting packet memory or ALU
-    wire packmem_selected;
-    assign packmem_selected = (addr_type == `BPF_ABS || addr_type == `BPF_IND || addr_type == `BPF_MSH);
-    wire awaiting_packmem;
-    assign awaiting_packmem = (opcode_class == `BPF_LD || opcode_class == `BPF_LDX) && packmem_selected && prev_vld;
     wire awaiting_ALU;
-    assign awaiting_ALU = (opcode_class == `BPF_ALU) || (opcode_class == `BPF_JMP && jmp_type != `BPF_JA) && prev_vld;
+    assign awaiting_ALU = is_alu || (is_jmp && jmp_type != `AXIS_CPU_JA);
     
+    wire FIXME;
+    
+    //If a jump should be taken
+    wire jump_taken = 
+        (jmp_type == `AXIS_CPU_JA) ||
+        (jmp_type == `AXIS_CPU_JEQ && eq_i) ||
+        (jmp_type == `AXIS_CPU_JGT && gt_i) ||
+        (jmp_type == `AXIS_CPU_JGE && ge_i) ||
+        (jmp_type == `AXIS_CPU_JSET && set_i) ||
+        (jmp_type == `AXIS_CPU_JLAST && FIXME)
+    ;
     
     /****************/
     /**Do the logic**/
     /****************/
     
+    //regfile_sel_i, regfilewr_addr_i, and regfile_wr_en_i
+    assign regfile_sel_i = (is_stx) ? `REGFILE_IN_X : `REGFILE_IN_A;
+    assign regfile_wr_en_i = (is_sta || is_stx);
+    
     //rdy
     //this stage is always ready unless it is an ALU or memory access instruction.
-    always @(*) begin
-        if ((awaiting_packmem && !mem_vld_i) || (awaiting_ALU && !ALU_vld_i)) begin
-            rdy <= 0;
-        end else begin
-            rdy <= 1;
-        end
-    end
-    
-    //jt_out_i and jf_out_i
-    assign jt_out_i = jt_i;
-    assign jf_out_i = jf_i;
+    assign rdy = !(awaiting_ALU && !ALU_vld_i);
     
     //PC_sel_i and branch_mispredict_i
-    always @(*) begin
-        if (opcode_class == `BPF_JMP) begin
-            if (jmp_type == `BPF_JA) begin
-                PC_sel_i <= `PC_SEL_PLUS_IMM;
-                branch_mispredict_i <= (imm_i != 0);
-            end else if ( //If conditional jump was true
-                (jmp_type == `BPF_JEQ && eq_i) ||
-                (jmp_type == `BPF_JGT && gt_i) ||
-                (jmp_type == `BPF_JGE && ge_i) ||
-                (jmp_type == `BPF_JSET && set_i)
-            ) begin
-                PC_sel_i <= `PC_SEL_PLUS_JT;
-                branch_mispredict_i <= (jt_i != 0);
-            end else begin
-                PC_sel_i <= `PC_SEL_PLUS_JF;
-                branch_mispredict_i <= (jf_i != 0);
-            end
-        end else begin
-            PC_sel_i <= `PC_SEL_PLUS_1; 
-            branch_mispredict_i <= 0;
-        end
-    end
+    assign PC_sel_i = (prev_vld && is_jmp && jump_taken) ? `PC_SEL_PLUS_IMM : `PC_SEL_PLUS_1;
+    assign branch_mispredict_i = (prev_vld && is_jmp && jump_taken);
     
     //A_sel_i and A_en_i
     always @(*) begin
-        if (opcode_class == `BPF_LD) begin
+        if (is_lda) begin
             A_en_i <= 1;
             case (addr_type)
-                `BPF_ABS, `BPF_IND:
-                    A_sel_i <= `A_SEL_PACKET_MEM;
-                `BPF_IMM:
+                `AXIS_CPU_IMM:
                     A_sel_i <= `A_SEL_IMM;
-                `BPF_MEM:
+                `AXIS_CPU_MEM:
                     A_sel_i <= `A_SEL_MEM;
-                `BPF_LEN:
-                    A_sel_i <= `A_SEL_LEN;
                 default:
                     A_sel_i <= 0; //Error
             endcase
-        end else if (opcode_class == `BPF_ALU) begin
+        end else if (is_alu) begin
             A_en_i <= 1;
             A_sel_i <= `A_SEL_ALU;
-        end else if (is_TXA_instruction) begin
+        end else if (is_txa) begin
             A_en_i <= 1;
             A_sel_i <= `A_SEL_X;
         end else begin
@@ -265,23 +218,17 @@ module stage2 # (
     
     //X_sel_i and X_en_i
     always @(*) begin
-        if (opcode_class == `BPF_LDX) begin
+        if (is_ldx) begin
             X_en_i <= 1;
             case (addr_type)
-                `BPF_ABS, `BPF_IND:
-                    X_sel_i <= `X_SEL_PACKET_MEM;
-                `BPF_IMM:
+                `AXIS_CPU_IMM:
                     X_sel_i <= `X_SEL_IMM;
-                `BPF_MEM:
+                `AXIS_CPU_MEM:
                     X_sel_i <= `X_SEL_MEM;
-                `BPF_LEN:
-                    X_sel_i <= `X_SEL_LEN;
-                `BPF_MSH:
-                    X_sel_i <= `X_SEL_MSH;
                 default:
                     X_sel_i <= 0; //Error
             endcase
-        end else if (is_TAX_instruction) begin 
+        end else if (is_tax) begin 
             X_en_i <= 1;
             X_sel_i <= `X_SEL_A;
         end else begin
@@ -290,11 +237,8 @@ module stage2 # (
         end
     end
     
-    //regfile_sel_stage2
-    assign regfile_sel_stage2_i = imm_i[3:0];
-    
-    //imm_stage2_i;
-    assign imm_stage2_i = imm_i;
+    //regfile_sel_i
+    assign regfile_sel_i = instr_in[3:0];
     
     //ALU_ack_i
     assign ALU_ack_i = (awaiting_ALU && ALU_vld_i);
@@ -306,13 +250,7 @@ end else begin
     assign jmp_correction_i = icount;
 `endgen
     
-    //acc_i and rej_i
-    //TODO: add capability for RETA and RETX instructions
-    assign acc_i = is_RETIMM_instruction && (imm_i != 0);
-    assign rej_i = is_RETIMM_instruction && (imm_i == 0);
-    
     //Stall signals
-    assign stage2_reads_regfile_i = (opcode_class == `BPF_LD || opcode_class == `BPF_LDX) && (addr_type == `BPF_MEM);
     assign stage2_writes_A_i = A_en_i;
     assign stage2_writes_X_i = X_en_i;
     
@@ -325,27 +263,21 @@ end else begin
     assign enable_hot = prev_vld && rdy && !rst;
     
     //Outputs for this stage:
-    assign jt_out             = jt_out_i;
-    assign jf_out             = jf_out_i;
     assign PC_sel             = PC_sel_i;
     assign A_sel              = A_sel_i;
     assign A_en               = A_en_i && enable_hot;
     assign X_sel              = X_sel_i;
     assign X_en               = X_en_i && enable_hot;
-    assign regfile_sel_stage2 = regfile_sel_stage2_i;
-    assign imm_stage2         = imm_stage2_i;
+    assign regfile_sel        = regfile_sel_i;
+    assign regfile_wr_en      = regfile_wr_en_i;
     assign ALU_ack            = ALU_ack_i && enable_hot;
     assign branch_mispredict  = branch_mispredict_i && enable_hot;
-    
-    assign acc = acc_i && enable_hot;
-    assign rej = rej_i && enable_hot;
     
     assign jmp_correction = jmp_correction_i;
     
     //Note that stall signals are gated with prev_vld. This is because they are
     //computed combinationally from the output of the last stage.
     //Stall signals
-    assign stage2_reads_regfile = stage2_reads_regfile_i && prev_vld;
     assign stage2_writes_A = stage2_writes_A_i && prev_vld;
     assign stage2_writes_X = stage2_writes_X_i && prev_vld;
     

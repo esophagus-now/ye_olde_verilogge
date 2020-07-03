@@ -12,6 +12,11 @@ Hooks up all the controller stages into one module
 
 `ifdef ICARUS_VERILOG
 `include "axis_cpu_defs.vh"
+`include "stage0.v"
+`include "stage0_point_5.v"
+`include "stage1.v"
+`include "stage2.v"
+`default_nettype none
 `endif
 
 
@@ -32,18 +37,19 @@ module controller # (
     input wire set,
     input wire ALU_vld,
     
-    //Inputs from packet memory
-    input wire [7:0] instr_in,
-    input wire mem_vld,
+    //Input stream handshaking signals (TDATA and TLAST go into datapath)
+    input wire din_TVALID,
+    output wire din_TREADY,
     
+    //Interface to instruction memory
+    input wire [7:0] instr_in,
     
     //Outputs to code memory
     output wire inst_rd_en,
     
-    //Outputs to packet memory
-    output wire rd_en,
-    output wire acc,
-    output wire rej,
+    //Output stream handshaking signals (TDATA and TLAST come from datapath)
+    output wire dout_TVALID,
+    input wire dout_TREADY,
     
     //Outputs to datapath
     //stage0 (and stage2)
@@ -53,19 +59,18 @@ module controller # (
     output wire [3:0] ALU_sel,
     output wire ALU_en,
     output wire regfile_wr_en,
-    output wire [31:0] imm_stage1,
+    output wire [3:0] imm_sel_stage1,
     //stage2
-    output wire [7:0] jt,
-    output wire [7:0] jf,
     output wire [1:0] PC_sel, 
     output wire [2:0] A_sel,
     output wire A_en,
     output wire [2:0] X_sel,
     output wire X_en,
-    output wire [3:0] regfile_sel,
-    output wire [31:0] imm_stage2,
+    output wire regfile_sel, //Whether A or X is written to the regfile
+    output wire [3:0] regfile_wr_addr,
+    output wire [3:0] imm_sel_stage2,
     output wire ALU_ack,
-    output wire [CODE_ADDR_WIDTH-1:0] jmp_correction
+    output wire [CODE_ADDR_WIDTH -1:0] jmp_correction
     
 );
 
@@ -73,23 +78,23 @@ module controller # (
     wire vld_stage0;
     
     //Stage 0.5 outputs (not always used)
-    wire [63:0] instr_out_stage0_5;
+    wire [7:0] instr_out_stage0_5;
     wire [5:0] ocount_stage0_5;
     wire rdy_stage0_5;
     wire vld_stage0_5;
     
     //Stage 1 outputs
-    wire [3:0] regfile_sel_stage1;
-    wire [63:0] instr_out_stage1;
+    wire [3:0] utility_addr; //Used for either setting jmp_off_sel or imm_sel
+    wire jmp_off_sel_en;
+    wire imm_sel_en;
+    wire [7:0] instr_out_stage1;
     wire [5:0] ocount_stage1;
     wire rdy_stage1;
     wire vld_stage1;
     
     //Stage 2 outputs
     wire [1:0] PC_sel_stage2; //branch_mispredict signifies when to use stage2's PC_sel over stage0's
-    wire [3:0] regfile_sel_stage2; //stage2_reads_regfile signifies when to use stage2's regfile_sel
     wire branch_mispredict;
-    wire stage2_reads_regfile; 
     wire stage2_writes_A;
     wire stage2_writes_X;
     wire rdy_stage2;
@@ -126,16 +131,14 @@ module controller # (
         .rst(rst),
         .instr_in(instr_out_stage0_5),
         .branch_mispredict(branch_mispredict),
-        .stage2_reads_regfile(stage2_reads_regfile), //TODO: maybe make regfile dual port?
         .stage2_writes_A(stage2_writes_A),
         .stage2_writes_X(stage2_writes_X),
         .B_sel(B_sel),
         .ALU_sel(ALU_sel),
         .ALU_en(ALU_en),
-        .rd_en(rd_en),
-        .regfile_sel_stage1(regfile_sel_stage1),
-        .regfile_wr_en(regfile_wr_en),
-        .imm_stage1(imm_stage1),
+        .utility_addr(utility_addr),
+        .jmp_off_sel_en(jmp_off_sel_en),
+        .imm_sel_en(imm_sel_en),
         .instr_out(instr_out_stage1),
         .PC_en(PC_en),
         .icount(ocount_stage0_5),
@@ -161,18 +164,14 @@ end else begin : no_idle_stage
         .rst(rst),
         .instr_in(instr_in),
         .branch_mispredict(branch_mispredict),
-        .stage2_reads_regfile(stage2_reads_regfile), //TODO: maybe make regfile dual port?
         .stage2_writes_A(stage2_writes_A),
         .stage2_writes_X(stage2_writes_X),
         .B_sel(B_sel),
         .ALU_sel(ALU_sel),
         .ALU_en(ALU_en),
-        .addr_sel(addr_sel),
-        .transfer_sz(transfer_sz),
-        .rd_en(rd_en),
-        .regfile_sel_stage1(regfile_sel_stage1),
-        .regfile_wr_en(regfile_wr_en),
-        .imm_stage1(imm_stage1),
+        .utility_addr(utility_addr),
+        .jmp_off_sel_en(jmp_off_sel_en),
+        .imm_sel_en(imm_sel_en),
         .instr_out(instr_out_stage1),
         .PC_en(PC_en),
         .icount(6'b0),
@@ -191,26 +190,24 @@ end else begin : no_idle_stage
         .clk(clk),
         .rst(rst),
         .instr_in(instr_out_stage1),
-        .mem_vld(mem_vld),
         .eq(eq),
         .gt(gt),
         .ge(ge),
         .set(set),
         .ALU_vld(ALU_vld),
-        .jt_out(jt),
-        .jf_out(jf),
+        .din_TVALID(din_TVALID),
+        .din_TREADY(din_TREADY),
+        .dout_TVALID(dout_TVALID),
+        .dout_TREADY(dout_TREADY),
         .PC_sel(PC_sel_stage2), //branch_mispredict signifies when to use stage2's PC_sel over stage0's
         .A_sel(A_sel),
         .A_en(A_en),
         .X_sel(X_sel),
         .X_en(X_en),
-        .regfile_sel_stage2(regfile_sel_stage2),
-        .imm_stage2(imm_stage2),
+        .regfile_sel(regfile_sel),
+        .regfile_wr_addr(regfile_wr_addr),
         .ALU_ack(ALU_ack),
         .branch_mispredict(branch_mispredict),
-        .acc(acc),
-        .rej(rej),
-        .stage2_reads_regfile(stage2_reads_regfile), 
         .stage2_writes_A(stage2_writes_A),
         .stage2_writes_X(stage2_writes_X),
         .PC_en(PC_en),
@@ -222,7 +219,6 @@ end else begin : no_idle_stage
 
     //Arbitrate PC_sel and regfile_sel
     assign PC_sel = (branch_mispredict) ? PC_sel_stage2 : `PC_SEL_PLUS_1;
-    assign regfile_sel = (stage2_reads_regfile) ? regfile_sel_stage2 : regfile_sel_stage1;
 
 endmodule
 

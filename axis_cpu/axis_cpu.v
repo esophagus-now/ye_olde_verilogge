@@ -4,16 +4,17 @@
 
 /* BIG LIST OF TODOS
     
-[ ] Edit and rename bpf_defs.vh to match new ISA
-[ ] Add MUL/DIV/MOD into ALU with proper handshaking
-[ ] Add TLAST register and special jump type for it
-[ ] Add in axis_reg_map register for single-stepping (gate inst_rd_en?)
-[ ] Instantiate instruction memory in here
-[ ] Add immediate memory to datapath
-[ ] Add logic to program instruction and immediate memory from axis_reg_map
-[ ] Implement special logic to read jump amount 
+[x] Edit and rename bpf_defs.vh to match new ISA
+[x] Add MUL/DIV/MOD into ALU with proper handshaking
+[x] Add immediate and jump offset memory to datapath
+[ ] Instantiate instruction memory in datapath
+[ ] Implement instructions for setting imm and jmp_off
 [ ] Implement instructions for reading/writing to stream 
     -> Include "PASS" instruction?
+[ ] Add TLAST register and special jump type for it
+[ ] Add in axis_reg_map register for single-stepping (gate inst_rd_en?)
+[ ] Add logic to program instruction and immediate memory from axis_reg_map
+[ ] Implement special logic to read jump amount 
 [ ] Add code to send register values over debug stream
 [ ] Update sims
 
@@ -23,11 +24,13 @@
 
 `ifdef ICARUS_VERILOG
 `include "macros.vh"
+`include "controller.v"
+`include "datapath.v"
+`default_nettype none
 `endif
 
 module axis_cpu # (
     parameter CODE_ADDR_WIDTH = 10,
-    parameter CODE_DATA_WIDTH = 8,
     parameter PESS = 0
 ) (
     input wire clk,
@@ -45,34 +48,31 @@ module axis_cpu # (
     output wire cmd_out_TVALID,
     
     //Debug ports
-    `out_axis_l(dbg, 32),
-    
-    //Interface to intruction memory
-    output wire [CODE_ADDR_WIDTH-1:0] inst_rd_addr,
-    output wire inst_rd_en,
-    input wire [CODE_DATA_WIDTH-1:0] instr_in
-
+    `out_axis_l(dbg, 32)
 );
+    
+    wire hold_in_rst; //TODO: hook this up to axis_reg_map
     
     //Controller outputs
     wire [1:0] PC_sel; 
     wire PC_en;
+    wire inst_rd_en;
     wire B_sel;
     wire [3:0] ALU_sel;
     wire ALU_en;
     wire addr_sel;
+    wire regfile_sel; //Whether A or X is written to the regfile
     wire regfile_wr_en;
-    wire [31:0] imm_stage1;
-    wire [7:0] jt;
-    wire [7:0] jf;
+    wire [3:0] regfile_wr_addr;
+    wire [3:0] utility_addr; //Used for setting jmp_off_sel or imm_sel
+    wire jmp_off_sel_en;
+    wire imm_sel_en;
     wire [2:0] A_sel;
     wire A_en;
     wire [2:0] X_sel;
     wire X_en;
-    wire [3:0] regfile_sel;
-    wire [31:0] imm_stage2;
     wire ALU_ack;
-    wire [CODE_ADDR_WIDTH-1:0] jmp_correction;
+    wire [CODE_ADDR_WIDTH -1:0] jmp_correction;
     
     //Datapath outputs
     wire eq;
@@ -80,6 +80,7 @@ module axis_cpu # (
     wire ge;
     wire set;
     wire ALU_vld;
+    wire [7:0] instr;
     
     controller # (
         .CODE_ADDR_WIDTH(CODE_ADDR_WIDTH),
@@ -92,37 +93,30 @@ module axis_cpu # (
         .ge(ge),
         .set(set),
         .ALU_vld(ALU_vld),
-        .instr_in(instr_in),
-        .mem_vld(resized_mem_data_vld), //TODO: add caching to cpu_adapter
+        .din_TVALID(din_TVALID),
+        .din_TREADY(din_TREADY),
+        .dout_TVALID(dout_TVALID),
+        .dout_TREADY(dout_TREADY),
+        .instr_in(instr),
         .inst_rd_en(inst_rd_en),
-        .rd_en(cpu_rd_en),
-        .acc(cpu_acc),
-        .rej(cpu_rej),
         .PC_en(PC_en),
         .B_sel(B_sel),
         .ALU_sel(ALU_sel),
         .ALU_en(ALU_en),
-        .addr_sel(addr_sel),
-        .transfer_sz(transfer_sz),
+        .regfile_wr_addr(regfile_wr_addr),
         .regfile_wr_en(regfile_wr_en),
-        .imm_stage1(imm_stage1),
-        .jt(jt),
-        .jf(jf),
+        .regfile_sel(regfile_sel),
         .PC_sel(PC_sel), 
         .A_sel(A_sel),
         .A_en(A_en),
         .X_sel(X_sel),
         .X_en(X_en),
-        .regfile_sel(regfile_sel),
-        .imm_stage2(imm_stage2),
         .ALU_ack(ALU_ack),
         .jmp_correction(jmp_correction)
     );
 
     datapath # (
-        .BYTE_ADDR_WIDTH(BYTE_ADDR_WIDTH),
-        .CODE_ADDR_WIDTH(CODE_ADDR_WIDTH),
-        .PLEN_WIDTH(PLEN_WIDTH)
+        .CODE_ADDR_WIDTH(CODE_ADDR_WIDTH)
     ) dpath (
         .clk(clk),
         .rst(rst || hold_in_rst),
@@ -132,7 +126,7 @@ module axis_cpu # (
         .X_en(X_en),
         .PC_sel(PC_sel),
         .PC_en(PC_en),
-        .inst_rd_addr(inst_rd_addr),
+        .inst_rd_en(inst_rd_en),
         .B_sel(B_sel),
         .ALU_sel(ALU_sel),
         .ALU_en(ALU_en),
@@ -142,16 +136,12 @@ module axis_cpu # (
         .set(set),
         .ALU_vld(ALU_vld),
         .ALU_ack(ALU_ack),
+        .utility_addr(utility_addr),
+        .jmp_off_sel_en(jmp_off_sel_en),
+        .imm_sel_en(imm_sel_en),
         .regfile_sel(regfile_sel),
+        .regfile_wr_addr(regfile_wr_addr),
         .regfile_wr_en(regfile_wr_en),
-        .addr_sel(addr_sel),
-        .packet_rd_addr(byte_rd_addr),
-        .packet_data(resized_mem_data),
-        .packet_len(cpu_byte_len),
-        .imm_stage1(imm_stage1),
-        .imm_stage2(imm_stage2),
-        .jt(jt),
-        .jf(jf),
         .jmp_correction(jmp_correction)
     );
 
