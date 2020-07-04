@@ -1,1 +1,50 @@
-Nothing in here yet!
+cmd_in_TDATA	cmd_in_TVALID	din_TDATA	din_TVALID	din_TREADY_exp	din_TLAST	dout_TDATA_exp	dout_TVALID_exp	dout_TREADY	dout_TLAST_exp  Comments
+0               0               0           0           0               0           0               0               0           0               Template line
+
+0               1               0           0           0               0           0               0               0           0               Enable programming mode
+1               1               0           0           0               0           0               0               0           0
+
+0               0               0           0           0               0           0               0               0           0               
+
+1               1               0           0           0               0           0               0               0           0               Write to instr_mem
+02              1               0           0           0               0           0               0               0           0               IN
+1               1               0           0           0               0           0               0               0           0               Write to instr_mem
+C0              1               0           0           0               0           0               0               0           0               TAX
+1               1               0           0           0               0           0               0               0           0               Write to instr_mem
+90              1               0           0           0               0           0               0               0           0               ADD X
+1               1               0           0           0               0           0               0               0           0               Write to instr_mem
+51              1               0           0           0               0           0               0               0           0               OUT LAST
+1               1               0           0           0               0           0               0               0           0               Write to instr_mem
+E3              1               0           0           0               0           0               0               0           0               SETJMP 3
+1               1               0           0           0               0           0               0               0           0               Write to instr_mem
+A0              1               0           0           0               0           0               0               0           0               JA
+
+            
+
+0               0               0           0           0               0           0               0               0           0               
+
+2               1               0           0           0               0           0               0               0           0               Write to jmp_off_table
+02              1               0           0           0               0           0               0               0           0               (doesn't matter)
+2               1               0           0           0               0           0               0               0           0               Write to jmp_off_table
+02              1               0           0           0               0           0               0               0           0               (doesn't matter)
+2               1               0           0           0               0           0               0               0           0               Write to jmp_off_table
+FB              1               0           0           0               0           0               0               0           0               Set to -5 in 2's complement
+         
+0               0               0           0           0               0           0               0               0           0   
+
+0               1               0           0           0               0           0               0               0           0               Disable programming mode (run CPU)
+0               1               0           0           0               0           0               0               0           0
+
+
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           1               0           0               0               0           0   
+0               0               0           0           1               0           0               0               0           0   
+0               0               7           0           1               0           0               0               0           0   
+0               0               9           1           1               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           18              1               0           1   
+0               0               0           0           0               0           18              1               1           1   
+0               0               0           0           0               0           0               0               0           0   

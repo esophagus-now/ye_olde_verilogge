@@ -51,7 +51,7 @@ module axis_cpu_tb # (
     always #5 clk <= ~clk;
     
     `auto_tb_read_loop(clk)
-        `dummy = $fscanf(`fd, "%d%b%d%b%b%b%d%b%b%b", 
+        `dummy = $fscanf(`fd, "%h%b%d%b%b%b%d%b%b%b", 
             cmd_in_TDATA,
             cmd_in_TVALID,
             
@@ -68,7 +68,12 @@ module axis_cpu_tb # (
     `auto_tb_read_end
     
     `auto_tb_test_loop(clk)
-        $display("The time now is %t", $time);
+        `test(din_TREADY, din_TREADY_exp);
+        `test(dout_TVALID, dout_TVALID_exp);
+        if (`axis_flit(dout)) begin
+            `test(dout_TDATA, dout_TDATA_exp);
+            `test(dout_TLAST, dout_TLAST_exp);
+        end
     `auto_tb_test_end
     
     axis_cpu # (

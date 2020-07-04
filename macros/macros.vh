@@ -252,7 +252,9 @@ wire unused_dummy_in_wire_rst_sig_macro
 //Unfortunately, I wasn't able to find a workaround to hide `fd and `dummy
 
 `define auto_tb_decls \
-    integer auto_tb_fd, auto_tb_dummy
+    integer auto_tb_fd, auto_tb_dummy;\
+    integer auto_tb_line = 0; /*There's an off-by-one error somewhere... */ \
+    integer auto_tb_incr = 0
     
 `define open_drivers_file(f) \        
         auto_tb_fd = $fopen(f, "r");\
@@ -268,11 +270,11 @@ wire unused_dummy_in_wire_rst_sig_macro
                 $finish;\
             end\
         end\
-        auto_tb_dummy = 1
+        auto_tb_incr = 1
 
 `define test(x,y) \
-        if (x != y) begin\
-            $display("%t ps, variable x: expected %h but got %h", $time, y, x);\
+        if ($time != 0 && !(x === y)) begin \
+            $display("TB ERROR: line %d, variable x: expected %h but got %h", auto_tb_line, y, x);\
             #5 $finish;\
         end\
         auto_tb_dummy = 1
@@ -287,11 +289,25 @@ wire unused_dummy_in_wire_rst_sig_macro
             #20\
             $finish;\
         end\
+        /* Add line increment then reset the increment */ \
+        auto_tb_line = auto_tb_line + auto_tb_incr; \
+        auto_tb_incr = 0; \
         #0.01
 
 `define auto_tb_read_end\
         /*Skip comments at end of line*/\
         while (!$feof(auto_tb_fd) && $fgetc(auto_tb_fd) != "\n") ;\
+        auto_tb_incr = auto_tb_incr + 1;\
+        /* Do our best to count blank lines */\
+        while(!$feof(auto_tb_fd) && auto_tb_dummy != -1) begin \
+            auto_tb_dummy = $fgetc(auto_tb_fd);\
+            if (auto_tb_dummy == "\n") begin \
+                auto_tb_incr = auto_tb_incr + 1; \
+            end else if (auto_tb_dummy != " " && auto_tb_dummy != "\t") begin \
+                auto_tb_dummy = $ungetc(auto_tb_dummy, auto_tb_fd); \
+                auto_tb_dummy = -1; \
+            end \
+        end \
     end
 
 `define auto_tb_test_loop(clk)\

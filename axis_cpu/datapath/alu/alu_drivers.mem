@@ -1,5 +1,6 @@
 A       B       ALU_sel ALU_en  ALU_ack     ALU_out ALU_vld set eq  gt  ge  Comments
 0       0       0000    0       0           0       0       0   0   0   0   Time 5
+0       0       0000    0       0           0       0       0   0   0   0   Time 15
 5       10      0000    1       0           0       0       0   0   0   0   Time 25, start an addition
 10      20      0001    1       1           15      1       0   0   0   0   Time 35, start a subtraction
 0       0       0000    0       0           -10     1       0   0   0   0   Time 45, Don't acknowledge right away

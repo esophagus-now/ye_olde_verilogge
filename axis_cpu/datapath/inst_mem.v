@@ -48,22 +48,27 @@ module sdpram # (parameter
     input wire [ADDR_WIDTH-1:0] rd_addr,
     output reg [DATA_WIDTH-1:0] rd_data
 );
-    `localparam DEPTH = 2**ADDR_WIDTH;
+    localparam DEPTH = 2**ADDR_WIDTH;
 
     reg [DATA_WIDTH-1:0] data[0:DEPTH-1];
 
+    genvar i;
     //For testing purposes, this preloads the memory with a program
     `ifdef PRELOAD_TEST_PROGRAM
     `include "axis_cpu_defs.vh"
 
     initial begin
-        data[0]  = {`AXIS_CPU_LD, 1'b0, `AXIS_CPU_STREAM}; //IN
-        data[1]  = {`AXIS_CPU_TAX, 4'b0}; //TAX
-        data[2]  = {`AXIS_CPU_ALU, `ALU_SEL_X, 1'b0, `AXIS_CPU_ADD}; //ADD X
-        data[3]  = {`AXIS_CPU_ST, 1'b1, 4'b1}; //OUT (and set TLAST)
-        data[4]  = {`AXIS_CPU_SET_JMP_OFF, 4'd3};             //JA -5 (part 1). Select index 3 from the jump offset table (this is arbitrary; it depends on you loading -5 in two's complement into the table beforehand)
-        data[5]  = {`AXIS_CPU_JMP, 1'b0, 1'b0, `AXIS_CPU_JA}; //JA -5 (part 2)
+        data[0]  = {`AXIS_CPU_LD, 1'b0, `AXIS_CPU_STREAM}; //IN, 'h02
+        data[1]  = {`AXIS_CPU_TAX, 4'b0}; //TAX, 'hC0
+        data[2]  = {`AXIS_CPU_ALU, `ALU_B_SEL_X, 1'b0, `AXIS_CPU_ADD}; //ADD X, 'h90
+        data[3]  = {`AXIS_CPU_ST, 1'b1, 4'b1}; //OUT (and set TLAST), 'h51
+        data[4]  = {`AXIS_CPU_SET_JMP_OFF, 4'd3};             //JA -5 (part 1), 'hE3. Select index 3 from the jump offset table (this is arbitrary; it depends on you loading -5 in two's complement into the table beforehand)
+        data[5]  = {`AXIS_CPU_JMP, 1'b0, 1'b0, `AXIS_CPU_JA}; //JA -5 (part 2), 'A0
         
+    end
+    `else
+    for (i = 0; i < DEPTH; i = i + 1) begin
+        initial data[i] <= 0;
     end
     `endif
 

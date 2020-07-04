@@ -20,6 +20,11 @@ module sdp_lut_ram #(
 );
     reg [DATA_WIDTH-1:0] ram [0:2**(ADDR_WIDTH)-1];
     
+    genvar i;
+    for (i = 0; i < 2**ADDR_WIDTH; i = i + 1) begin
+        initial ram[i] <= 0;
+    end
+    
     always @(posedge clk) begin
         if (wr_en)
         ram[wr_addr] <= din;

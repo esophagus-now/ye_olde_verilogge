@@ -261,9 +261,6 @@ module stage2 # (
         end
     end
     
-    //regfile_sel_i
-    assign regfile_sel_i = instr_in[3:0];
-    
     //ALU_ack_i
     assign ALU_ack_i = (awaiting_ALU && ALU_vld_i);
     
@@ -271,6 +268,10 @@ module stage2 # (
     assign utility_addr_i = instr_in[3:0];
     assign imm_sel_en_i = is_set_imm;
     assign jmp_off_sel_en_i = is_set_jmp;
+    
+    //Deal with external streams
+    assign din_TREADY = awaiting_in;
+    assign dout_TVALID = awaiting_out;
     
     //last signals
     assign last_out_i = instr_in[0]; //Get output TLAST from LSB of instruction

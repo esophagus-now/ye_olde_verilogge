@@ -128,7 +128,7 @@ module axis_cpu # (
     assign jmp_off_wr_en = (reg_addr == `AXIS_CPU_REG_JMP_OFF) && reg_strb;
     assign imm_wr_en = (reg_addr == `AXIS_CPU_REG_IMM) && reg_strb;
     
-    wire hold_in_rst = !programming;
+    wire hold_in_rst = programming;
     
     //Controller outputs
     wire [1:0] PC_sel; 
