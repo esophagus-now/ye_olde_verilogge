@@ -12,15 +12,9 @@ A testbench for alu.v
 
 `include "alu.v"
 `include "axis_cpu_defs.vh"
+`include "macros.vh"
 
 `define stringify(x) `"x`"
-
-`define mktest(x) \
-if (x != x``_exp) begin\
-    $display("%t ps, variable x: expected %h but got %h", $time, x``_exp, x);\
-    #5 $finish;\
-end\
-dummy = 1
 
 module alu_tb;
 	reg clk;
@@ -44,7 +38,7 @@ module alu_tb;
     reg ge_exp = 0;
     reg ALU_vld_exp = 0;
     
-    integer fd, dummy;
+    `auto_tb_decls;
     
     initial begin
         $dumpfile("alu.vcd");
@@ -58,48 +52,28 @@ module alu_tb;
         ALU_en <= 0;
         ALU_ack <= 0;
         
-        fd = $fopen("alu_drivers.mem", "r");
-        if (fd == 0) begin
-            $display("Could not open drivers file");
-            $finish;
-        end
-        
-        //Skip first line of comments
-        while ($fgetc(fd) != "\n") begin
-            if ($feof(fd)) begin
-                $display("Error: drivers file is in incorrect format");
-                $finish;
-            end
-        end
+        `open_drivers_file("alu_drivers.mem");
     end
     
     always #5 clk <= ~clk;
     
-    always @(posedge clk) begin
-        if ($feof(fd)) begin
-            $display("Reached end of drivers file");
-            #20
-            $finish;
-        end
-        
-        //Check expected values against sim values
-        `mktest(ALU_out);
-        `mktest(ALU_vld);
-        `mktest(set);
-        `mktest(eq);
-        `mktest(gt);
-        `mktest(ge);
-        
-        #0.01
-        dummy = $fscanf(fd, "%d%d%b%b%b%d%b%b%b%b%b", 
+    `auto_tb_read_loop(clk)
+        `dummy = $fscanf(`fd, "%d%d%b%b%b%d%b%b%b%b%b", 
             A, B, ALU_sel, ALU_en, ALU_ack,
             ALU_out_exp, ALU_vld_exp, set_exp, eq_exp, gt_exp, ge_exp
         );
-        
-        //Skip comments at end of line
-        while (!$feof(fd) && $fgetc(fd) != "\n") ;
-    end
-
+    `auto_tb_read_end
+    
+    `auto_tb_test_loop(clk)
+        //Check expected values against sim values
+        `test(ALU_out,ALU_out_exp);
+        `test(ALU_vld,ALU_vld_exp);
+        `test(set,set_exp);
+        `test(eq,eq_exp);
+        `test(gt,gt_exp);
+        `test(ge,ge_exp);
+    `auto_tb_test_end
+    
     alu DUT (
         .clk(clk),
         .rst(1'b0),

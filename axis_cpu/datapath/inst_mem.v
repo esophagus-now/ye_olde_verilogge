@@ -60,7 +60,7 @@ module sdpram # (parameter
         data[0]  = {`AXIS_CPU_LD, 1'b0, `AXIS_CPU_STREAM}; //IN
         data[1]  = {`AXIS_CPU_TAX, 4'b0}; //TAX
         data[2]  = {`AXIS_CPU_ALU, `ALU_SEL_X, 1'b0, `AXIS_CPU_ADD}; //ADD X
-        data[3]  = {`AXIS_CPU_OUT, 4'b1}; //OUT (and set TLAST)
+        data[3]  = {`AXIS_CPU_ST, 1'b1, 4'b1}; //OUT (and set TLAST)
         data[4]  = {`AXIS_CPU_SET_JMP_OFF, 4'd3};             //JA -5 (part 1). Select index 3 from the jump offset table (this is arbitrary; it depends on you loading -5 in two's complement into the table beforehand)
         data[5]  = {`AXIS_CPU_JMP, 1'b0, 1'b0, `AXIS_CPU_JA}; //JA -5 (part 2)
         

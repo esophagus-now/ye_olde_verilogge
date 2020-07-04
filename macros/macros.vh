@@ -58,11 +58,14 @@
 `define sim_in_axis(name, width) \
     reg [width -1:0] name``_TDATA = 0;\
     reg name``_TVALID = 0;\
-    wire name``_TREADY
+    wire name``_TREADY;\
+    reg name``_TREADY_exp = 0
     
 `define sim_out_axis(name, width) \
     wire [width -1:0] name``_TDATA;\
+    reg [width -1:0] name``_TDATA_exp;\
     wire name``_TVALID;\
+    reg name``_TVALID_exp = 0;\
     reg name``_TREADY = 1
 
 `define ports_axis(name) name``_TDATA, name``_TVALID, name``_TREADY
@@ -99,7 +102,8 @@
     
 `define sim_out_axis_l(name, width) \
     `sim_out_axis(name, width);\
-    wire name``_TLAST
+    wire name``_TLAST;\
+    reg name``_TLAST_exp = 0
 
 `define ports_axis_l(name) `ports_axis(name), name``_TLAST
 
@@ -134,7 +138,8 @@
     
 `define sim_out_axis_k(name, width) \
     `sim_out_axis(name, width);\
-    wire [(width/8) -1:0] name``_TKEEP
+    wire [(width/8) -1:0] name``_TKEEP;\
+    reg [(width/8) -1:0] name``_TKEEP_exp = 0
 
 `define ports_axis_k(name) `ports_axis(name), name``_TKEEP
 
@@ -175,7 +180,8 @@
     
 `define sim_out_axis_kl(name, width) \
     `sim_out_axis_l(name, width);\
-    wire [(width/8) -1:0] name``_TKEEP
+    wire [(width/8) -1:0] name``_TKEEP;\
+    reg [(width/8) -1:0] name``_TKEEP_exp = 0
 `define sim_out_axis_lk(n, w) `sim_out_axis_kl(n, w)
 
 `define ports_axis_kl(name) `ports_axis_l(name), name``_TKEEP
@@ -215,3 +221,81 @@ wire unused_dummy_in_wire_rst_sig_macro
 `define prendre (
 `define autrement ) : (
 `define fin ))
+
+//For making self-testing testbenches. 
+//In your testbench, place 
+//
+//  auto_tb_decls;
+//
+//Outside all initial/always blocks, and it's best to put the declarations
+//at the top.
+//
+//Use 
+//
+//  open_drivers_file("my_drivers.mem");
+//
+//inside of an initial block.
+//
+//Then we run two loops. The first is for reading the drivers file. The 
+//second is where you can run automatic tests. Outside all initial always
+//blocks, place:
+//
+//  `auto_tb_read_loop(my_testbench_clk)
+//      `dummy = $fscanf(`fd, "%h%b%b...", my_sig_1, my_sig_2, expected_my_sig_2, ...);
+//  `auto_tb_read_end
+//
+//  `auto_tb_test_loop(my_testbench_clk)
+//      `test(my_sig_2, expected_my_sig_2);
+//      //... other tests ...
+//  `auto_tb_test_end
+//
+//Unfortunately, I wasn't able to find a workaround to hide `fd and `dummy
+
+`define auto_tb_decls \
+    integer auto_tb_fd, auto_tb_dummy
+    
+`define open_drivers_file(f) \        
+        auto_tb_fd = $fopen(f, "r");\
+        if (auto_tb_fd == 0) begin\
+            $display("Could not open file %s", f);\
+            $finish;\
+        end\
+        \
+        while ($fgetc(auto_tb_fd) != "\n") begin\
+            if ($feof(auto_tb_fd)) begin\
+                $display("Error: file is in incorrect format");\
+                $display("Must be nonempty, and first line is always skipped and treated as comments");\
+                $finish;\
+            end\
+        end\
+        auto_tb_dummy = 1
+
+`define test(x,y) \
+        if (x != y) begin\
+            $display("%t ps, variable x: expected %h but got %h", $time, y, x);\
+            #5 $finish;\
+        end\
+        auto_tb_dummy = 1
+
+`define fd      auto_tb_fd
+`define dummy   auto_tb_dummy
+
+`define auto_tb_read_loop(clk)\
+    always @(posedge clk) begin\
+        if ($feof(auto_tb_fd)) begin\
+            $display("Successfully completed drivers file");\
+            #20\
+            $finish;\
+        end\
+        #0.01
+
+`define auto_tb_read_end\
+        /*Skip comments at end of line*/\
+        while (!$feof(auto_tb_fd) && $fgetc(auto_tb_fd) != "\n") ;\
+    end
+
+`define auto_tb_test_loop(clk)\
+    always @(posedge clk) begin\
+
+`define auto_tb_test_end\
+    end
