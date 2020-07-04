@@ -57,6 +57,7 @@ module stage2 # (
     input wire gt,
     input wire ge,
     input wire set,
+    input wire last,
     input wire ALU_vld,
     
     //Outputs for this stage:
@@ -70,6 +71,11 @@ module stage2 # (
     output wire regfile_wr_en,
     output wire ALU_ack,
     output wire branch_mispredict,
+    output wire [3:0] utility_addr, //Used for setting jmp_off_sel or imm_sel
+    output wire jmp_off_sel_en,
+    output wire imm_sel_en,
+    output wire last_out,
+    output wire last_en,
     
     //Outputs to outside world streams
     output wire din_TREADY,
@@ -78,6 +84,7 @@ module stage2 # (
     //Signals for stall logic
     output wire stage2_writes_A,
     output wire stage2_writes_X,
+    output wire stage2_writes_imm,
     
     
     //count number of cycles instruction has been around for
@@ -108,14 +115,21 @@ module stage2 # (
     `logic A_en_i;
     `logic [2:0] X_sel_i;
     `logic X_en_i;
-    wire regfile_sel_i;
+    wire regfile_sel_i; //Selects A or X for writing to regfile
     wire regfile_wr_en_i;
     wire ALU_ack_i;
     wire branch_mispredict_i;
+    wire [3:0] utility_addr_i; //Used for setting registers, jmp_off_sel, or imm_sel
+    wire jmp_off_sel_en_i;
+    wire imm_sel_en_i;
+    wire last_out_i;
+    wire last_en_i;
+    wire last_i;
     
     //Stall signals
     wire stage2_writes_A_i;
     wire stage2_writes_X_i;
+    wire stage2_writes_imm_i;
     
     //count number of cycles instruction has been around for
     wire PC_en_i;
@@ -133,6 +147,7 @@ module stage2 # (
     assign gt_i       = gt;
     assign ge_i       = ge;
     assign set_i      = set;
+    assign last_i     = last;
     assign ALU_vld_i  = ALU_vld;
     
     assign PC_en_i = PC_en;
@@ -152,19 +167,21 @@ module stage2 # (
     wire is_stx = (instr_in[7:5] == `AXIS_CPU_STX);
     wire is_alu = (instr_in[7:5] == `AXIS_CPU_ALU);
     wire is_jmp = (instr_in[7:5] == `AXIS_CPU_JMP);
+    wire is_cond_jmp = is_jmp && (jmp_type != `AXIS_CPU_JA);
     wire is_tax = (instr_in[7:4] == `AXIS_CPU_TAX);
     wire is_txa = (instr_in[7:4] == `AXIS_CPU_TXA);
     wire is_set_jmp = (instr_in[7:4] == `AXIS_CPU_SET_JMP_OFF);
     wire is_set_imm = (instr_in[7:4] == `AXIS_CPU_SET_IMM);
+    wire is_outa = is_sta && (instr_in[4] == `AXIS_CPU_ST_STREAM);
+    wire is_outx = is_stx && (instr_in[4] == `AXIS_CPU_ST_STREAM);
     
     wire alu_b_sel_x = instr_in[4]; //1 for X, 0 for IMM
     wire jmp_cmp_x = instr_in[4]; //1 for X, 0 for IMM
     
-    //If we are awaiting packet memory or ALU
-    wire awaiting_ALU;
-    assign awaiting_ALU = is_alu || (is_jmp && jmp_type != `AXIS_CPU_JA);
-    
-    wire FIXME;
+    //If we are awaiting streams or ALU
+    wire awaiting_ALU = is_alu || (is_jmp && jmp_type != `AXIS_CPU_JA);
+    wire awaiting_in = (is_lda || is_ldx) && (addr_type == `AXIS_CPU_STREAM);
+    wire awaiting_out = (is_outa || is_outx);
     
     //If a jump should be taken
     wire jump_taken = 
@@ -173,7 +190,7 @@ module stage2 # (
         (jmp_type == `AXIS_CPU_JGT && gt_i) ||
         (jmp_type == `AXIS_CPU_JGE && ge_i) ||
         (jmp_type == `AXIS_CPU_JSET && set_i) ||
-        (jmp_type == `AXIS_CPU_JLAST && FIXME)
+        (jmp_type == `AXIS_CPU_JLAST && last_i)
     ;
     
     /****************/
@@ -186,7 +203,10 @@ module stage2 # (
     
     //rdy
     //this stage is always ready unless it is an ALU or memory access instruction.
-    assign rdy = !(awaiting_ALU && !ALU_vld_i);
+    assign rdy = !(awaiting_ALU && !ALU_vld_i) && 
+                 !(awaiting_in && !din_TVALID) &&
+                 !(awaiting_out && !dout_TREADY)
+    ;
     
     //PC_sel_i and branch_mispredict_i
     assign PC_sel_i = (prev_vld && is_jmp && jump_taken) ? `PC_SEL_PLUS_IMM : `PC_SEL_PLUS_1;
@@ -199,6 +219,8 @@ module stage2 # (
             case (addr_type)
                 `AXIS_CPU_IMM:
                     A_sel_i <= `A_SEL_IMM;
+                `AXIS_CPU_STREAM:
+                    A_sel_i <= `A_SEL_STREAM;
                 `AXIS_CPU_MEM:
                     A_sel_i <= `A_SEL_MEM;
                 default:
@@ -223,6 +245,8 @@ module stage2 # (
             case (addr_type)
                 `AXIS_CPU_IMM:
                     X_sel_i <= `X_SEL_IMM;
+                `AXIS_CPU_STREAM:
+                    X_sel_i <= `X_SEL_STREAM;
                 `AXIS_CPU_MEM:
                     X_sel_i <= `X_SEL_MEM;
                 default:
@@ -243,6 +267,17 @@ module stage2 # (
     //ALU_ack_i
     assign ALU_ack_i = (awaiting_ALU && ALU_vld_i);
     
+    //Setting jump offset or immediate offset
+    assign utility_addr_i = instr_in[3:0];
+    assign imm_sel_en_i = is_set_imm;
+    assign jmp_off_sel_en_i = is_set_jmp;
+    
+    //last signals
+    assign last_out_i = instr_in[0]; //Get output TLAST from LSB of instruction
+    assign last_en_i = awaiting_in; //Quick and dirty! Just keep overwriting
+                                    //last_r (in the datapath) until the flit
+                                    //actually goes through
+    
     //jmp_correction_i
 `genif (CODE_ADDR_WIDTH > 6) begin
     assign jmp_correction_i = $signed(icount);
@@ -253,6 +288,7 @@ end else begin
     //Stall signals
     assign stage2_writes_A_i = A_en_i;
     assign stage2_writes_X_i = X_en_i;
+    assign stage2_writes_imm_i = imm_sel_en_i;
     
     /****************************************/
     /**Assign outputs from internal signals**/
@@ -272,6 +308,11 @@ end else begin
     assign regfile_wr_en      = regfile_wr_en_i;
     assign ALU_ack            = ALU_ack_i && enable_hot;
     assign branch_mispredict  = branch_mispredict_i && enable_hot;
+    assign utility_addr       = utility_addr_i;
+    assign imm_sel_en         = imm_sel_en_i && enable_hot;
+    assign jmp_off_sel_en     = jmp_off_sel_en_i && enable_hot;
+    assign last_en            = last_en_i && enable_hot;
+    assign last_out           = last_out_i;
     
     assign jmp_correction = jmp_correction_i;
     
@@ -280,5 +321,6 @@ end else begin
     //Stall signals
     assign stage2_writes_A = stage2_writes_A_i && prev_vld;
     assign stage2_writes_X = stage2_writes_X_i && prev_vld;
+    assign stage2_writes_imm = stage2_writes_imm_i && prev_vld;
     
 endmodule

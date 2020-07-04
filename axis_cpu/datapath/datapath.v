@@ -47,13 +47,25 @@ module datapath # (
     output wire ALU_vld,
     input wire ALU_ack,
     
+    //Signals to/from external streams
+    input wire [31:0] din_TDATA,
+    input wire din_TLAST,
+    output wire [31:0] dout_TDATA,
+    output wire dout_TLAST,
+    
+    //Signals to from controller for dealing with last
+    input wire last_en,
+    input wire last_out, //Seems kind of silly to take this as input only to
+                         //to turn around and put in on dout_TLAST
+    output wire last,
+    
     //The bottom four bits of an instruction, used for addressing the reg
     //file, jmp table, or imm table
     input wire [3:0] utility_addr,
     input wire [3:0] regfile_wr_addr,
     
     //Signals for reading/writing register file
-    input wire regfile_sel, //Selects A or X as input to the register file
+    input wire regfile_sel, //Selects A or X as input to the register file (HACK: also selects A or X for stream out)
     input wire regfile_wr_en,
     
     //Signals for imm_sel register
@@ -87,7 +99,9 @@ module datapath # (
     reg [CODE_ADDR_WIDTH-1:0] PC = 0;
     reg [3:0] jmp_off_sel_r = 0;
     reg [3:0] imm_sel_r = 0;
-
+    
+    reg last_r = 0;
+    
     //Forward-declare wires
     wire [31:0] regfile_idata;
     wire [31:0] regfile_odata;
@@ -106,6 +120,8 @@ module datapath # (
                     A <= regfile_odata; 
                 `A_SEL_ALU:
                     A <= ALU_out;
+                `A_SEL_STREAM: //For INA instruction
+                    A <= din_TDATA;
                 `A_SEL_X: //for TXA instruction
                     A <= X;
             endcase
@@ -120,6 +136,8 @@ module datapath # (
                     X <= imm; //Note use of imm_stage2
                 `X_SEL_MEM:
                     X <= regfile_odata;
+                `X_SEL_STREAM: //For INX instruction
+                    A <= din_TDATA;
                 `X_SEL_A: //for TAX instruction
                     X <= A;
                 default:
@@ -171,6 +189,22 @@ module datapath # (
         .wr_en(regfile_wr_en),
         .odata(regfile_odata)
     );
+    
+    //Stream out
+    //HACK: use regfile_idata for dout_TDATA
+    assign dout_TDATA = regfile_idata;
+    
+    //last signals
+    always @(posedge clk) begin
+        if (rst) begin
+            last_r <= 0;
+        end else begin
+            if (last_en)
+                last_r <= din_TLAST;
+        end
+    end
+    assign last = last_r;
+    assign dout_TLAST = last_out;
     
     //Jump offset table
     always @(posedge clk) begin

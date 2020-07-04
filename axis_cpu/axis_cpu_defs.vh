@@ -5,20 +5,21 @@
 
 //Please remember to set this as "global include" in Vivado's sources panel
 
+//Programming registers addresses
+`define     AXIS_CPU_REG_PROG      4'b0000
+`define     AXIS_CPU_REG_INST      4'b0001
+`define     AXIS_CPU_REG_JMP_OFF   4'b0010
+`define     AXIS_CPU_REG_IMM       4'b0011
+
 /* instruction classes, always compare to instr[7:5] */
 `define		AXIS_CPU_LD		3'b000
 `define		AXIS_CPU_LDX	3'b001
+`define     AXIS_CPU_ST     3'b010
+`define     AXIS_CPU_STX    3'b011
 `define		AXIS_CPU_ALU	3'b100
 `define		AXIS_CPU_JMP	3'b101
 
 /* Specific opdocdes for instructions, always compare to instr[7:4] */
-//Very subtle kludge here: notice that ST and OUT (and STX and OUTX) share
-//a prefix of 010 (and 011). This is used inside the stage2 module to say
-//whether A or X is read
-`define		AXIS_CPU_ST		        4'b0100
-`define		AXIS_CPU_OUT	        4'b0101
-`define		AXIS_CPU_STX	        4'b0110
-`define		AXIS_CPU_OUTX	        4'b0111
 `define     AXIS_CPU_TAX            4'b1100
 `define     AXIS_CPU_TXA            4'b1101
 `define     AXIS_CPU_SET_JMP_OFF    4'b1110
@@ -29,6 +30,11 @@
 `define		AXIS_CPU_IMM 	3'b000 
 `define		AXIS_CPU_MEM	3'b001
 `define     AXIS_CPU_STREAM 3'b010
+
+/* st/stx fields */
+//Destination type, always compare to instr[4]
+`define     AXIS_CPU_ST_MEM     1'b0
+`define     AXIS_CPU_ST_STREAM  1'b1
 
 //Jump types, always compare to instr[2:0]
 `define		AXIS_CPU_JA		3'b000
@@ -45,18 +51,21 @@
 //Named constants for A register MUX
 `define		A_SEL_IMM 	    3'b000
 `define		A_SEL_STREAM 	3'b001
-`define		A_SEL_MEM	    3'b011
-`define		A_SEL_ALU	    3'b110
-`define		A_SEL_X		    3'b111
+`define		A_SEL_MEM	    3'b010
+`define		A_SEL_ALU	    3'b011
+`define		A_SEL_X		    3'b100
 //Named constants for X register MUX
 `define		X_SEL_IMM 	    3'b000 
 `define		X_SEL_STREAM    3'b001 
-`define		X_SEL_MEM	    3'b011
-`define		X_SEL_ALU	    3'b110
-`define		X_SEL_A		    3'b111
+`define		X_SEL_MEM	    3'b010
+`define		X_SEL_ALU	    3'b011
+`define		X_SEL_A		    3'b100
 //A or X select for regfile write
 `define		REGFILE_IN_A	1'b0
 `define		REGFILE_IN_X	1'b1
+//A or X select for stream out
+`define     OUT_SEL_A       1'b0
+`define     OUT_SEL_X       1'b1
 //ALU operand B select
 `define		ALU_B_SEL_IMM	1'b0
 `define		ALU_B_SEL_X		1'b1

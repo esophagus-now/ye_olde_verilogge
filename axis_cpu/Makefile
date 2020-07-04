@@ -14,6 +14,7 @@ IVERILOG_INCLUDE = -I../macros/
 IVERILOG_INCLUDE += -Icontroller/
 IVERILOG_INCLUDE += -Idatapath/
 IVERILOG_INCLUDE += -Idatapath/alu/
+IVERILOG_INCLUDE += -I../axis_reg_map
 IVERILOG_WARNS=-Wall -Wno-timescale
 
 # By default, package as an ip

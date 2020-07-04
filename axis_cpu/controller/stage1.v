@@ -10,8 +10,6 @@ stage1.v
 
 Implements the decode stage. Also responsible for a few datapath signals:
         - B_sel, ALU_sel, ALU_en
-        - din_TREADY
-        - utility_addr, jmp_off_sel_en, imm_sel_en
     
 This is the most complicated stage, since it must also deal with buffered 
 handshaking.
@@ -44,15 +42,12 @@ module stage1 (
     //Signals for stall logic
     input wire stage2_writes_A,
     input wire stage2_writes_X,
+    input wire stage2_writes_imm,
     
     //Outputs from this stage:
     output wire B_sel,
     output wire [3:0] ALU_sel,
     output wire ALU_en,
-    output wire rd_en,
-    output wire [3:0] utility_addr, //Used for setting jmp_off_sel or imm_sel
-    output wire jmp_off_sel_en,
-    output wire imm_sel_en,
     
     //Outputs for next stage (registered in this module):
     //Simplification: just output the instruction and let stage 2 do the thinking
@@ -82,9 +77,6 @@ module stage1 (
     wire B_sel_i;
     wire [3:0] ALU_sel_i;
     wire ALU_en_i;
-    wire regfile_sel_i;
-    wire regfile_wr_en_i;
-    wire [3:0] utility_addr_i;
     
     wire [7:0] instr_out_i;
     
@@ -126,6 +118,7 @@ module stage1 (
     wire is_stx = (instr_in[7:5] == `AXIS_CPU_STX);
     wire is_alu = (instr_in[7:5] == `AXIS_CPU_ALU);
     wire is_jmp = (instr_in[7:5] == `AXIS_CPU_JMP);
+    wire is_cond_jmp = is_jmp && (jmp_type != `AXIS_CPU_JA);
     wire is_tax = (instr_in[7:4] == `AXIS_CPU_TAX);
     wire is_txa = (instr_in[7:4] == `AXIS_CPU_TXA);
     wire is_set_jmp = (instr_in[7:4] == `AXIS_CPU_SET_JMP_OFF);
@@ -135,13 +128,9 @@ module stage1 (
     wire jmp_cmp_x = instr_in[4]; //1 for X, 0 for IMM
     
     //For determining when we are stalled
-    wire we_read_A; 
-    assign we_read_A = is_alu || is_jmp;
-    wire we_read_X;
-    assign we_read_X = (is_alu && alu_b_sel_x) || (is_jmp && jmp_cmp_x);
-    
-    //Some instructions don't need to make it into stage 2
-    wire early_exit = (is_set_jmp || is_set_imm);
+    wire we_read_A = is_alu || is_jmp;
+    wire we_read_X = (is_alu && alu_b_sel_x) || (is_cond_jmp && jmp_cmp_x);
+    wire we_read_imm = (is_alu && !alu_b_sel_x) || (is_cond_jmp && !jmp_cmp_x);
     
     /****************/
     /**Do the logic**/
@@ -150,9 +139,7 @@ module stage1 (
     assign B_sel_i = instr_in[4];
     
     assign ALU_sel_i = instr_in[3:0];
-    assign ALU_en_i = is_alu || (is_jmp && jmp_type != `AXIS_CPU_JA);
-    
-    assign utility_addr_i = instr_in[3:0];
+    assign ALU_en_i = is_alu || (is_cond_jmp);
     
     //Stall signals
     assign stalled_i = 
@@ -202,7 +189,6 @@ module stage1 (
     assign B_sel              = B_sel_i;
     assign ALU_sel            = ALU_sel_i;
     assign ALU_en             = ALU_en_i && enable_hot;
-    assign utility_addr       = utility_addr_i;
     
     assign instr_out = instr_out_i;
     

@@ -41,6 +41,12 @@ module controller # (
     input wire din_TVALID,
     output wire din_TREADY,
     
+    //Not 100% sure why I did it this way, but TLAST is managed by the
+    //datapath, so these are the signals for controlling that
+    output wire last_out,
+    output wire last_en,
+    input wire last,
+    
     //Interface to instruction memory
     input wire [7:0] instr_in,
     
@@ -97,6 +103,7 @@ module controller # (
     wire branch_mispredict;
     wire stage2_writes_A;
     wire stage2_writes_X;
+    wire stage2_writes_imm;
     wire rdy_stage2;
 
 
@@ -136,9 +143,6 @@ module controller # (
         .B_sel(B_sel),
         .ALU_sel(ALU_sel),
         .ALU_en(ALU_en),
-        .utility_addr(utility_addr),
-        .jmp_off_sel_en(jmp_off_sel_en),
-        .imm_sel_en(imm_sel_en),
         .instr_out(instr_out_stage1),
         .PC_en(PC_en),
         .icount(ocount_stage0_5),
@@ -166,12 +170,10 @@ end else begin : no_idle_stage
         .branch_mispredict(branch_mispredict),
         .stage2_writes_A(stage2_writes_A),
         .stage2_writes_X(stage2_writes_X),
+        .stage2_writes_imm(stage2_writes_imm),
         .B_sel(B_sel),
         .ALU_sel(ALU_sel),
         .ALU_en(ALU_en),
-        .utility_addr(utility_addr),
-        .jmp_off_sel_en(jmp_off_sel_en),
-        .imm_sel_en(imm_sel_en),
         .instr_out(instr_out_stage1),
         .PC_en(PC_en),
         .icount(6'b0),
@@ -207,9 +209,16 @@ end else begin : no_idle_stage
         .regfile_sel(regfile_sel),
         .regfile_wr_addr(regfile_wr_addr),
         .ALU_ack(ALU_ack),
+        .utility_addr(utility_addr),
+        .jmp_off_sel_en(jmp_off_sel_en),
+        .imm_sel_en(imm_sel_en),
+        .last_out(last_out),
+        .last_en(last_en),
+        .last(last),
         .branch_mispredict(branch_mispredict),
         .stage2_writes_A(stage2_writes_A),
         .stage2_writes_X(stage2_writes_X),
+        .stage2_writes_imm(stage2_writes_imm),
         .PC_en(PC_en),
         .icount(ocount_stage1),
         .jmp_correction(jmp_correction),
