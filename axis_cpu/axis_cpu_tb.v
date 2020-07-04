@@ -33,7 +33,8 @@ module axis_cpu_tb # (
     wire cmd_out_TVALID;
     
     //Debug ports
-    `sim_out_axis_l(dbg, 32);
+    `sim_out_axis(to_guv, 80);
+    `sim_in_axis(from_guv, 80);
     
     `auto_tb_decls;
     
@@ -98,7 +99,8 @@ module axis_cpu_tb # (
 		.cmd_out_TVALID(cmd_out_TVALID),
         
         //Debug ports
-        `inst_axis_l(dbg, dbg)
+        `inst_axis(to_guv, to_guv),
+        `inst_axis(from_guv, from_guv)
     );
 
 endmodule

@@ -89,7 +89,10 @@ module datapath # (
     //This is my little hack for dealing with the effects of pipelining.
     //Basically, the jump offsets are relative to the jump instruction 
     //itself, but we may have already started working on the next instructions
-    input wire [CODE_ADDR_WIDTH -1:0] jmp_correction
+    input wire [CODE_ADDR_WIDTH -1:0] jmp_correction,
+    
+    //Debug signals
+    output wire [79:0] to_guv_TDATA
 );
 
     //Registers
@@ -263,4 +266,7 @@ module datapath # (
 		.rd_data(instr),
 		.rd_en(inst_rd_en)
     );
+    
+    //Debug signals
+    assign to_guv_TDATA = {A, X, jmp_off_sel_r, imm_sel_r, instr};
 endmodule

@@ -74,8 +74,15 @@ module controller # (
     output wire imm_sel_en,
     output wire last_out,
     output wire last_en,
-    output wire [CODE_ADDR_WIDTH-1:0] jmp_correction
+    output wire [CODE_ADDR_WIDTH-1:0] jmp_correction,
     
+    //Debug signals. Idea is that stage0 connects into to_guv, and from_guv 
+    //connects into stage1
+    output wire to_guv_TVALID,
+    input wire to_guv_TREADY,
+    
+    input wire from_guv_TVALID,
+    output wire from_guv_TREADY
 );
 
     //Stage 0 outputs
@@ -124,9 +131,14 @@ module controller # (
         .branch_mispredict(branch_mispredict),
         .prev_vld(vld_stage0),
         .rdy(rdy_stage0_5),
-        .next_rdy(rdy_stage1),
-        .vld(vld_stage0_5)
+        .next_rdy(to_guv_TREADY),
+        .vld(to_guv_TVALID)
     );
+    
+    //Normally, stage0_point_5.vld goes into stage1.prev_vld and stage1.rdy
+    //goes into stage0_5.next_rdy. Instead, we redirect these two signals
+    //through the governor. (By the way, if debugging is disabled, axis_cpu.v
+    //will just wire these back together)
     
     stage1 decode  (
 		.clk(clk),
@@ -155,8 +167,8 @@ module controller # (
 		.ocount(ocount_stage1),
         
         //Handshaking signals
-		.prev_vld(vld_stage0_5),
-		.rdy(rdy_stage1),
+		.prev_vld(from_guv_TVALID),
+		.rdy(from_guv_TREADY),
 		.next_rdy(rdy_stage2),
 		.vld(vld_stage1)
     );
@@ -167,9 +179,15 @@ end else begin : no_idle_stage
         .branch_mispredict(branch_mispredict),
         .inst_rd_en(inst_rd_en),
         .PC_en(PC_en),
-        .next_rdy(rdy_stage1),
-        .vld(vld_stage0)
+        .next_rdy(to_guv_TREADY),
+        .vld(to_guv_TVALID)
     );
+    
+    
+    //Normally, stage0.vld goes into stage1.prev_vld and stage1.rdy goes 
+    //into stage0.next_rdy. Instead, we redirect these two signals through 
+    //the governor. (By the way, if debugging is disabled, axis_cpu.v will 
+    //just wire these back together)
     
     stage1 decode  (
 		.clk(clk),
@@ -198,8 +216,8 @@ end else begin : no_idle_stage
 		.ocount(ocount_stage1),
         
         //Handshaking signals
-		.prev_vld(vld_stage0),
-		.rdy(rdy_stage1),
+		.prev_vld(from_guv_TVALID),
+		.rdy(from_guv_TREADY),
 		.next_rdy(rdy_stage2),
 		.vld(vld_stage1)
     );

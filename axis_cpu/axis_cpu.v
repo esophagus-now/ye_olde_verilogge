@@ -13,8 +13,7 @@
     -> Include "PASS" instruction?
 [x] Add TLAST register and special jump type for it
 [x] Add logic to program instruction and immediate memory from axis_reg_map
-[ ] Add in axis_reg_map register for single-stepping (gate inst_rd_en?)
-[ ] Add code to send register values over debug stream
+[x] Add code to send register values over debug stream
 [ ] Update sims
 
 */
@@ -34,7 +33,8 @@ module axis_cpu # (
     parameter REG_ADDR_WIDTH = 4, //Seems good enough
     parameter CPU_ID_WIDTH = 12,
     parameter [CPU_ID_WIDTH-1:0] CPU_ID = 0, //Basically like a base address, used for AXIS register map
-    parameter PESS = 0
+    parameter PESS = 0,
+    parameter ENABLE_DEBUG = 0
 ) (
     input wire clk,
     input wire rst,
@@ -50,8 +50,9 @@ module axis_cpu # (
     output wire [31:0] cmd_out_TDATA,
     output wire cmd_out_TVALID,
     
-    //Debug ports
-    `out_axis_l(dbg, 32)
+    //Debug ports. Format is {A, X, jmp_sel, imm_sel, instr}
+    `out_axis(to_guv, 80),
+    `in_axis(from_guv, 80)
 );
     
     reg programming = 0; //If 1, then we are in the programming state. The
@@ -161,7 +162,20 @@ module axis_cpu # (
     wire ge;
     wire set;
     wire ALU_vld;
+    wire [7:0] instr_from_datapath;
+    wire [7:0] instr_from_guv = from_guv_TDATA[7:0];
+    wire from_guv_TVALID_i;
+    wire to_guv_TREADY_i;
     wire [7:0] instr;
+`genif(ENABLE_DEBUG) begin
+    assign instr = instr_from_guv;
+    assign to_guv_TREADY_i = to_guv_TREADY;
+    assign from_guv_TVALID_i = from_guv_TVALID;
+`else_gen
+    assign instr = instr_from_datapath;
+    assign to_guv_TREADY_i = from_guv_TREADY;
+    assign from_guv_TVALID_i = to_guv_TVALID;
+`endgen
     
     controller # (
         .CODE_ADDR_WIDTH(CODE_ADDR_WIDTH),
@@ -214,7 +228,13 @@ module axis_cpu # (
 		.imm_sel_en(imm_sel_en),
 		.last_out(last_out),
 		.last_en(last_en),
-		.jmp_correction(jmp_correction)
+		.jmp_correction(jmp_correction),
+        
+        //Debug signals
+        .to_guv_TVALID(to_guv_TVALID),
+        .to_guv_TREADY(to_guv_TREADY_i),
+        .from_guv_TVALID(from_guv_TVALID_i),
+        .from_guv_TREADY(from_guv_TREADY)
     );
 
     datapath # (
@@ -225,7 +245,7 @@ module axis_cpu # (
         
         //Signals for instruction memory
         .inst_rd_en(inst_rd_en),
-        .instr(instr),
+        .instr(instr_from_datapath),
         
         //Inputs for A register
         .A_sel(A_sel),
@@ -292,7 +312,10 @@ module axis_cpu # (
         //This is my little hack for dealing with the effects of pipelining.
         //Basically the jump offsets are relative to the jump instruction 
         //itself but we may have already started working on the next instructions
-        .jmp_correction(jmp_correction)
+        .jmp_correction(jmp_correction),
+        
+        //Debug signals
+        .to_guv_TDATA(to_guv_TDATA)
     );
 
 endmodule
