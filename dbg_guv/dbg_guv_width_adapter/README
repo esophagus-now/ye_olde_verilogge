@@ -1,3 +1,7 @@
+=====================
+RUNNING THE TESTBENCH
+=====================
+
 To build the testbench, you will require sonar, an excellent tool developed
 by Varun Sharma:
 
@@ -27,3 +31,56 @@ Note: I am using sonar-3.1.0.dev0, with the following modification:
 
 In other words, remove the condition and run the if statement body 
 unconditionally.
+
+
+=============================================
+WHY MUST DEBUG GOVERNORS HAVE WIDTH ADAPTERS?
+=============================================
+
+In theory, all you need for debugging is an AXIS governor. However, there 
+are major problems with this. If all the governor log outputs have 
+different widths, the poor developer (who's already stressed out because 
+they have to debug their project) now has to draw up all the width 
+conversions for logs too, and then put them in an AXI Stream Switch, and 
+woe betide them if there are more than 16 governors... oh and by the way, 
+it's up to the developer to keep track of which stream came from which guv, 
+and how wide all the sidechannels are... what a mess!
+
+This width adapter actually has two jobs. Not only does it convert any log 
+stream size to 32 bits, it also adds 1-3 header flits that give important 
+metadata:
+
+    - Which governor produced the log
+    - How many bytes of data were in this flit
+    - How wide were TID and TDEST, and what their values were
+    - Whether TLAST was high
+      
+Okay, that's simple enough to understand:
+
+
+        Ugly! Messy!                             Simple! Clean!
+      Corner cases from                        Organized! Smooth!
+      here until second                        (but lower speeds)
+          coming!                 +---------+
+                                  |         |
+  TDATA (n bytes)---------------->|         |
+  (optional) TKEEP (n bits)------>|         |-------->TDATA (4 bytes)
+  TVALID------------------------->|  Width  |----------------->TVALID
+  TREADY------------------------->| Adapter |----------------->TREADY
+  (optional) TLAST--------------->|         |------------------>TLAST
+  (optional) TDEST (p bits)------>|         |
+  (optional) TID (q bits)-------->|         |
+                                  |         |
+                                  +---------+
+
+AXI Stream sidechannels are SUCH a thorn in my side... so this deals with 
+that as nicely as I possibly can.
+
+Anyway, at the cost of lower performance (who cares? we're debugging!) this 
+makes it super easy to automatically connect all the dbg_guv logs together, 
+and has an important side effect of making it much easier to write a 
+generalized user interface.
+
+By the way, see this "generalized interface" here: 
+
+    https://github.com/esophagus-now/timonerie

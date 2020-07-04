@@ -35,17 +35,12 @@ module controller # (
     input wire gt,
     input wire ge,
     input wire set,
+    input wire last,
     input wire ALU_vld,
     
     //Input stream handshaking signals (TDATA and TLAST go into datapath)
     input wire din_TVALID,
     output wire din_TREADY,
-    
-    //Not 100% sure why I did it this way, but TLAST is managed by the
-    //datapath, so these are the signals for controlling that
-    output wire last_out,
-    output wire last_en,
-    input wire last,
     
     //Interface to instruction memory
     input wire [7:0] instr_in,
@@ -64,19 +59,22 @@ module controller # (
     output wire B_sel,
     output wire [3:0] ALU_sel,
     output wire ALU_en,
-    output wire regfile_wr_en,
-    output wire [3:0] imm_sel_stage1,
+    
     //stage2
-    output wire [1:0] PC_sel, 
+    output wire [1:0] PC_sel, //branch_mispredict signifies when to use stage2's PC_sel over stage0's
     output wire [2:0] A_sel,
     output wire A_en,
     output wire [2:0] X_sel,
     output wire X_en,
-    output wire regfile_sel, //Whether A or X is written to the regfile
-    output wire [3:0] regfile_wr_addr,
-    output wire [3:0] imm_sel_stage2,
+    output wire regfile_sel, //selects A or X as input to register file
+    output wire regfile_wr_en,
     output wire ALU_ack,
-    output wire [CODE_ADDR_WIDTH -1:0] jmp_correction
+    output wire [3:0] utility_addr, //Used for setting jmp_off_sel or imm_sel
+    output wire jmp_off_sel_en,
+    output wire imm_sel_en,
+    output wire last_out,
+    output wire last_en,
+    output wire [CODE_ADDR_WIDTH-1:0] jmp_correction
     
 );
 
@@ -90,9 +88,6 @@ module controller # (
     wire vld_stage0_5;
     
     //Stage 1 outputs
-    wire [3:0] utility_addr; //Used for either setting jmp_off_sel or imm_sel
-    wire jmp_off_sel_en;
-    wire imm_sel_en;
     wire [7:0] instr_out_stage1;
     wire [5:0] ocount_stage1;
     wire rdy_stage1;
@@ -134,23 +129,36 @@ module controller # (
     );
     
     stage1 decode  (
-        .clk(clk),
-        .rst(rst),
-        .instr_in(instr_out_stage0_5),
-        .branch_mispredict(branch_mispredict),
-        .stage2_writes_A(stage2_writes_A),
-        .stage2_writes_X(stage2_writes_X),
-        .B_sel(B_sel),
-        .ALU_sel(ALU_sel),
-        .ALU_en(ALU_en),
-        .instr_out(instr_out_stage1),
-        .PC_en(PC_en),
-        .icount(ocount_stage0_5),
-        .ocount(ocount_stage1),
-        .prev_vld(vld_stage0_5),
-        .rdy(rdy_stage1),
-        .next_rdy(rdy_stage2),
-        .vld(vld_stage1)
+		.clk(clk),
+		.rst(rst),
+        
+		.instr_in(instr_out_stage0_5),
+		.branch_mispredict(branch_mispredict),
+        
+        //Signals for stall logic
+		.stage2_writes_A(stage2_writes_A),
+		.stage2_writes_X(stage2_writes_X),
+		.stage2_writes_imm(stage2_writes_imm),
+        
+        //Outputs from this stage:
+		.B_sel(B_sel),
+		.ALU_sel(ALU_sel),
+		.ALU_en(ALU_en),
+        
+        //Outputs for next stage (registered in this module):
+        //Simplification: just output the instruction and let stage 2 do the thinking
+		.instr_out(instr_out_stage1),
+        
+        //count number of cycles instruction has been around for
+		.PC_en(PC_en),
+		.icount(ocount_stage0_5),
+		.ocount(ocount_stage1),
+        
+        //Handshaking signals
+		.prev_vld(vld_stage0_5),
+		.rdy(rdy_stage1),
+		.next_rdy(rdy_stage2),
+		.vld(vld_stage1)
     );
 end else begin : no_idle_stage   
     stage0 fetch  (
@@ -164,24 +172,36 @@ end else begin : no_idle_stage
     );
     
     stage1 decode  (
-        .clk(clk),
-        .rst(rst),
-        .instr_in(instr_in),
-        .branch_mispredict(branch_mispredict),
-        .stage2_writes_A(stage2_writes_A),
-        .stage2_writes_X(stage2_writes_X),
-        .stage2_writes_imm(stage2_writes_imm),
-        .B_sel(B_sel),
-        .ALU_sel(ALU_sel),
-        .ALU_en(ALU_en),
-        .instr_out(instr_out_stage1),
-        .PC_en(PC_en),
-        .icount(6'b0),
-        .ocount(ocount_stage1),
-        .prev_vld(vld_stage0),
-        .rdy(rdy_stage1),
-        .next_rdy(rdy_stage2),
-        .vld(vld_stage1)
+		.clk(clk),
+		.rst(rst),
+        
+		.instr_in(instr_in),
+		.branch_mispredict(branch_mispredict),
+        
+        //Signals for stall logic
+		.stage2_writes_A(stage2_writes_A),
+		.stage2_writes_X(stage2_writes_X),
+		.stage2_writes_imm(stage2_writes_imm),
+        
+        //Outputs from this stage:
+		.B_sel(B_sel),
+		.ALU_sel(ALU_sel),
+		.ALU_en(ALU_en),
+        
+        //Outputs for next stage (registered in this module):
+        //Simplification: just output the instruction and let stage 2 do the thinking
+		.instr_out(instr_out_stage1),
+        
+        //count number of cycles instruction has been around for
+		.PC_en(PC_en),
+		.icount(6'b0),
+		.ocount(ocount_stage1),
+        
+        //Handshaking signals
+		.prev_vld(vld_stage0),
+		.rdy(rdy_stage1),
+		.next_rdy(rdy_stage2),
+		.vld(vld_stage1)
     );
 `endgen
 
@@ -189,41 +209,58 @@ end else begin : no_idle_stage
     stage2 # (
         .CODE_ADDR_WIDTH(CODE_ADDR_WIDTH)
     ) writeback (
-        .clk(clk),
-        .rst(rst),
-        .instr_in(instr_out_stage1),
-        .eq(eq),
-        .gt(gt),
-        .ge(ge),
-        .set(set),
-        .ALU_vld(ALU_vld),
-        .din_TVALID(din_TVALID),
-        .din_TREADY(din_TREADY),
-        .dout_TVALID(dout_TVALID),
-        .dout_TREADY(dout_TREADY),
-        .PC_sel(PC_sel_stage2), //branch_mispredict signifies when to use stage2's PC_sel over stage0's
-        .A_sel(A_sel),
-        .A_en(A_en),
-        .X_sel(X_sel),
-        .X_en(X_en),
-        .regfile_sel(regfile_sel),
-        .regfile_wr_addr(regfile_wr_addr),
-        .ALU_ack(ALU_ack),
-        .utility_addr(utility_addr),
-        .jmp_off_sel_en(jmp_off_sel_en),
-        .imm_sel_en(imm_sel_en),
-        .last_out(last_out),
-        .last_en(last_en),
-        .last(last),
-        .branch_mispredict(branch_mispredict),
-        .stage2_writes_A(stage2_writes_A),
-        .stage2_writes_X(stage2_writes_X),
-        .stage2_writes_imm(stage2_writes_imm),
-        .PC_en(PC_en),
-        .icount(ocount_stage1),
-        .jmp_correction(jmp_correction),
-        .prev_vld(vld_stage1),
-        .rdy(rdy_stage2)
+		.clk(clk),
+		.rst(rst),
+
+        //Inputs from last stage:
+		.instr_in(instr_out_stage1),
+        
+        //Inputs from outside world streams:
+		.din_TVALID(din_TVALID),
+		.dout_TREADY(dout_TREADY),
+        
+        //Inputs from datapath:
+		.eq(eq),
+		.gt(gt),
+		.ge(ge),
+		.set(set),
+		.last(last),
+		.ALU_vld(ALU_vld),
+        
+        //Outputs for this stage:
+		.PC_sel(PC_sel_stage2), //branch_mispredict signifies when to use stage2's PC_sel over stage0's
+		.A_sel(A_sel),
+		.A_en(A_en),
+		.X_sel(X_sel),
+		.X_en(X_en),
+		.regfile_sel(regfile_sel), //selects A or X as input to register file
+		.regfile_wr_en(regfile_wr_en),
+		.ALU_ack(ALU_ack),
+		.branch_mispredict(branch_mispredict),
+		.utility_addr(utility_addr), //Used for setting jmp_off_sel or imm_sel
+		.jmp_off_sel_en(jmp_off_sel_en),
+		.imm_sel_en(imm_sel_en),
+		.last_out(last_out),
+		.last_en(last_en),
+        
+        //Outputs to outside world streams
+		.din_TREADY(din_TREADY),
+		.dout_TVALID(dout_TVALID),
+        
+        //Signals for stall logic
+		.stage2_writes_A(stage2_writes_A),
+		.stage2_writes_X(stage2_writes_X),
+		.stage2_writes_imm(stage2_writes_imm),
+        
+        
+        //count number of cycles instruction has been around for
+		.PC_en(PC_en),
+		.icount(ocount_stage1),
+		.jmp_correction(jmp_correction),
+        
+        //Handshaking signals
+		.prev_vld(vld_stage1),
+		.rdy(rdy_stage2)
     );
 
     //Arbitrate PC_sel and regfile_sel

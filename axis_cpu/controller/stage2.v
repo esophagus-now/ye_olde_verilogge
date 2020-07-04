@@ -67,7 +67,6 @@ module stage2 # (
     output wire [2:0] X_sel,
     output wire X_en,
     output wire regfile_sel, //selects A or X as input to register file
-    output wire [3:0] regfile_wr_addr,
     output wire regfile_wr_en,
     output wire ALU_ack,
     output wire branch_mispredict,

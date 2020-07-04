@@ -140,7 +140,6 @@ module axis_cpu # (
     wire addr_sel;
     wire regfile_sel; //Whether A or X is written to the regfile
     wire regfile_wr_en;
-    wire [3:0] regfile_wr_addr;
     wire [3:0] utility_addr; //Used for setting jmp_off_sel or imm_sel
     wire jmp_off_sel_en;
     wire imm_sel_en;
@@ -168,36 +167,54 @@ module axis_cpu # (
         .CODE_ADDR_WIDTH(CODE_ADDR_WIDTH),
         .PESS(PESS)
     ) ctrl (
-        .clk(clk),
-        .rst(rst || hold_in_rst),
-        .eq(eq),
-        .gt(gt),
-        .ge(ge),
-        .set(set),
-        .ALU_vld(ALU_vld),
-        .din_TVALID(din_TVALID),
-        .din_TREADY(din_TREADY),
-        .dout_TVALID(dout_TVALID),
-        .dout_TREADY(dout_TREADY),
-        .instr_in(instr),
-        .inst_rd_en(inst_rd_en),
-        .PC_en(PC_en),
-        .B_sel(B_sel),
-        .ALU_sel(ALU_sel),
-        .ALU_en(ALU_en),
-        .regfile_wr_addr(regfile_wr_addr),
-        .regfile_wr_en(regfile_wr_en),
-        .regfile_sel(regfile_sel),
-        .PC_sel(PC_sel), 
-        .A_sel(A_sel),
-        .A_en(A_en),
-        .X_sel(X_sel),
-        .X_en(X_en),
-        .last_out(last_out),
-        .last_en(last_en),
-        .last(last),
-        .ALU_ack(ALU_ack),
-        .jmp_correction(jmp_correction)
+		.clk(clk),
+		.rst(rst || hold_in_rst),
+        
+        //Inputs from datapath
+		.eq(eq),
+		.gt(gt),
+		.ge(ge),
+		.set(set),
+		.last(last),
+		.ALU_vld(ALU_vld),
+        
+        //Input stream handshaking signals (TDATA and TLAST go into datapath)
+		.din_TVALID(din_TVALID),
+		.din_TREADY(din_TREADY),
+        
+        //Interface to instruction memory
+		.instr_in(instr),
+        
+        //Outputs to code memory
+		.inst_rd_en(inst_rd_en),
+        
+        //Output stream handshaking signals (TDATA and TLAST come from datapath)
+		.dout_TVALID(dout_TVALID),
+		.dout_TREADY(dout_TREADY),
+        
+        //Outputs to datapath
+        //stage0 (and stage2)
+		.PC_en(PC_en),
+        //stage1
+		.B_sel(B_sel),
+		.ALU_sel(ALU_sel),
+		.ALU_en(ALU_en),
+        
+        //stage2
+		.PC_sel(PC_sel), //branch_mispredict signifies when to use stage2's PC_sel over stage0's
+		.A_sel(A_sel),
+		.A_en(A_en),
+		.X_sel(X_sel),
+		.X_en(X_en),
+		.regfile_sel(regfile_sel), //selects A or X as input to register file
+		.regfile_wr_en(regfile_wr_en),
+		.ALU_ack(ALU_ack),
+		.utility_addr(utility_addr), //Used for setting jmp_off_sel or imm_sel
+		.jmp_off_sel_en(jmp_off_sel_en),
+		.imm_sel_en(imm_sel_en),
+		.last_out(last_out),
+		.last_en(last_en),
+		.jmp_correction(jmp_correction)
     );
 
     datapath # (
@@ -205,14 +222,24 @@ module axis_cpu # (
     ) dpath (
         .clk(clk),
         .rst(rst || hold_in_rst),
-        .A_sel(A_sel),
-        .A_en(A_en),
-        .X_sel(X_sel),
-        .X_en(X_en),
-        .PC_sel(PC_sel),
-        .PC_en(PC_en),
+        
+        //Signals for instruction memory
         .inst_rd_en(inst_rd_en),
         .instr(instr),
+        
+        //Inputs for A register
+        .A_sel(A_sel),
+        .A_en(A_en),
+        
+        //Inputs for X register
+        .X_sel(X_sel),
+        .X_en(X_en),
+        
+        //Signals for PC register
+        .PC_sel(PC_sel),
+        .PC_en(PC_en),
+        
+        //Signals to/from ALU
         .B_sel(B_sel),
         .ALU_sel(ALU_sel),
         .ALU_en(ALU_en),
@@ -222,35 +249,50 @@ module axis_cpu # (
         .set(set),
         .ALU_vld(ALU_vld),
         .ALU_ack(ALU_ack),
+        
+        //Signals to/from external streams
         .din_TDATA(din_TDATA),
         .din_TLAST(din_TLAST),
         .dout_TDATA(dout_TDATA),
         .dout_TLAST(dout_TLAST),
-        .last_out(last_out),
+        
+        //Signals to from controller for dealing with last
         .last_en(last_en),
+        .last_out(last_out), //Seems kind of silly to take this as input only to
+                             //to turn around and put in on dout_TLAST
         .last(last),
+        
+        //The bottom four bits of an instruction, used for addressing the reg
+        //file, jmp table, or imm table
         .utility_addr(utility_addr),
-        .jmp_off_sel_en(jmp_off_sel_en),
-        .imm_sel_en(imm_sel_en),
-        .regfile_sel(regfile_sel),
-        .regfile_wr_addr(regfile_wr_addr),
+        
+        //Signals for reading/writing register file
+        .regfile_sel(regfile_sel), //Selects A or X as input to the register file (HACK: also selects A or X for stream out)
         .regfile_wr_en(regfile_wr_en),
-        .jmp_correction(jmp_correction),
         
+        //Signals for imm_sel register
+        .imm_sel_en(imm_sel_en),
         //These are for reprogramming the immediates table
-		.imm_wr_data(reg_data),
-		.imm_wr_addr(imm_wr_addr),
-		.imm_wr_en(imm_wr_en),
+        .imm_wr_data(reg_data),
+        .imm_wr_addr(imm_wr_addr),
+        .imm_wr_en(imm_wr_en),
         
+        //Signals for jmp_off_sel register
+        .jmp_off_sel_en(jmp_off_sel_en),
         //These are for reprogramming the jump offsets table
-		.jmp_off_wr_data(reg_data[7:0]),
-		.jmp_off_wr_addr(jmp_off_wr_addr),
-		.jmp_off_wr_en(jmp_off_wr_en),
+        .jmp_off_wr_data(reg_data[7:0]),
+        .jmp_off_wr_addr(jmp_off_wr_addr),
+        .jmp_off_wr_en(jmp_off_wr_en),
         
         //Signals for writing new instructions
-		.inst_mem_wr_data(reg_data[7:0]),
-		.inst_mem_wr_addr(inst_mem_wr_addr),
-		.inst_mem_wr_en(inst_mem_wr_en)
+        .inst_mem_wr_addr(inst_mem_wr_addr),
+        .inst_mem_wr_data(reg_data[7:0]),
+        .inst_mem_wr_en(inst_mem_wr_en),
+        
+        //This is my little hack for dealing with the effects of pipelining.
+        //Basically the jump offsets are relative to the jump instruction 
+        //itself but we may have already started working on the next instructions
+        .jmp_correction(jmp_correction)
     );
 
 endmodule

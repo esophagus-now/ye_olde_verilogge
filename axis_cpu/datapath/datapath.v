@@ -62,7 +62,6 @@ module datapath # (
     //The bottom four bits of an instruction, used for addressing the reg
     //file, jmp table, or imm table
     input wire [3:0] utility_addr,
-    input wire [3:0] regfile_wr_addr,
     
     //Signals for reading/writing register file
     input wire regfile_sel, //Selects A or X as input to the register file (HACK: also selects A or X for stream out)
@@ -115,7 +114,7 @@ module datapath # (
         if (A_en == 1'b1) begin
             case (A_sel)
                 `A_SEL_IMM:
-                    A <= imm; //Note use of imm_stage2
+                    A <= imm;
                 `A_SEL_MEM:
                     A <= regfile_odata; 
                 `A_SEL_ALU:
@@ -133,7 +132,7 @@ module datapath # (
         if (X_en == 1'b1) begin
             case (X_sel)
                 `X_SEL_IMM:
-                    X <= imm; //Note use of imm_stage2
+                    X <= imm; 
                 `X_SEL_MEM:
                     X <= regfile_odata;
                 `X_SEL_STREAM: //For INX instruction
@@ -156,13 +155,13 @@ module datapath # (
                 `PC_SEL_PLUS_1:
                     PC <= PC + 1;
                 `PC_SEL_PLUS_IMM:
-                    PC <= PC + imm - jmp_correction; //Note use of stage2
+                    PC <= PC + jmp_off - jmp_correction; 
             endcase
         end
     end
     
     //ALU
-    assign B = (B_sel == `ALU_B_SEL_IMM) ? imm : X; //Note use of stage1
+    assign B = (B_sel == `ALU_B_SEL_IMM) ? imm : X; 
     alu the_alu (
         .clk(clk),
         .rst(rst),
@@ -184,7 +183,7 @@ module datapath # (
     regfile scratch_mem (
         .clk(clk),
         .rst(rst),
-        .addr(regfile_wr_addr),
+        .addr(utility_addr),
         .idata(regfile_idata),
         .wr_en(regfile_wr_en),
         .odata(regfile_odata)
