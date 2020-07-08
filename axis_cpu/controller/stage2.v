@@ -34,10 +34,10 @@ understand it for myself.
 */
 
 `ifdef ICARUS_VERILOG
-`include "axis_cpu_defs.vh"
-`include "macros.vh"
 `default_nettype none
 `endif
+`include "axis_cpu_defs.vh"
+`include "macros.vh"
 
 module stage2 # (
     parameter CODE_ADDR_WIDTH = 10
@@ -125,6 +125,9 @@ module stage2 # (
     wire last_en_i;
     wire last_i;
     
+    wire din_TREADY_i;
+    wire dout_TVALID_i;
+    
     //Stall signals
     wire stage2_writes_A_i;
     wire stage2_writes_X_i;
@@ -157,7 +160,7 @@ module stage2 # (
     /************************************/
     
     wire [2:0] jmp_type = instr_in[2:0];
-    wire [2:0] addr_type = instr_in[2:0];
+    wire [1:0] addr_type = instr_in[4:3];
     
     //Helper booleans
     wire is_lda = (instr_in[7:5] == `AXIS_CPU_LD);
@@ -220,7 +223,7 @@ module stage2 # (
                     A_sel_i <= `A_SEL_IMM;
                 `AXIS_CPU_STREAM:
                     A_sel_i <= `A_SEL_STREAM;
-                `AXIS_CPU_MEM:
+                `AXIS_CPU_MEM_LOW, `AXIS_CPU_MEM_HIGH:
                     A_sel_i <= `A_SEL_MEM;
                 default:
                     A_sel_i <= 0; //Error
@@ -246,7 +249,7 @@ module stage2 # (
                     X_sel_i <= `X_SEL_IMM;
                 `AXIS_CPU_STREAM:
                     X_sel_i <= `X_SEL_STREAM;
-                `AXIS_CPU_MEM:
+                `AXIS_CPU_MEM_LOW, `AXIS_CPU_MEM_HIGH:
                     X_sel_i <= `X_SEL_MEM;
                 default:
                     X_sel_i <= 0; //Error
@@ -269,8 +272,8 @@ module stage2 # (
     assign jmp_off_sel_en_i = is_set_jmp;
     
     //Deal with external streams
-    assign din_TREADY = awaiting_in;
-    assign dout_TVALID = awaiting_out;
+    assign din_TREADY_i = awaiting_in;
+    assign dout_TVALID_i = awaiting_out;
     
     //last signals
     assign last_out_i = instr_in[0]; //Get output TLAST from LSB of instruction
@@ -313,6 +316,11 @@ end else begin
     assign jmp_off_sel_en     = jmp_off_sel_en_i && enable_hot;
     assign last_en            = last_en_i && enable_hot;
     assign last_out           = last_out_i;
+    //Ugly special case... enable_hot only works for signals that pulse for
+    //a single cycle. I never thought about this before, so I should really
+    //fix this...
+    assign din_TREADY         = din_TREADY_i && prev_vld;
+    assign dout_TVALID        = dout_TVALID_i && prev_vld;
     
     assign jmp_correction = jmp_correction_i;
     

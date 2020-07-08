@@ -10,9 +10,10 @@ A simple ALU designed to match the needs of the AXIS CPU.
 
 `ifdef ICARUS_VERILOG
 `default_nettype none
+`endif
+
 `include "axis_cpu_defs.vh"
 `include "macros.vh"
-`endif
 
 module alu # (
 	parameter PESS = 0

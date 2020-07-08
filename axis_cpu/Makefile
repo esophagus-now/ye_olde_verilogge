@@ -46,7 +46,7 @@ clean:
 ip: clean
 	rm -rf ${out_dir}
 	mkdir -p ${out_dir}/src
-	cp $(find -name "*.v" | grep -v "_tb") ../macros/macros.vh ${out_dir}/src
+	cp $(shell find -name "*.v" | grep -v "_tb") axis_cpu_defs.vh ../macros/macros.vh ../axis_reg_map/axis_reg_map.v ${out_dir}/src
 	vivado -nolog -nojournal -notrace -mode batch -source ip_maker.tcl -tclargs ${out_dir} ${ip_name} ${part_no}
 	rm -rf ${ip_name}_tmp_proj
 	rm -f *log

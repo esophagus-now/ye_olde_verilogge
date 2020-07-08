@@ -26,10 +26,12 @@
 `define     AXIS_CPU_SET_IMM        4'b1111
 
 /* ld/ldx fields */
-//Addressing mode, always compare to instr[2:0]
-`define		AXIS_CPU_IMM 	3'b000 
-`define		AXIS_CPU_MEM	3'b001
-`define     AXIS_CPU_STREAM 3'b010
+//Addressing mode, always compare to instr[4:3]
+`define		AXIS_CPU_IMM        2'b00 
+`define     AXIS_CPU_STREAM     2'b01
+`define		AXIS_CPU_MEM_LOW	2'b10 //Registers 0-7
+`define		AXIS_CPU_MEM_HIGH	2'b11 //Registers 8-15
+
 
 /* st/stx fields */
 //Destination type, always compare to instr[4]

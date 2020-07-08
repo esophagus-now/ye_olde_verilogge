@@ -35,7 +35,7 @@ module stage0_point_5 (
     output wire vld
 );
 
-    bhand # (
+    bhand_cycle_count # (
         .DATA_WIDTH(8),
         .ENABLE_COUNT(1),
         .COUNT_WIDTH(6)

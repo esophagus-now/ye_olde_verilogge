@@ -58,7 +58,7 @@ module sdpram # (parameter
     `include "axis_cpu_defs.vh"
 
     initial begin
-        data[0]  = {`AXIS_CPU_LD, 1'b0, `AXIS_CPU_STREAM}; //IN, 'h02
+        data[0]  = {`AXIS_CPU_LD, `AXIS_CPU_STREAM, 3'b0}; //IN, 'h08
         data[1]  = {`AXIS_CPU_TAX, 4'b0}; //TAX, 'hC0
         data[2]  = {`AXIS_CPU_ALU, `ALU_B_SEL_X, 1'b0, `AXIS_CPU_ADD}; //ADD X, 'h90
         data[3]  = {`AXIS_CPU_ST, 1'b1, 4'b1}; //OUT (and set TLAST), 'h51

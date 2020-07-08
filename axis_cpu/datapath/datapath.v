@@ -5,14 +5,14 @@
 `timescale 1ns / 1ps
 
 `ifdef ICARUS_VERILOG
-`include "macros.vh"
-`include "axis_cpu_defs.vh"
 `include "alu.v"
 `include "regfile.v"
 `include "sdp_lut_ram.v"
 `include "inst_mem.v"
 `default_nettype none
 `endif
+`include "macros.vh"
+`include "axis_cpu_defs.vh"
 
 module datapath # (
     parameter CODE_ADDR_WIDTH = 10
@@ -91,6 +91,10 @@ module datapath # (
     //itself, but we may have already started working on the next instructions
     input wire [CODE_ADDR_WIDTH -1:0] jmp_correction,
     
+    //Some of the registers in the ALU need to be reset if a branch was
+    //mispredicted. As far as I know, this is only the ALU
+    input wire branch_mispredict,
+    
     //Debug signals
     output wire [79:0] to_guv_TDATA
 );
@@ -139,11 +143,9 @@ module datapath # (
                 `X_SEL_MEM:
                     X <= regfile_odata;
                 `X_SEL_STREAM: //For INX instruction
-                    A <= din_TDATA;
+                    X <= din_TDATA;
                 `X_SEL_A: //for TAX instruction
                     X <= A;
-                default:
-                    X <= 0; //Does this even make sense?
             endcase
         end
     end
@@ -167,7 +169,7 @@ module datapath # (
     assign B = (B_sel == `ALU_B_SEL_IMM) ? imm : X; 
     alu the_alu (
         .clk(clk),
-        .rst(rst),
+        .rst(rst || branch_mispredict),
         .A(A),
         .B(B),
         .ALU_sel(ALU_sel),
@@ -232,7 +234,7 @@ module datapath # (
 `genif(SIGN_BITS <= 0) begin
     assign jmp_off = jmp_off_unextended[CODE_ADDR_WIDTH -1:0];
 `else_gen 
-    assign jmp_off = {{SIGN_BITS{1'b1}}, jmp_off_unextended};
+    assign jmp_off = {{SIGN_BITS{jmp_off_unextended[7]}}, jmp_off_unextended};
 `endgen
     
     //Immediate table

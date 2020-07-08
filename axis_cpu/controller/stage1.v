@@ -18,19 +18,14 @@ Note: the outputs of a stage are combinational on the inputs. All the "hot" bus
 signals (such as write enables) are only asserted on the single cycle when 
 valid and ready are high (on the input side).
 
-TODO: 
-[ ] Support for stream input operation and correct stalling
-[ ] Edit stage2_reads_A and stage2_reads_X to handle stream output
-[ ] New instructions for setting imm_sel and jmp_offset_sel
-
 */
 
 `ifdef ICARUS_VERILOG
-`include "axis_cpu_defs.vh"
-`include "macros.vh"
 `include "bhand_cycle_count.v"
 `default_nettype none
 `endif
+`include "axis_cpu_defs.vh"
+`include "macros.vh"
 
 module stage1 (
     input wire clk,
@@ -138,7 +133,7 @@ module stage1 (
     
     assign B_sel_i = instr_in[4];
     
-    assign ALU_sel_i = instr_in[3:0];
+    assign ALU_sel_i = (is_jmp) ? 0 : instr_in[3:0];
     assign ALU_en_i = is_alu || (is_cond_jmp);
     
     //Stall signals

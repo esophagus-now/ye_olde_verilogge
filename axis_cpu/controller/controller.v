@@ -11,13 +11,13 @@ Hooks up all the controller stages into one module
 */
 
 `ifdef ICARUS_VERILOG
-`include "axis_cpu_defs.vh"
 `include "stage0.v"
 `include "stage0_point_5.v"
 `include "stage1.v"
 `include "stage2.v"
 `default_nettype none
 `endif
+`include "axis_cpu_defs.vh"
 
 
 `define genif generate if
@@ -53,6 +53,7 @@ module controller # (
     input wire dout_TREADY,
     
     //Outputs to datapath
+    output wire branch_mispredict,
     //stage0 (and stage2)
     output wire PC_en,
     //stage1
@@ -102,7 +103,7 @@ module controller # (
     
     //Stage 2 outputs
     wire [1:0] PC_sel_stage2; //branch_mispredict signifies when to use stage2's PC_sel over stage0's
-    wire branch_mispredict;
+    //wire branch_mispredict;
     wire stage2_writes_A;
     wire stage2_writes_X;
     wire stage2_writes_imm;

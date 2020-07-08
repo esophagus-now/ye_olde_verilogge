@@ -1,5 +1,5 @@
 cmd_in_TDATA	cmd_in_TVALID	din_TDATA	din_TVALID	din_TREADY_exp	din_TLAST	dout_TDATA_exp	dout_TVALID_exp	dout_TREADY	dout_TLAST_exp  Comments
-0               0               0           0           0               0           0               0               0           0               Template line
+0               0               0           0           0               0           0               0               0           0               Test 1: a simple loop where we read from the stream and output the double of the value
 
 0               1               0           0           0               0           0               0               0           0               Enable programming mode
 1               1               0           0           0               0           0               0               0           0
@@ -7,7 +7,7 @@ cmd_in_TDATA	cmd_in_TVALID	din_TDATA	din_TVALID	din_TREADY_exp	din_TLAST	dout_TD
 0               0               0           0           0               0           0               0               0           0               
 
 1               1               0           0           0               0           0               0               0           0               Write to instr_mem
-02              1               0           0           0               0           0               0               0           0               IN
+08              1               0           0           0               0           0               0               0           0               IN
 1               1               0           0           0               0           0               0               0           0               Write to instr_mem
 C0              1               0           0           0               0           0               0               0           0               TAX
 1               1               0           0           0               0           0               0               0           0               Write to instr_mem
@@ -40,24 +40,425 @@ FA              1               0           0           0               0       
 
 0               0               0           0           0               0           0               0               0           0   
 0               0               0           0           0               0           0               0               0           0   
-0               0               0           0           1               0           0               0               0           0   
+0               0               0           0           1               0           0               0               0           0               Expect CPU to start trying to read din
 0               0               0           0           1               0           0               0               0           0   
 0               0               7           0           1               0           0               0               0           0   
-0               0               9           1           1               0           0               0               0           0   
+0               0               9           1           1               0           0               0               0           0               Give CPU a 9
 0               0               0           0           0               0           0               0               0           0   
 0               0               0           0           0               0           0               0               0           0   
 0               0               0           0           0               0           0               0               0           0   
-0               0               0           0           0               0           18              1               0           1   
-0               0               0           0           0               0           18              1               1           1   
+0               0               0           0           0               0           18              1               0           1               Expect CPU to try outputting 18 on dout
+0               0               0           0           0               0           18              1               1           1               Read the 18
 0               0               0           0           0               0           0               0               0           0   
 0               0               0           0           0               0           0               0               0           0   
+0               0               23          1           0               0           0               0               0           0               Get our value of 23 valid on din
 0               0               23          1           0               0           0               0               0           0   
-0               0               23          1           0               0           0               0               0           0   
-0               0               23          1           1               0           0               0               0           0   
-0               0               233         0           0               0           0               0               0           0   
+0               0               23          1           1               0           0               0               0           0               CPU reads 23 on this cycle
+0               0               233         0           0               0           0               0               0           0               (This 233 is just to check the CPU doesn't read when it shouldn't)
+0               0               0           0           0               0           0               0               1           0               Start saying we're ready for the output
 0               0               0           0           0               0           0               0               1           0   
-0               0               0           0           0               0           0               0               1           0   
-0               0               0           0           0               0           46              1               1           1   
-0               0               0           0           0               0           46              0               1           0   
+0               0               0           0           0               0           46              1               1           1               CPU gives an output of 46, which we read right away
+0               0               0           0           0               0           46              0               1           0               We're still ready, but CPU shouldn't output anything
+             
+
+
+0               1               0           0           0               0           0               0               0           0               Test 2: Collatz trajectory counter. Enable programming mode
+1               1               0           0           0               0           0               0               0           0
+
+1               1               0           0           0               0           0               0               0           0               Initialize X and IMM for Collatz program
+F0              1               0           0           0               0           0               0               0           0               00: SETIMM 0;   imm_table[0] should be equal to 1
+1               1               0           0           0               0           0               0               0           0               
+20              1               0           0           0               0           0               0               0           0               01: LDX IMM;    X = 1
+1               1               0           0           0               0           0               0               0           0               
+F1              1               0           0           0               0           0               0               0           0               02: SETIMM 1;   imm_table[1] should be equal to 3
+
+1               1               0           0           0               0           0               0               0           0               Beginning of main loop. 
+D0              1               0           0           0               0           0               0               0           0               03: TXA;        Let A = X.
+1               1               0           0           0               0           0               0               0           0               
+92              1               0           0           0               0           0               0               0           0               04: XOR X;      Make sure A contains 0
+1               1               0           0           0               0           0               0               0           0               
+40              1               0           0           0               0           0               0               0           0               05: ST R0;      R0 (count) = 0
+1               1               0           0           0               0           0               0               0           0             
+08              1               0           0           0               0           0               0               0           0               06: IN;         Read a flit from din
+
+1               1               0           0           0               0           0               0               0           0               Beginning of Collatz loop. 
+41              1               0           0           0               0           0               0               0           0               07: ST R1;      Save current A
+1               1               0           0           0               0           0               0               0           0             
+10              1               0           0           0               0           0               0               0           0               08: LD R0;      Load count into A
+1               1               0           0           0               0           0               0               0           0             
+90              1               0           0           0               0           0               0               0           0               09: ADD X;      Increment A
+1               1               0           0           0               0           0               0               0           0             
+40              1               0           0           0               0           0               0               0           0               10: ST R0;      Store back into count
+1               1               0           0           0               0           0               0               0           0             
+11              1               0           0           0               0           0               0               0           0               11: LD R1;      Beginning of Collatz loop. Restore A
+1               1               0           0           0               0           0               0               0           0               
+E0              1               0           0           0               0           0               0               0           0               12: SETJMP 0;   jmp_table[0] should get us to the "return", +9
+1               1               0           0           0               0           0               0               0           0               
+B1              1               0           0           0               0           0               0               0           0               13: JEQ X;      If A is 1, we're done
+1               1               0           0           0               0           0               0               0           0               
+E1              1               0           0           0               0           0               0               0           0               14: SETJMP 1;   jmp_table[1] should get us to "multiply and add", +3
+1               1               0           0           0               0           0               0               0           0               
+B4              1               0           0           0               0           0               0               0           0               15: JSET X;     If A is not a multiple of two, we multiply and add
+1               1               0           0           0               0           0               0               0           0               
+96              1               0           0           0               0           0               0               0           0               16: RSH X;      (Else divide by two)
+1               1               0           0           0               0           0               0               0           0               
+E2              1               0           0           0               0           0               0               0           0               17: SETJMP 2;   jmp_table[2] should get us to top of Collatz loop, -12
+1               1               0           0           0               0           0               0               0           0               
+A0              1               0           0           0               0           0               0               0           0               18: JA;         Go to top of Collatz loop
+1               1               0           0           0               0           0               0               0           0               
+88              1               0           0           0               0           0               0               0           0               19: MUL IMM;    Multiply by 3
+1               1               0           0           0               0           0               0               0           0               
+90              1               0           0           0               0           0               0               0           0               20: ADD X;      Add 1
+1               1               0           0           0               0           0               0               0           0               
+E3              1               0           0           0               0           0               0               0           0               21: SETJMP 3;   jmp_table[3] should get us to top of Collatz loop, -16
+1               1               0           0           0               0           0               0               0           0               
+A0              1               0           0           0               0           0               0               0           0               22: JA;         Go to top of Collatz loop
+1               1               0           0           0               0           0               0               0           0               
+10              1               0           0           0               0           0               0               0           0               23: LD R0;      Here we are returning count
+1               1               0           0           0               0           0               0               0           0               
+51              1               0           0           0               0           0               0               0           0               24: OUT LAST;  
+1               1               0           0           0               0           0               0               0           0               
+E4              1               0           0           0               0           0               0               0           0               25: SETJMP 4;   jmp_table[4] should get us to top of main loop, -23
+1               1               0           0           0               0           0               0               0           0               
+A0              1               0           0           0               0           0               0               0           0               26: JA;         Go to top of main loop        
+            
+
+0               0               0           0           0               0           0               0               0           0               
+
+2               1               0           0           0               0           0               0               0           0               Write to jmp_off_table
+09              1               0           0           0               0           0               0               0           0               +9
+2               1               0           0           0               0           0               0               0           0               
+03              1               0           0           0               0           0               0               0           0               +3
+2               1               0           0           0               0           0               0               0           0               
+F4              1               0           0           0               0           0               0               0           0               -12 (2's complement)
+2               1               0           0           0               0           0               0               0           0               
+F0              1               0           0           0               0           0               0               0           0               -16
+2               1               0           0           0               0           0               0               0           0               
+EB              1               0           0           0               0           0               0               0           0               -23
+         
+0               0               0           0           0               0           0               0               0           0           
+
+3               1               0           0           0               0           0               0               0           0               Write to imm_table
+01              1               0           0           0               0           0               0               0           0               +10
+3               1               0           0           0               0           0               0               0           0               
+03              1               0           0           0               0           0               0               0           0               +3   
+
+0               1               0           0           0               0           0               0               0           0               Disable programming mode (run CPU)
+0               1               0           0           0               0           0               0               0           0
+
+
+0               0               0           0           0               0           0               0               0           0               (CPU is now doing a bunch of initialization)
 0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           1               0           0               0               0           0               Expect CPU to start trying to read din
+0               0               0           0           1               0           0               0               0           0   
+0               0               9           0           1               0           0               0               0           0   
+0               0               7           1           1               0           0               0               0           0               Give CPU a 7
+0               0               0           0           0               0           0               0               0           0               (Now CPU is computing the trajectory count)
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           0               0               0           0   
+0               0               0           0           0               0           17              1               0           1               CPU finally finishes copmute collatz length of 7, which should be 16
+0               0               0           0           0               0           17              1               0           1               
+0               0               0           0           0               0           17              1               0           1               
+0               0               0           0           0               0           17              1               0           1               
+0               0               0           0           0               0           17              1               1           1               And now we read it
 0               0               0           0           0               0           0               0               0           0   

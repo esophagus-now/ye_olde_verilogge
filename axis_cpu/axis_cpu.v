@@ -2,31 +2,16 @@
 //whose license information can be found at 
 //https://github.com/UofT-HPRC/fpga-bpf/blob/master/LICENSE
 
-/* BIG LIST OF TODOS
-    
-[x] Edit and rename bpf_defs.vh to match new ISA
-[x] Add MUL/DIV/MOD into ALU with proper handshaking
-[x] Add immediate and jump offset memory to datapath
-[x] Instantiate instruction memory in datapath
-[x] Implement instructions for setting imm and jmp_off
-[x] Implement instructions for reading/writing to stream 
-    -> Include "PASS" instruction?
-[x] Add TLAST register and special jump type for it
-[x] Add logic to program instruction and immediate memory from axis_reg_map
-[x] Add code to send register values over debug stream
-[ ] Update sims
-
-*/
-
 `timescale 1ns / 1ps
 
 `ifdef ICARUS_VERILOG
-`include "macros.vh"
 `include "controller.v"
 `include "datapath.v"
 `include "axis_reg_map.v"
 `default_nettype none
 `endif
+
+`include "macros.vh"
 
 module axis_cpu # (
     parameter CODE_ADDR_WIDTH = 10,
@@ -156,6 +141,8 @@ module axis_cpu # (
     
     wire [CODE_ADDR_WIDTH -1:0] jmp_correction;
     
+    wire branch_mispredict;
+    
     //Datapath outputs
     wire eq;
     wire gt;
@@ -207,6 +194,7 @@ module axis_cpu # (
 		.dout_TREADY(dout_TREADY),
         
         //Outputs to datapath
+        .branch_mispredict(branch_mispredict),
         //stage0 (and stage2)
 		.PC_en(PC_en),
         //stage1
@@ -313,6 +301,10 @@ module axis_cpu # (
         //Basically the jump offsets are relative to the jump instruction 
         //itself but we may have already started working on the next instructions
         .jmp_correction(jmp_correction),
+        
+        //Some of the registers in the ALU need to be reset if a branch was
+        //mispredicted. As far as I know, this is only the ALU
+        .branch_mispredict(branch_mispredict),
         
         //Debug signals
         .to_guv_TDATA(to_guv_TDATA)
