@@ -29,7 +29,7 @@ module axis_reg_map # (
     output wire [31:0] cmd_out_TDATA,
     output wire cmd_out_TVALID,
     
-    //Register update outputs, used by whatever is instantiating this module
+    //Register update outputs used by whatever is instantiating this module
     output wire [REG_ADDR_WIDTH -1:0] reg_addr,
     output wire [31:0] reg_data,
     output wire reg_strb

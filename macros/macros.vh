@@ -58,11 +58,14 @@
 `define sim_in_axis(name, width) \
     reg [width -1:0] name``_TDATA = 0;\
     reg name``_TVALID = 0;\
-    wire name``_TREADY
+    wire name``_TREADY;\
+    reg name``_TREADY_exp = 0
     
 `define sim_out_axis(name, width) \
     wire [width -1:0] name``_TDATA;\
+    reg [width -1:0] name``_TDATA_exp;\
     wire name``_TVALID;\
+    reg name``_TVALID_exp = 0;\
     reg name``_TREADY = 1
 
 `define ports_axis(name) name``_TDATA, name``_TVALID, name``_TREADY
@@ -99,7 +102,8 @@
     
 `define sim_out_axis_l(name, width) \
     `sim_out_axis(name, width);\
-    wire name``_TLAST
+    wire name``_TLAST;\
+    reg name``_TLAST_exp = 0
 
 `define ports_axis_l(name) `ports_axis(name), name``_TLAST
 
@@ -134,7 +138,8 @@
     
 `define sim_out_axis_k(name, width) \
     `sim_out_axis(name, width);\
-    wire [(width/8) -1:0] name``_TKEEP
+    wire [(width/8) -1:0] name``_TKEEP;\
+    reg [(width/8) -1:0] name``_TKEEP_exp = 0
 
 `define ports_axis_k(name) `ports_axis(name), name``_TKEEP
 
@@ -175,7 +180,8 @@
     
 `define sim_out_axis_kl(name, width) \
     `sim_out_axis_l(name, width);\
-    wire [(width/8) -1:0] name``_TKEEP
+    wire [(width/8) -1:0] name``_TKEEP;\
+    reg [(width/8) -1:0] name``_TKEEP_exp = 0
 `define sim_out_axis_lk(n, w) `sim_out_axis_kl(n, w)
 
 `define ports_axis_kl(name) `ports_axis_l(name), name``_TKEEP
@@ -215,8 +221,7 @@ wire unused_dummy_in_wire_rst_sig_macro
 `define prendre (
 `define autrement ) : (
 `define fin ))
-<<<<<<< main
-=======
+
 
 //For making self-testing testbenches. 
 //In your testbench, place 
@@ -249,10 +254,10 @@ wire unused_dummy_in_wire_rst_sig_macro
 
 `define auto_tb_decls \
     integer auto_tb_fd, auto_tb_dummy;\
-    integer auto_tb_line = 1; /*There's an off-by-one error somewhere... */ \
+    integer auto_tb_line = 0;  \
     integer auto_tb_incr = 0
     
-`define open_drivers_file(f) \
+`define open_drivers_file(f) \        
         auto_tb_fd = $fopen(f, "r");\
         if (auto_tb_fd == 0) begin\
             $display("Could not open file %s", f);\
@@ -278,17 +283,17 @@ wire unused_dummy_in_wire_rst_sig_macro
 `define fd      auto_tb_fd
 `define dummy   auto_tb_dummy
 
-`define auto_tb_read_loop(clk) \
-    always @(posedge clk) begin \
-        if ($feof(auto_tb_fd)) begin \
+`define auto_tb_read_loop(clk)\
+    always @(posedge clk) begin\
+        if ($feof(auto_tb_fd)) begin\
             $display("Successfully completed drivers file");\
             #20\
             $finish;\
-        end \
+        end\
         /* Add line increment then reset the increment */ \
-        #0.01; \
         auto_tb_line = auto_tb_line + auto_tb_incr; \
-        auto_tb_incr = 0; 
+        auto_tb_incr = 0; \
+        #0.01
 
 `define auto_tb_read_end\
         /*Skip comments at end of line*/\
@@ -311,4 +316,3 @@ wire unused_dummy_in_wire_rst_sig_macro
 
 `define auto_tb_test_end\
     end
->>>>>>> local
