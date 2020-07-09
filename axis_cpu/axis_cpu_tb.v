@@ -46,7 +46,9 @@ module axis_cpu_tb # (
         `open_drivers_file("axis_cpu_drivers.mem");
         
         //Just to prevent simulation going forever
-        #5000 $finish;
+        #10000 
+        $display("Simulation timeout");
+        $finish;
     end
     
     always #5 clk <= ~clk;

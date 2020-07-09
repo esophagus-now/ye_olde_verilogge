@@ -34,4 +34,4 @@
 @return:
   LD R0    ; A = count
   OUT 1    ; Output A with TLAST = 1
-  JA @main   ;       Go to top of main loop        
+  JA @main ; Go to top of main loop        

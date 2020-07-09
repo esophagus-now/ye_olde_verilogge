@@ -1,0 +1,197 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Wed Jul  8 12:53:19 2020
+[*]
+[dumpfile] "/home/mahkoe/research/ye_olde_verilogge/axis_cpu/axis_cpu.vcd"
+[dumpfile_mtime] "Wed Jul  8 12:53:11 2020"
+[dumpfile_size] 190720
+[savefile] "/home/mahkoe/research/ye_olde_verilogge/axis_cpu/axis_cpu.gtkw"
+[timestart] 1683500
+[size] 954 1028
+[pos] -1 -1
+*-16.095928 1731400 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] axis_cpu_tb.
+[treeopen] axis_cpu_tb.DUT.
+[treeopen] axis_cpu_tb.DUT.ctrl.
+[treeopen] axis_cpu_tb.DUT.ctrl.no_idle_stage.
+[treeopen] axis_cpu_tb.DUT.dpath.
+[sst_width] 229
+[signals_width] 262
+[sst_expanded] 1
+[sst_vpaned_height] 284
+@28
+axis_cpu_tb.clk
+axis_cpu_tb.rst
+@420
+[color] 6
+axis_cpu_tb.auto_tb_line
+@800200
+-cmd_in
+@22
+axis_cpu_tb.cmd_in_TDATA[31:0]
+@28
+axis_cpu_tb.cmd_in_TVALID
+@1000200
+-cmd_in
+@800200
+-din
+@24
+[color] 2
+axis_cpu_tb.din_TDATA[31:0]
+@28
+[color] 2
+axis_cpu_tb.din_TVALID
+axis_cpu_tb.din_TREADY
+[color] 3
+axis_cpu_tb.din_TREADY_exp
+[color] 2
+axis_cpu_tb.din_TLAST
+@1000200
+-din
+@800200
+-dout
+@c00024
+axis_cpu_tb.dout_TDATA[31:0]
+@28
+(0)axis_cpu_tb.dout_TDATA[31:0]
+(1)axis_cpu_tb.dout_TDATA[31:0]
+(2)axis_cpu_tb.dout_TDATA[31:0]
+(3)axis_cpu_tb.dout_TDATA[31:0]
+(4)axis_cpu_tb.dout_TDATA[31:0]
+(5)axis_cpu_tb.dout_TDATA[31:0]
+(6)axis_cpu_tb.dout_TDATA[31:0]
+(7)axis_cpu_tb.dout_TDATA[31:0]
+(8)axis_cpu_tb.dout_TDATA[31:0]
+(9)axis_cpu_tb.dout_TDATA[31:0]
+(10)axis_cpu_tb.dout_TDATA[31:0]
+(11)axis_cpu_tb.dout_TDATA[31:0]
+(12)axis_cpu_tb.dout_TDATA[31:0]
+(13)axis_cpu_tb.dout_TDATA[31:0]
+(14)axis_cpu_tb.dout_TDATA[31:0]
+(15)axis_cpu_tb.dout_TDATA[31:0]
+(16)axis_cpu_tb.dout_TDATA[31:0]
+(17)axis_cpu_tb.dout_TDATA[31:0]
+(18)axis_cpu_tb.dout_TDATA[31:0]
+(19)axis_cpu_tb.dout_TDATA[31:0]
+(20)axis_cpu_tb.dout_TDATA[31:0]
+(21)axis_cpu_tb.dout_TDATA[31:0]
+(22)axis_cpu_tb.dout_TDATA[31:0]
+(23)axis_cpu_tb.dout_TDATA[31:0]
+(24)axis_cpu_tb.dout_TDATA[31:0]
+(25)axis_cpu_tb.dout_TDATA[31:0]
+(26)axis_cpu_tb.dout_TDATA[31:0]
+(27)axis_cpu_tb.dout_TDATA[31:0]
+(28)axis_cpu_tb.dout_TDATA[31:0]
+(29)axis_cpu_tb.dout_TDATA[31:0]
+(30)axis_cpu_tb.dout_TDATA[31:0]
+(31)axis_cpu_tb.dout_TDATA[31:0]
+@1401200
+-group_end
+@24
+[color] 3
+axis_cpu_tb.dout_TDATA_exp[31:0]
+@28
+axis_cpu_tb.dout_TVALID
+[color] 3
+axis_cpu_tb.dout_TVALID_exp
+[color] 2
+axis_cpu_tb.dout_TREADY
+axis_cpu_tb.dout_TLAST
+[color] 3
+axis_cpu_tb.dout_TLAST_exp
+@1000200
+-dout
+@c00200
+-dbg
+@1401200
+-dbg
+@200
+-Internals
+@c00024
+axis_cpu_tb.DUT.dpath.PC[9:0]
+@28
+(0)axis_cpu_tb.DUT.dpath.PC[9:0]
+(1)axis_cpu_tb.DUT.dpath.PC[9:0]
+(2)axis_cpu_tb.DUT.dpath.PC[9:0]
+(3)axis_cpu_tb.DUT.dpath.PC[9:0]
+(4)axis_cpu_tb.DUT.dpath.PC[9:0]
+(5)axis_cpu_tb.DUT.dpath.PC[9:0]
+(6)axis_cpu_tb.DUT.dpath.PC[9:0]
+(7)axis_cpu_tb.DUT.dpath.PC[9:0]
+(8)axis_cpu_tb.DUT.dpath.PC[9:0]
+(9)axis_cpu_tb.DUT.dpath.PC[9:0]
+@1401200
+-group_end
+@c00420
+axis_cpu_tb.DUT.dpath.jmp_off[9:0]
+@28
+(0)axis_cpu_tb.DUT.dpath.jmp_off[9:0]
+(1)axis_cpu_tb.DUT.dpath.jmp_off[9:0]
+(2)axis_cpu_tb.DUT.dpath.jmp_off[9:0]
+(3)axis_cpu_tb.DUT.dpath.jmp_off[9:0]
+(4)axis_cpu_tb.DUT.dpath.jmp_off[9:0]
+(5)axis_cpu_tb.DUT.dpath.jmp_off[9:0]
+(6)axis_cpu_tb.DUT.dpath.jmp_off[9:0]
+(7)axis_cpu_tb.DUT.dpath.jmp_off[9:0]
+(8)axis_cpu_tb.DUT.dpath.jmp_off[9:0]
+(9)axis_cpu_tb.DUT.dpath.jmp_off[9:0]
+@1401200
+-group_end
+@420
+axis_cpu_tb.DUT.dpath.jmp_correction[9:0]
+@28
+axis_cpu_tb.DUT.dpath.PC_sel[1:0]
+axis_cpu_tb.DUT.dpath.PC_en
+axis_cpu_tb.DUT.ctrl.branch_mispredict
+@201
+-stage 1
+@22
+axis_cpu_tb.DUT.ctrl.no_idle_stage.decode.instr_in[7:0]
+@28
+axis_cpu_tb.DUT.ctrl.no_idle_stage.decode.prev_vld
+axis_cpu_tb.DUT.ctrl.no_idle_stage.decode.rdy
+axis_cpu_tb.DUT.ctrl.no_idle_stage.decode.alu_b_sel_x
+axis_cpu_tb.DUT.ctrl.no_idle_stage.decode.ALU_sel[3:0]
+axis_cpu_tb.DUT.ctrl.no_idle_stage.decode.ALU_en
+@200
+-stage2
+@22
+axis_cpu_tb.DUT.ctrl.writeback.instr_in[7:0]
+@28
+axis_cpu_tb.DUT.ctrl.writeback.prev_vld
+axis_cpu_tb.DUT.ctrl.writeback.rdy
+@420
+axis_cpu_tb.DUT.dpath.A[31:0]
+axis_cpu_tb.DUT.dpath.X[31:0]
+axis_cpu_tb.DUT.dpath.imm[31:0]
+@28
+axis_cpu_tb.DUT.ctrl.writeback.awaiting_ALU
+axis_cpu_tb.DUT.ctrl.writeback.ALU_vld
+axis_cpu_tb.DUT.ctrl.writeback.ALU_ack
+axis_cpu_tb.DUT.ctrl.writeback.set
+axis_cpu_tb.DUT.ctrl.writeback.is_jmp
+axis_cpu_tb.DUT.ctrl.writeback.jmp_type[2:0]
+axis_cpu_tb.DUT.ctrl.writeback.jump_taken
+@200
+-ALU
+@420
+axis_cpu_tb.DUT.dpath.the_alu.A[31:0]
+axis_cpu_tb.DUT.dpath.the_alu.B[31:0]
+@28
+axis_cpu_tb.DUT.dpath.the_alu.ALU_sel[3:0]
+axis_cpu_tb.DUT.dpath.the_alu.ALU_en
+axis_cpu_tb.DUT.dpath.the_alu.ALU_vld_i
+axis_cpu_tb.DUT.dpath.the_alu.ALU_vld
+axis_cpu_tb.DUT.dpath.the_alu.ALU_ack
+@22
+axis_cpu_tb.DUT.dpath.the_alu.ALU_out[31:0]
+axis_cpu_tb.DUT.dpath.the_alu.ALU_out_i[31:0]
+axis_cpu_tb.DUT.dpath.the_alu.ALU_out_r[31:0]
+axis_cpu_tb.DUT.dpath.the_alu.ALU_sel_i[3:0]
+axis_cpu_tb.DUT.dpath.the_alu.ALU_sel_saved[3:0]
+@28
+axis_cpu_tb.DUT.dpath.the_alu.ALU_sel_saved_is_one_cycle_op
+axis_cpu_tb.DUT.dpath.the_alu.ALU_vld_i
+axis_cpu_tb.DUT.dpath.the_alu.ALU_vld_r
+[pattern_trace] 1
+[pattern_trace] 0

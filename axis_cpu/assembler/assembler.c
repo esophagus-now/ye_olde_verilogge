@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 
 //Returns index of inserted number. If number already exists in array, 
 //doesn't add it a second time. Returns -1 if array is full and can't
@@ -20,8 +21,8 @@ int add2arr(int32_t *arr, int *len, int capacity, int val) {
     }
     
     //Insert at end of array
-    arr[*len++] = val;
-    return i;
+    arr[*len] = val;
+    return (*len)++;
 }
 
 typedef struct _lex_state {
@@ -146,6 +147,12 @@ static struct {
     mkentry(IMM)
 };
 
+//Some constants for the programming registers
+#define PROG_MODE_REG 0
+#define INST_MEM_REG 1
+#define JMP_TABLE_REG 2
+#define IMM_TABLE_REG 3
+
 static int const mnemonics_len = sizeof(mnemonics)/sizeof(*mnemonics);
 
 //Does not care about efficiency
@@ -210,16 +217,224 @@ int parse_jump_loc(char const *str, unresolved_op_t *dst) {
     return 0;
 }
 
+void debug_hook_print_after_first_pass(
+    unresolved_op_t const *opcodes, 
+    int num_ops,
+    char **labels,
+    int const *labels_pos,
+    int num_labels,
+    int const *stars,
+    int num_starred
+) {
+    int stars_ind = 0;
+    int labels_ind = 0;
+    
+    //For now, just print it out so I can see it for myself
+    int i;
+    for (i = 0; i < num_ops; i++) {
+        if (labels_ind < num_labels) {
+            if (labels_pos[labels_ind] == i) {
+                printf("%s\n", labels[labels_ind]);
+                labels_ind++;
+            }
+        }
+        
+        if (stars_ind < num_starred) {
+            if (stars[stars_ind] == i) {
+                printf("* ");
+                stars_ind++;
+            } else {
+                printf("  ");
+            }
+        } else {
+            printf("  ");
+        }
+        
+        printf("%03d: %02x", i, opcodes[i].code & 0xFF);
+        if (opcodes[i].jmp_label) {
+            printf(" %s", opcodes[i].jmp_label);
+        } else if (opcodes[i].jmp_stars > 0) {
+            printf(" %+d stars", opcodes[i].jmp_stars);
+        } else if (opcodes[i].code == IMM) {
+            printf(" %08x (%d)", opcodes[i].imm_val, opcodes[i].imm_val);
+        }
+        
+        printf("\n");
+    }
+}
+
+#define ERR_UNKNOWN_LABEL -256
+#define ERR_OUT_OF_JMP_OFFS -257
+#define ERR_OUT_OF_JMPS_MSG \
+        "Sorry! The AXIS CPU can only support 16 different jump offsets. \n" \
+        "The best you can do is try adding useless instructions to try and \n" \
+        "make more jump offsets equal\n"
+
+//Searches the list of labels. Searches for the required jump offset in the
+//jmp_table, or adds it if it is not found. Returns the index into the
+//jmp_table, suitable for OR'ing into the opcode. Returns one of the above
+//(negative) error codes on error
+int jmp_off_from_label(
+    char const *label, 
+    int curr_addr, 
+    char const **labels, 
+    int const* labels_pos, 
+    int num_labels,
+    int *jmp_table,
+    int *num_jumps
+) {
+    //First, find the label's address by searching the labels
+    //Not efficient, but who cares?
+    int label_addr;
+    int i;
+    for (i = 0; i < num_labels; i++) {
+        if (!strcmp(labels[i], label)) {
+            //Found it
+            label_addr = labels_pos[i];
+            break;
+        }
+    }
+    
+    //Check if we didn't find the address
+    if (i == num_labels) {
+        return ERR_UNKNOWN_LABEL;
+    }
+    
+    //Calculate the needed jump offset
+    //Each jump is actually two instructions: the instruction to set the
+    //jump offest, and the actual jump instruction itself. Jump offsets are
+    //always measure from the next PC after the actual jump instructions.
+    int jmp_off = label_addr - (curr_addr + 2);
+    
+    int rc = add2arr(jmp_table, num_jumps, 16, jmp_off);
+    if (rc < 0) {
+        return ERR_OUT_OF_JMP_OFFS;
+    }
+    
+    return rc;
+}
+
+#define ERR_STAR_OOB -258
+//Searches through the star addresses to find the one indicated by the
+//instructions. Adds the jump offset into the jmp_table, or adds it if it is
+//not found. Retruns the index into the jmp_table, or one of the (negative)
+//error codes defined above.
+int jmp_off_from_star(
+    int jmp_stars,
+    int curr_addr,
+    int const *stars,
+    int num_stars,
+    int *jmp_table,
+    int *num_jumps
+) {
+    //Find the index of the first star whose address is >= curr_addr+1. This
+    //can be one-past-the-end if there are no stars. The plus 1 is because
+    //all jumps are preceded by an automatically added isntruction that
+    //sets the jump offset (and this extra instruction is never starred)
+    
+    int i;
+    for (i = 0; i < num_stars; i++) {
+        if (stars[i] >= curr_addr+1) break;
+    }
+    
+    //Special case. It's hard to explain, but basically, the jump instruction
+    //may have a star. For example,
+    //
+    //  * inst 1
+    //    setjmp (curr_addr)
+    //  * JA +   (stars[i])
+    //  * inst2  (stars[i + jmp_stars])
+    //  * inst3
+    //
+    //The single '+' means jmp_stars is equal to 1. stars[i + jmp_stars] is
+    //the correct address for where to jump. However, if we had
+    //
+    //  * inst 1
+    //    setjmp (curr_addr)
+    //    JA +
+    //  * inst2  (stars[i])
+    //  * inst3  (stars[i + jmp_stars])
+    //
+    //then stars[i + jmp_stars] would incorrectly take us to inst3. However,
+    //in
+    //
+    //  * inst 1 (stars[i + jmp_stars])
+    //    setjmp (curr_addr)
+    //  * JA -   (stars[i])
+    //  * inst2  
+    //  * inst3  
+    //
+    //stars[i + jmp_stars] correctly takes us to inst1, and in
+    //
+    //  * inst 1 (stars[i + jmp_stars])
+    //    setjmp (curr_addr)
+    //    JA -   
+    //  * inst2  (stars[i])
+    //  * inst3 
+    //
+    //stars[i + jmp_stars] is still correct.
+    //Here's the conclusion: we need to subtract one star from positive 
+    //jumps if the jump instruction itself is starred.
+    if (jmp_stars > 0) {
+        //Make sure we're not going out of the table
+        if (i >= num_stars) {
+            return ERR_STAR_OOB;
+        }
+        
+        //If the jump instruction itself is starred
+        if (stars[i] != curr_addr+1) {
+            jmp_stars--;
+        }
+    }
+    
+    //Now we find the actual target address
+    int target_addr_ind = i + jmp_stars;
+    
+    //Make sure index into stars is in bounds
+    if (target_addr_ind < 0 || target_addr_ind >= num_stars) {
+        return ERR_STAR_OOB;
+    }
+    
+    int target_addr = stars[target_addr_ind];
+    
+    //We can now calculate the offset
+    //Each jump is actually two instructions: the instruction to set the
+    //jump offest, and the actual jump instruction itself. Jump offsets are
+    //always measure from the next PC after the actual jump instructions.
+    int jmp_off = target_addr - (curr_addr + 2);
+    
+    int rc = add2arr(jmp_table, num_jumps, 16, jmp_off);
+    if (rc < 0) {
+        return ERR_OUT_OF_JMP_OFFS;
+    }
+    
+    return rc;
+}
+
+//Adds an entry to a programming stream. Doesn't do any sanity checking. 
+//Automatically increments the pog_cmds_pos
+void add_reg_write(uint32_t reg, uint32_t val, uint32_t *prog_cmds, int *prog_cmds_pos) {
+    prog_cmds[(*prog_cmds_pos)++] = reg;
+    prog_cmds[(*prog_cmds_pos)++] = val;
+}
+
+void debug_hook_print_after_second_pass(uint32_t const *prog_cmds, int len) {
+    int i;
+    for (i = 0; i < len; i++) {
+        printf("%02x\n", prog_cmds[i]);
+    }
+}
+
 int main(int argc, char **argv) {
     int ret = 0;
     if (argc != 2) {
-        puts("Usage: assmembler my_source.asm > prog.bit");
+        fprintf(stderr, "Usage: assmembler my_source.asm > prog.bit");
         return -1;
     }
     
     if (argv[1][0] == '-') {
         //Always print help
-        puts(
+        fprintf(stderr,
         "Usage: assembler my_source.asm > prog.bit\n"
         "\n"
         "prog.bit has a special binary format which represents the sequence\n"
@@ -303,7 +518,7 @@ int main(int argc, char **argv) {
     #define MAX_STARS 128
     #define MAX_LABELS 64
     unresolved_op_t opcodes[MAX_OPCODES]; //I don't care about making this dynamically sized
-    int num_opcodes = 0;
+    //int num_opcodes = 0;
     
     int starred_opcodes[MAX_STARS]; //Keeps track of addresses of opcodes with a star
     int num_starred = 0;
@@ -577,43 +792,103 @@ int main(int argc, char **argv) {
         curr_addr++;
     }
     
+    //debug_hook_print_after_first_pass(opcodes, curr_addr, labels, labels_pos, num_labels, starred_opcodes, num_starred);
+    
     //Second pass: tidy up the jump and immediate offsets while also
     //outputting the binary
-    int stars_ind = 0;
-    int labels_ind = 0;
     
-    //For now, just print it out so I can see it for myself
+    
+    //Commands to send to CPU. If sent over the command stream, will 
+    //correctly program the CPU with all isntructions, immediates, and jump
+    //offsets
+    uint32_t prog_cmds[2*(MAX_OPCODES+32)+4];
+    int prog_cmds_pos = 0;
+    
+    //Start by adding the two flits for entering command mode
+    add_reg_write(PROG_MODE_REG, 1, prog_cmds, &prog_cmds_pos);
+    
     int i;
     for (i = 0; i < curr_addr; i++) {
-        if (labels_ind < num_labels) {
-            if (labels_pos[labels_ind] == i) {
-                printf("%s\n", labels[labels_ind]);
-                labels_ind++;
-            }
-        }
-        
-        if (stars_ind < num_starred) {
-            if (starred_opcodes[stars_ind] == i) {
-                printf("* ");
-                stars_ind++;
+        if (opcodes[i].code == SET_JMP_OFF) {
+            //Resolve the jump offset
+            if (opcodes[i].jmp_label) {
+                int rc = jmp_off_from_label(
+                    opcodes[i].jmp_label,
+                    i,
+                    (char const **) labels, labels_pos, num_labels,
+                    jmp_table, &num_jmps
+                );
+                
+                //Check for errors
+                if (rc == ERR_UNKNOWN_LABEL) {
+                    fprintf(stderr, "Error, line %d: Unknown label [%s]\n", opcodes[i].src_line, opcodes[i].jmp_label);
+                    ret = -1;
+                    goto cleanup;
+                } else if (rc == ERR_OUT_OF_JMP_OFFS) {
+                    fprintf(stderr, ERR_OUT_OF_JMPS_MSG);
+                    ret = -1;
+                    goto cleanup;
+                }
+                
+                //If no error, rc contains the index into the jump table
+                opcodes[i].code |= rc;
+            } else if (opcodes[i].jmp_stars != 0) {
+                int rc = jmp_off_from_star(
+                    opcodes[i].jmp_stars,
+                    i,
+                    starred_opcodes, num_starred,
+                    jmp_table, &num_jmps
+                );
+                
+                //Check for errors
+                if (rc == ERR_STAR_OOB) {
+                    fprintf(stderr, "Error, line %d: star jump is out of bounds (sounds like something from a video game!)\n", opcodes[i].src_line);
+                    ret = -1;
+                    goto cleanup;
+                } else if (rc == ERR_OUT_OF_JMP_OFFS) {
+                    fprintf(stderr, ERR_OUT_OF_JMPS_MSG);
+                    ret = -1;
+                    goto cleanup;
+                }
+                
+                //If no error, rc contains the index into the jump table
+                opcodes[i].code |= rc;
             } else {
-                printf("  ");
+                fprintf(stderr, "Marco made some kind of terrible programming mistake that was later detected as an inconsistency in the parsed program's data structures. Sorry!\n");
+                ret = -1;
+                goto cleanup;
             }
-        } else {
-            printf("  ");
-        }
-        
-        printf("%03d: %02x", i, opcodes[i].code & 0xFF);
-        if (opcodes[i].jmp_label) {
-            printf(" %s", opcodes[i].jmp_label);
-        } else if (opcodes[i].jmp_stars > 0) {
-            printf(" %+d stars", opcodes[i].jmp_stars);
         } else if (opcodes[i].code == IMM) {
-            printf(" %08x (%d)", opcodes[i].imm_val, opcodes[i].imm_val);
+            int rc = add2arr(imm_table, &num_imms, 16, opcodes[i].imm_val);
+            if (rc < 0) {
+                fprintf(stderr, "Sorry! The AXIS CPU can only support 16 immediates in any one program!\n");
+                ret = -1;
+                goto cleanup;
+            }
+            
+            //If no error, rc contains the index into the immediates table
+            opcodes[i].code |= rc;
         }
         
-        printf("\n");
+        add_reg_write(INST_MEM_REG, opcodes[i].code, prog_cmds, &prog_cmds_pos);
     }
+    
+    //Now add reg writes for programming jump offsets and immediates
+    for (i = 0; i < num_jmps; i++) {
+        add_reg_write(JMP_TABLE_REG, jmp_table[i], prog_cmds, &prog_cmds_pos);
+    }
+    for (i = 0; i < num_imms; i++) {
+        add_reg_write(IMM_TABLE_REG, imm_table[i], prog_cmds, &prog_cmds_pos);
+    }
+    
+    //And release the CPU from programming mode
+    add_reg_write(PROG_MODE_REG, 0, prog_cmds, &prog_cmds_pos);
+    
+    //Finally, print to stdout
+    //debug_hook_print_after_second_pass(prog_cmds, prog_cmds_pos);
+    
+    fflush(stdout);
+    write(STDOUT_FILENO, (char*) prog_cmds, 4*prog_cmds_pos);
     
     cleanup:
     del_lex_state(l);
