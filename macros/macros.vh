@@ -215,3 +215,100 @@ wire unused_dummy_in_wire_rst_sig_macro
 `define prendre (
 `define autrement ) : (
 `define fin ))
+<<<<<<< main
+=======
+
+//For making self-testing testbenches. 
+//In your testbench, place 
+//
+//  auto_tb_decls;
+//
+//Outside all initial/always blocks, and it's best to put the declarations
+//at the top.
+//
+//Use 
+//
+//  open_drivers_file("my_drivers.mem");
+//
+//inside of an initial block.
+//
+//Then we run two loops. The first is for reading the drivers file. The 
+//second is where you can run automatic tests. Outside all initial always
+//blocks, place:
+//
+//  `auto_tb_read_loop(my_testbench_clk)
+//      `dummy = $fscanf(`fd, "%h%b%b...", my_sig_1, my_sig_2, expected_my_sig_2, ...);
+//  `auto_tb_read_end
+//
+//  `auto_tb_test_loop(my_testbench_clk)
+//      `test(my_sig_2, expected_my_sig_2);
+//      //... other tests ...
+//  `auto_tb_test_end
+//
+//Unfortunately, I wasn't able to find a workaround to hide `fd and `dummy
+
+`define auto_tb_decls \
+    integer auto_tb_fd, auto_tb_dummy;\
+    integer auto_tb_line = 1; /*There's an off-by-one error somewhere... */ \
+    integer auto_tb_incr = 0
+    
+`define open_drivers_file(f) \
+        auto_tb_fd = $fopen(f, "r");\
+        if (auto_tb_fd == 0) begin\
+            $display("Could not open file %s", f);\
+            $finish;\
+        end\
+        \
+        while ($fgetc(auto_tb_fd) != "\n") begin\
+            if ($feof(auto_tb_fd)) begin\
+                $display("Error: file is in incorrect format");\
+                $display("Must be nonempty, and first line is always skipped and treated as comments");\
+                $finish;\
+            end\
+        end\
+        auto_tb_incr = 1
+
+`define test(x,y) \
+        if ($time != 0 && !(x === y)) begin \
+            $display("TB ERROR: line %d, variable x: expected %h but got %h", auto_tb_line, y, x);\
+            #5 $finish;\
+        end\
+        auto_tb_dummy = 1
+
+`define fd      auto_tb_fd
+`define dummy   auto_tb_dummy
+
+`define auto_tb_read_loop(clk) \
+    always @(posedge clk) begin \
+        if ($feof(auto_tb_fd)) begin \
+            $display("Successfully completed drivers file");\
+            #20\
+            $finish;\
+        end \
+        /* Add line increment then reset the increment */ \
+        #0.01; \
+        auto_tb_line = auto_tb_line + auto_tb_incr; \
+        auto_tb_incr = 0; 
+
+`define auto_tb_read_end\
+        /*Skip comments at end of line*/\
+        while (!$feof(auto_tb_fd) && $fgetc(auto_tb_fd) != "\n") ;\
+        auto_tb_incr = auto_tb_incr + 1;\
+        /* Do our best to count blank lines */\
+        while(!$feof(auto_tb_fd) && auto_tb_dummy != -1) begin \
+            auto_tb_dummy = $fgetc(auto_tb_fd);\
+            if (auto_tb_dummy == "\n") begin \
+                auto_tb_incr = auto_tb_incr + 1; \
+            end else if (auto_tb_dummy != " " && auto_tb_dummy != "\t") begin \
+                auto_tb_dummy = $ungetc(auto_tb_dummy, auto_tb_fd); \
+                auto_tb_dummy = -1; \
+            end \
+        end \
+    end
+
+`define auto_tb_test_loop(clk)\
+    always @(posedge clk) begin\
+
+`define auto_tb_test_end\
+    end
+>>>>>>> local
