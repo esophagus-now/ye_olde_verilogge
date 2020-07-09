@@ -127,7 +127,7 @@ char *get_word(lex_state *l) {
 
 #define mkentry(X) {X, #X}
 
-struct {
+static struct {
     unsigned char raw_code;
     char const *str;
 } const mnemonics[] = {
@@ -139,21 +139,75 @@ struct {
     mkentry(AND), mkentry(OR), mkentry(XOR),
     mkentry(NOT),
     mkentry(MUL), mkentry(DIV), mkentry(MOD),
+    mkentry(LSH), mkentry(RSH),
     mkentry(JA),
     mkentry(JEQ), mkentry(JGT), mkentry(JGE), mkentry(JSET), mkentry(JLAST),
     mkentry(TAX), mkentry(TXA),
     mkentry(IMM)
 };
 
+static int const mnemonics_len = sizeof(mnemonics)/sizeof(*mnemonics);
+
 //Does not care about efficiency
 unsigned char opcode_from_mnemonic(char const *str) {
-    static int const len = sizeof(mnemonics)/sizeof(*mnemonics);
     int i;
-    for (i = 0; i < len; i++) {
+    for (i = 0; i < mnemonics_len; i++) {
         if (strcasecmp(str, mnemonics[i].str) == 0) return mnemonics[i].raw_code;
     }
     
     return INVALID_MNEMONIC;
+}
+
+//Tries to parse a string of the form Rn, where n is an integer between 0
+//and 15. If the string cannot be parsed, returns -1. Otherwise returns n
+int get_regnum(char const *str) {
+    if (str[0] != 'R') return -1;
+    
+    int ret;
+    int rc = sscanf(str+1, "%d", &ret);
+    
+    if (rc != 1) return -1;
+    
+    return ret;
+}
+
+typedef struct _unresolved_op_t {
+    unsigned char code;
+    int src_line;
+    char const *jmp_label;
+    int jmp_stars;
+    int32_t imm_val;
+} unresolved_op_t;
+
+//Returns 0 on success, -1 on error
+int parse_jump_loc(char const *str, unresolved_op_t *dst) {
+    if (str[0] == '+') {
+        int pluscount = 1;
+        while (*++str == '+') pluscount++;
+        if (*str != '\0') {
+            //Bogus characters after the last '+'
+            return -1;
+        }
+        dst->jmp_label = NULL;
+        dst->jmp_stars = pluscount;
+    } else if (str[0] == '-') {
+        int minuscount = 1;
+        while (*++str == '-') minuscount++;
+        if (*str != '\0') {
+            //Bogus characters after the last '-'
+            return -1;
+        }
+        dst->jmp_label = NULL;
+        dst->jmp_stars = -minuscount;
+    } else if (str[0] == '@') {
+        dst->jmp_label = str;
+        dst->jmp_stars = 0;
+    } else {
+        //This string does not look like a jump location
+        return -1;
+    }
+    
+    return 0;
 }
 
 int main(int argc, char **argv) {
@@ -194,8 +248,8 @@ int main(int argc, char **argv) {
         "\tTXA           ==> Transfer X into A\n"
         "\tIN            ==> Read from the din stream into A\n"
         "\tINX           ==> Read from the din stream into X\n"
-        "\tOUT           ==> Write A to the dout stream\n"
-        "\tOUTX          ==> Write X to the dout stream\n"
+        "\tOUT  (0|1)    ==> Write A to the dout stream. The parameter is the value for TLAST\n"
+        "\tOUTX (0|1)    ==> Write X to the dout stream. The parameter is the value for TLAST\n"
         "\t(ADD|SUB|MUL|DIV|MOD|LSH|RSH|AND|OR|XOR|NOT) (X|IMM)\n"
         "                ==> Perform A = (X|IMM) op A\n"
         "\tJA <loc>      ==> Unconditional jump\n"
@@ -248,11 +302,7 @@ int main(int argc, char **argv) {
     #define MAX_OPCODES 2048
     #define MAX_STARS 128
     #define MAX_LABELS 64
-    struct {
-        unsigned char code;
-        char *jmp_label;
-        int jmp_stars;
-    } opcodes[MAX_OPCODES]; //I don't care about making this dynamically sized
+    unresolved_op_t opcodes[MAX_OPCODES]; //I don't care about making this dynamically sized
     int num_opcodes = 0;
     
     int starred_opcodes[MAX_STARS]; //Keeps track of addresses of opcodes with a star
@@ -311,23 +361,80 @@ int main(int argc, char **argv) {
         //At this point, word should contain a mnemonic
         unsigned char code = opcode_from_mnemonic(word);
         if (code == INVALID_MNEMONIC) {
-            fprintf(stderr, "Error, line %d: Invalid mnemonic [%s]\n", word);
+            fprintf(stderr, "Error, line %d: Invalid mnemonic [%s]\n", l->current_line, word);
             ret = -1;
             goto cleanup;
         }
         
         switch(code) {
         case LD:
-        case LDX:
+        case LDX: {
             //Need to read a single parameter, the string "X" or the string
-            //"IMM". Then need to modify the raw opcode to set the addr_type
-            //field in bits 4:3
+            //"IMM", or a string "Rn" where n is an integer from 0-15. Then
+            //need to modify the raw opcode to set the addr_type field.
+            word = get_word(l);
+            if (word == NULL) {
+                fprintf(stderr, "Error, line %d: Expected \"IMM\" \"Rn\" after instruction\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            int reg;
+            if (!strcmp(word, "IMM")) {
+                code |= LD_SRC_IMM;
+            } else if ((reg = get_regnum(word)) >= 0) {
+                code |= LD_SRC_MEM | reg;
+            } else {
+                fprintf(stderr, "Error, line %d: Invalid parameter for load source (must be \"IMM\" or \"Rn\")\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
             break;
+        }
         case ST:
-        case STX:
+        case STX: {
             //Need to read a single parameter, a string "Rn" where n is an 
             //integer from 0-15
+            word = get_word(l);
+            if (word == NULL) {
+                fprintf(stderr, "Error, line %d: Expected \"Rn\" after instruction\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            int reg;
+            if ((reg = get_regnum(word)) >= 0) {
+                code |= ST_DST_MEM | reg;
+            } else {
+                fprintf(stderr, "Error, line %d: Invalid parameter for store dest (must be \"Rn\")\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
             break;
+        }
+        case OUT:
+        case OUTX: {
+            //Need to read a single bit that determines TLAST
+            word = get_word(l);
+            if (word == NULL) {
+                fprintf(stderr, "Error, line %d: Expected \"0\" or \"1\" for TLAST value\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            if (!strcmp(word, "0")) {
+                code |= 0;
+            } else if (!strcmp(word, "1")) {
+                code |= 1;
+            } else {
+                fprintf(stderr, "Error, line %d: Invalid TLAST value\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            break;
+        }
         case ADD:
         case SUB:
         case MUL:
@@ -338,16 +445,175 @@ int main(int argc, char **argv) {
         case AND:
         case OR:
         case XOR:
-        case NOT:
+        case NOT: {
             //Need to read a single parameter, the string "X" or the string
-            //"IMM".
-            break;
+            //"IMM". Then need to modify the field in the opcode
+            word = get_word(l);
+            if (word == NULL) {
+                fprintf(stderr, "Error, line %d: Expected \"X\" or \"IMM\" after instruction\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
             
+            if (!strcmp(word, "X")) {
+                code |= ALU_SRC_X;
+            } else if (!strcmp(word, "IMM")) {
+                code |= ALU_SRC_IMM;
+            } else {
+                fprintf(stderr, "Error, line %d: Invalid parameter for ALU source (must be \"X\" or \"IMM\")\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            break;
+        }
+        case JA:
+        case JLAST: {
+            //Need to add an empty setjmp opcode (don't forget to increment address)
+            word = get_word(l);
+            if (word == NULL) {
+                fprintf(stderr, "Error, line %d: Expected (+|-)^n or @label after instruction\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            //Need to read a jump location
+            int rc = parse_jump_loc(word, opcodes + curr_addr);
+            if (rc < 0) {
+                fprintf(stderr, "Error, line %d: invalid jump location\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            opcodes[curr_addr].code = SET_JMP_OFF;
+            opcodes[curr_addr].src_line = l->current_line;
+            curr_addr++;
+            break;
+        }
+        case JEQ:
+        case JGT:
+        case JGE:
+        case JSET: {
+            //Need to read two parameters. First the string "X" or the
+            //string "IMM". Then need to modify the field in the opcode. 
+            word = get_word(l);
+            if (word == NULL) {
+                fprintf(stderr, "Error, line %d: Expected \"X\" or \"IMM\" after instruction\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            if (!strcmp(word, "X")) {
+                code |= ALU_SRC_X;
+            } else if (!strcmp(word, "IMM")) {
+                code |= ALU_SRC_IMM;
+            } else {
+                fprintf(stderr, "Error, line %d: Invalid parameter for JMP compare source (must be \"X\" or \"IMM\")\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            //Need to add an empty setjmp opcode (don't forget to increment address)
+            word = get_word(l);
+            if (word == NULL) {
+                fprintf(stderr, "Error, line %d: Expected (+|-)^n or @label after instruction\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            //Second parameter, read a jump location
+            int rc = parse_jump_loc(word, opcodes + curr_addr);
+            if (rc < 0) {
+                fprintf(stderr, "Error, line %d: invalid jump location\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            opcodes[curr_addr].code = SET_JMP_OFF;
+            opcodes[curr_addr].src_line = l->current_line;
+            curr_addr++;
+            
+            break;
+        }
+        case IMM: {
+            //Need to parse an integer parameter, which we'll save into the
+            //unresolved opcode struct
+            word = get_word(l);
+            if (word == NULL) {
+                fprintf(stderr, "Error, line %d: Expected integer value after IMM instruction\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            //Assumes strings returned from get_word are never empty. Of
+            //course, I designed get_word to do that.
+            char *endptr;
+            long int val = strtol(word, &endptr, 0);
+            if (*endptr != '\0') {
+                fprintf(stderr, "Error, line %d: Invalid integer constant\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            //Check if value is in range
+            if (val > INT32_MAX || val < INT32_MIN) {
+                fprintf(stderr, "Error, line %d: Integer constant out of range for 32 bit signed int\n", l->current_line);
+                ret = -1;
+                goto cleanup;
+            }
+            
+            //Save value into struct
+            opcodes[curr_addr].imm_val = (int32_t) val; //Hopefully this truncation works
+            break;
+        }
+        default:
+            break;
         }
         
+        //Add instruction to the list
+        opcodes[curr_addr].jmp_label = NULL;
+        opcodes[curr_addr].jmp_stars = 0;
+        opcodes[curr_addr].code = code;
+        curr_addr++;
     }
     
+    //Second pass: tidy up the jump and immediate offsets while also
+    //outputting the binary
+    int stars_ind = 0;
+    int labels_ind = 0;
     
+    //For now, just print it out so I can see it for myself
+    int i;
+    for (i = 0; i < curr_addr; i++) {
+        if (labels_ind < num_labels) {
+            if (labels_pos[labels_ind] == i) {
+                printf("%s\n", labels[labels_ind]);
+                labels_ind++;
+            }
+        }
+        
+        if (stars_ind < num_starred) {
+            if (starred_opcodes[stars_ind] == i) {
+                printf("* ");
+                stars_ind++;
+            } else {
+                printf("  ");
+            }
+        } else {
+            printf("  ");
+        }
+        
+        printf("%03d: %02x", i, opcodes[i].code & 0xFF);
+        if (opcodes[i].jmp_label) {
+            printf(" %s", opcodes[i].jmp_label);
+        } else if (opcodes[i].jmp_stars > 0) {
+            printf(" %+d stars", opcodes[i].jmp_stars);
+        } else if (opcodes[i].code == IMM) {
+            printf(" %08x (%d)", opcodes[i].imm_val, opcodes[i].imm_val);
+        }
+        
+        printf("\n");
+    }
     
     cleanup:
     del_lex_state(l);

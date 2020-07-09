@@ -90,7 +90,7 @@ D0              1               0           0           0               0       
 1               1               0           0           0               0           0               0               0           0             
 40              1               0           0           0               0           0               0               0           0               10: ST R0;      Store back into count
 1               1               0           0           0               0           0               0               0           0             
-11              1               0           0           0               0           0               0               0           0               11: LD R1;      Beginning of Collatz loop. Restore A
+11              1               0           0           0               0           0               0               0           0               11: LD R1;      Restore A
 1               1               0           0           0               0           0               0               0           0               
 E0              1               0           0           0               0           0               0               0           0               12: SETJMP 0;   jmp_table[0] should get us to the "return", +9
 1               1               0           0           0               0           0               0               0           0               
