@@ -257,7 +257,7 @@ wire unused_dummy_in_wire_rst_sig_macro
     integer auto_tb_line = 0;  \
     integer auto_tb_incr = 0
     
-`define open_drivers_file(f) \        
+`define open_drivers_file(f) \
         auto_tb_fd = $fopen(f, "r");\
         if (auto_tb_fd == 0) begin\
             $display("Could not open file %s", f);\

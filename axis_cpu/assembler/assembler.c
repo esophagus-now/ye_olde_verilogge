@@ -428,14 +428,14 @@ void debug_hook_print_after_second_pass(uint32_t const *prog_cmds, int len) {
 int main(int argc, char **argv) {
     int ret = 0;
     if (argc != 2) {
-        fprintf(stderr, "Usage: assmembler my_source.asm > prog.bit");
+        fprintf(stderr, "Usage: assmembler my_source.asm > prog.bit");
         return -1;
     }
     
     if (argv[1][0] == '-') {
         //Always print help
         fprintf(stderr,
-        "Usage: assembler my_source.asm > prog.bit\n"
+        "Usage: assembler my_source.asm > prog.bit\n"
         "\n"
         "prog.bit has a special binary format which represents the sequence\n"
         "of words that must be written to the AXI CPU's cmd_in stream in\n"
