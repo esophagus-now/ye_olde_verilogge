@@ -149,14 +149,23 @@ proc get_next_rr_tree_id {} {
 # Given a list of AXI Stream masters (with only TDATA, TREADY, TVALID, and TLAST)
 # hooks up an automatically sized arbiter tree
 # Returns a reference to the top-level hierarchy cell
-proc rr_tree {msts {data_w 32}} {
+# UPDATE July 30 / 2020 
+# Added a parameter that can automatically use the new Si_PIPE parpameters on 
+# rr4 to add input pipe stages. This was done to prevent combinational loop 
+# errors when using dbg_guvs, which have a lot of combinational paths (you might
+# also get combinational loops of you write your own Verilog modules and aren't
+# careful about the AXI Stream rules; at least the input pipe stage can save
+# you from yourself!)
+proc rr_tree {msts {data_w 32} {input_pipe 0}} {
     puts "rr_tree args:"
     puts "msts = $msts"
     puts "data_w = $data_w"
     puts "----"
     
+    set nmsts [llength $msts]
+    
     # Quit gracefully if there is no tree to add
-    if {[llength $msts] == 0} {
+    if {$nmsts == 0} {
         return
     }
     
@@ -182,10 +191,28 @@ proc rr_tree {msts {data_w 32}} {
         set_property CONFIG.DATA_WIDTH $data_w $node
         
         lappend nodes $node
+        
+        # I do not care about efficiency; this function is only called once
         lappend slvs [get_bd_intf_pins $node/s0]
+        if {([llength $slvs] <= $nmsts) && ($input_pipe != 0)} {
+            set_property CONFIG.S0_PIPE 1 $node
+        }
+        
         lappend slvs [get_bd_intf_pins $node/s1]
+        if {([llength $slvs] <= $nmsts) && ($input_pipe != 0)} {
+            set_property CONFIG.S1_PIPE 1 $node
+        }
+        
         lappend slvs [get_bd_intf_pins $node/s2]
+        if {([llength $slvs] <= $nmsts) && ($input_pipe != 0)} {
+            set_property CONFIG.S2_PIPE 1 $node
+        }
+        
         lappend slvs [get_bd_intf_pins $node/s3]
+        if {([llength $slvs] <= $nmsts) && ($input_pipe != 0)} {
+            set_property CONFIG.S3_PIPE 1 $node
+        }
+        
         incr nnodes -1
         if {$nnodes > 0} {
             lappend msts [get_bd_intf_pins $node/o ]
@@ -320,7 +347,8 @@ proc add_dbg_core_to_list {nets} {
     # change
     if {[llength $log_outs] > 1} {
         # Put in the arbiter tree
-        set tree_cell [rr_tree $log_outs 32]
+        # UPDATE July 31 / 2020: adds input pipe stages now for safety
+        set tree_cell [rr_tree $log_outs 32 1]
         
         connect_bd_net [list [get_bd_pins -of_objects $guvs -filter {NAME == clk}] [get_bd_pins $tree_cell/clk]]
     }

@@ -174,7 +174,11 @@ module rr4_tb # (
 		.DATA_WIDTH(DATA_WIDTH),
 		.PIPE_STAGE(PIPE_STAGE),
 		.RESET_TYPE(RESET_TYPE),
-		.TLAST_ARB(TLAST_ARB)
+		.TLAST_ARB(TLAST_ARB),
+        .S0_PIPE(1),
+        .S1_PIPE(1),
+        .S2_PIPE(1),
+        .S3_PIPE(1)
     ) DUT (
         clk, rst,
         

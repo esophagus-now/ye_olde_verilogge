@@ -1,7 +1,7 @@
 # Call as:
 # vivado -mode tcl -nolog -nojournal -source scripts/ip_package.tcl -tclargs $out_dir $ip_name $part_name
 
-#start_gui
+# start_gui
 
 set out_dir [lindex $argv 0]
 set ip_name [lindex $argv 1]
@@ -40,6 +40,41 @@ set_property value true [ipx::get_user_parameters TLAST_ARB -of_objects [ipx::cu
 set_property value true [ipx::get_hdl_parameters TLAST_ARB -of_objects [ipx::current_core]]
 set_property value_format bool [ipx::get_user_parameters TLAST_ARB -of_objects [ipx::current_core]]
 set_property value_format bool [ipx::get_hdl_parameters TLAST_ARB -of_objects [ipx::current_core]]
+
+# Input pipe parameters GUI
+set_property display_name {s0 pipe stage} [ipgui::get_guiparamspec -name "S0_PIPE" -component [ipx::current_core] ]
+set_property tooltip {Enable pipe stage on input s0. Try using this if you have combinational loops.} [ipgui::get_guiparamspec -name "S0_PIPE" -component [ipx::current_core] ]
+set_property widget {checkBox} [ipgui::get_guiparamspec -name "S0_PIPE" -component [ipx::current_core] ]
+set_property value false [ipx::get_user_parameters S0_PIPE -of_objects [ipx::current_core]]
+set_property value false [ipx::get_hdl_parameters S0_PIPE -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_user_parameters S0_PIPE -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_hdl_parameters S0_PIPE -of_objects [ipx::current_core]]
+
+set_property display_name {s1 pipe stage} [ipgui::get_guiparamspec -name "S1_PIPE" -component [ipx::current_core] ]
+set_property tooltip {Enable pipe stage on input s1. Try using this if you have combinational loops.} [ipgui::get_guiparamspec -name "S1_PIPE" -component [ipx::current_core] ]
+set_property widget {checkBox} [ipgui::get_guiparamspec -name "S1_PIPE" -component [ipx::current_core] ]
+set_property value false [ipx::get_user_parameters S1_PIPE -of_objects [ipx::current_core]]
+set_property value false [ipx::get_hdl_parameters S1_PIPE -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_user_parameters S1_PIPE -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_hdl_parameters S1_PIPE -of_objects [ipx::current_core]]
+
+
+set_property display_name {s2 pipe stage} [ipgui::get_guiparamspec -name "S2_PIPE" -component [ipx::current_core] ]
+set_property tooltip {Enable pipe stage on input s2. Try using this if you have combinational loops.} [ipgui::get_guiparamspec -name "S2_PIPE" -component [ipx::current_core] ]
+set_property widget {checkBox} [ipgui::get_guiparamspec -name "S2_PIPE" -component [ipx::current_core] ]
+set_property value false [ipx::get_user_parameters S2_PIPE -of_objects [ipx::current_core]]
+set_property value false [ipx::get_hdl_parameters S2_PIPE -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_user_parameters S2_PIPE -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_hdl_parameters S2_PIPE -of_objects [ipx::current_core]]
+
+
+set_property display_name {s3 pipe stage} [ipgui::get_guiparamspec -name "S3_PIPE" -component [ipx::current_core] ]
+set_property tooltip {Enable pipe stage on input s3. Try using this if you have combinational loops.} [ipgui::get_guiparamspec -name "S3_PIPE" -component [ipx::current_core] ]
+set_property widget {checkBox} [ipgui::get_guiparamspec -name "S3_PIPE" -component [ipx::current_core] ]
+set_property value false [ipx::get_user_parameters S3_PIPE -of_objects [ipx::current_core]]
+set_property value false [ipx::get_hdl_parameters S3_PIPE -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_user_parameters S3_PIPE -of_objects [ipx::current_core]]
+set_property value_format bool [ipx::get_hdl_parameters S3_PIPE -of_objects [ipx::current_core]]
 
 # Clean up 'rst' interface bus
 set_property enablement_dependency {spirit:decode(id('MODELPARAM_VALUE.RESET_TYPE')) = 1} [ipx::get_bus_interfaces rst -of_objects [ipx::current_core]]
