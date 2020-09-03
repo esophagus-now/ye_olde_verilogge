@@ -313,6 +313,7 @@ wire unused_dummy_in_wire_rst_sig_macro
 
 `define auto_tb_test_loop(clk)\
     always @(posedge clk) begin\
+	#0.1\
 
 `define auto_tb_test_end\
     end
